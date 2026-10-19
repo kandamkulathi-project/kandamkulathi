@@ -89,6 +89,46 @@ describe("security proof negative controls", () => {
   it("does not treat a known advisory ID alone as remediation", () => {
     assert.equal(assessAudit(report(), new Map()).blockers.length, 1);
   });
+  it("distinguishes uninstalled optional binaries from unreadable installed packages", () => {
+    const absent = join(root, "node_modules", "other-os-binary");
+    const extra = [
+      { optionalDependencies: { binary: { from: "other-os-binary", path: absent } } },
+      ...tree,
+    ];
+    const optionalRead = (path) => {
+      if (path.startsWith(absent))
+        throw Object.assign(new Error("Not installed"), { code: "ENOENT" });
+      return read(path);
+    };
+    assert.equal(verifyInstalledPatches(root, manifest, extra, optionalRead).size, 1);
+    const unreadable = [
+      { dependencies: { bad: { from: "unreadable", path: process.cwd() } } },
+      ...tree,
+    ];
+    assert.throws(
+      () =>
+        verifyInstalledPatches(root, manifest, unreadable, (path) => {
+          if (path === join(process.cwd(), "package.json"))
+            throw Object.assign(new Error("Missing manifest"), { code: "ENOENT" });
+          return read(path);
+        }),
+      /Missing manifest/,
+    );
+  });
+  it("also inspects aliased packages using their real installed identity", () => {
+    const aliasPath = join(root, "node_modules", "alias");
+    const extraTree = [
+      { dependencies: { alias: { from: "npm:example@1.0.0", path: aliasPath } } },
+      ...tree,
+    ];
+    const aliasRead = (path) =>
+      path.startsWith(aliasPath)
+        ? path.endsWith("package.json")
+          ? JSON.stringify({ name: "example", version: "1.0.0" })
+          : "unpatched alias source"
+        : read(path);
+    assert.throws(() => verifyInstalledPatches(root, manifest, extraTree, aliasRead), /Unpatched/);
+  });
   it("fails a new advisory, changed module identity, or new vulnerable version", () => {
     const proof = new Map([[entry.advisory, entry]]);
     for (const changed of [

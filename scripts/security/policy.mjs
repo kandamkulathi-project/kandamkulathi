@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, join, relative, resolve } from "node:path";
 
 export const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -18,18 +18,41 @@ export const fingerprintAdvisory = (advisory) =>
     }),
   );
 
-export function collectPackages(tree, names) {
+export function collectPackages(tree, names, read = readFileSync) {
   assert(Array.isArray(tree) && tree.length > 0, "Installed dependency tree is missing");
   const found = new Map();
   const walk = (value) => {
     if (!value || typeof value !== "object") return;
-    if (names.includes(value.from) && value.path) found.set(value.path, value);
+    if (value.from && value.path) found.set(value.path, value);
     for (const field of ["dependencies", "devDependencies", "optionalDependencies"]) {
       for (const dependency of Object.values(value[field] ?? {})) walk(dependency);
     }
   };
   for (const project of tree) walk(project);
-  return [...found.values()];
+  // Inspect real package identities, including aliases; a display name is not proof.
+  return [...found.values()].flatMap((entry) => {
+    let identity;
+    try {
+      identity = JSON.parse(read(join(entry.path, "package.json"), "utf8"));
+    } catch (error) {
+      // pnpm also lists optional binaries for other OS/CPU targets that are not installed.
+      // A present directory with a missing/broken manifest must still fail closed.
+      if (error.code === "ENOENT" && !existsSync(entry.path)) return [];
+      throw error;
+    }
+    assert(
+      typeof identity.name === "string" && identity.name.length > 0,
+      "Missing package identity",
+    );
+    const expectedName = names.find(
+      (name) =>
+        entry.from === name ||
+        entry.from.startsWith(`npm:${name}@`) ||
+        entry.from.startsWith(`${name}@`),
+    );
+    if (expectedName) assert.equal(identity.name, expectedName, "Dependency identity differs");
+    return names.includes(identity.name) ? [{ ...entry, from: identity.name }] : [];
+  });
 }
 
 export function verifyInstalledPatches(root, manifest, tree, read = readFileSync) {
@@ -41,6 +64,7 @@ export function verifyInstalledPatches(root, manifest, tree, read = readFileSync
   const installed = collectPackages(
     tree,
     manifest.remediations.map((entry) => entry.package),
+    read,
   );
   const verified = new Map();
   const inside = (base, target) => {

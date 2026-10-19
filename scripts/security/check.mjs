@@ -21,15 +21,7 @@ const runPnpm = (args) =>
   });
 
 try {
-  const listed = runPnpm([
-    "list",
-    "node-forge",
-    "braces",
-    "--depth",
-    "Infinity",
-    "--recursive",
-    "--json",
-  ]);
+  const listed = runPnpm(["list", "--depth", "Infinity", "--recursive", "--json"]);
   assert(!listed.error && listed.status === 0, "Could not inspect the installed dependency tree");
   const manifest = JSON.parse(readFileSync(join(root, "security-remediations.json"), "utf8"));
   const verified = verifyInstalledPatches(root, manifest, JSON.parse(listed.stdout));

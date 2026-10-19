@@ -18,7 +18,7 @@ Sources: [Forge advisory](https://github.com/advisories/GHSA-86w9-cpqp-85rv), [u
 
 ## Evidence and review
 
-Before applying patches, the security regression pack produced nine failures, including acceptance of the malformed DigestAlgorithm variants and missing depth rejection. With patches, all 15 library tests passed, including valid SHA1/SHA256/SHA384/SHA512 signatures, altered-message rejection, parameter variants, parser entrypoints, nesting boundaries and normal glob behavior. Nine additional policy tests cover fail-closed decisions. These are local test results; they do not imply remote Linux CI, native device acceptance, cryptographic audit or phase approval.
+Before applying patches, the security regression pack produced nine failures, including acceptance of the malformed DigestAlgorithm variants and missing depth rejection. With patches, all 15 library tests passed, including valid SHA1/SHA256/SHA384/SHA512 signatures, altered-message rejection, parameter variants, parser entrypoints, nesting boundaries and normal glob behavior. Eleven additional policy tests cover fail-closed decisions, including package aliases and uninstalled platform binaries. These are local test results; they do not imply remote Linux CI, native device acceptance, cryptographic audit or phase approval.
 
 Senior review must examine the source changes, upstream provenance, fixtures, hashes and the patch-aware decision itself before merging. Remaining moderate findings are tracked separately. All prior company requirements, team assignments, phases and production gates stay in force.
 
