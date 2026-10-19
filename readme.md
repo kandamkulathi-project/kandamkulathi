@@ -6,7 +6,7 @@ A trusted Ayurvedic healthcare institution serving generations since 1847, dedic
 
 This private repository contains the runnable starter and the complete reviewed implementation, member and QA documents. **Business features and all phase acceptance are Pending. This is not a production release.** No live accounts, deployment, charges, messages, AI responses or patient data are enabled.
 
-**Security status:** the two high Expo-toolchain findings have committed local source patches, installed-file verification and regression tests; independent senior review is Pending. The raw registry audit still reports the original versions, and two moderate findings remain Open. See [dependency remediation](docs/security/DEPENDENCY_RISKS.md); no phase or production approval is implied.
+**Security status:** the two high Expo-toolchain findings have committed local source patches, installed-file verification and regression tests; independent senior review is Pending. Targeted esbuild/uuid upgrades remove the two moderate findings. The raw registry audit still reports the original locally patched versions. Free SAST/secrets/Node checks and local commit hooks are configured; mandatory remote protection is blocked by GitHub plan/admin access. See [security automation](docs/security/SECURITY_AUTOMATION.md) and [dependency remediation](docs/security/DEPENDENCY_RISKS.md); no phase or production approval is implied.
 
 Use Node **24.22.0** and pnpm **10.34.7**. Python 3.13 runs documentation checks. Enable pnpm through Corepack if your Node installation includes it, or install the exact pnpm version using your approved package-manager setup.
 
@@ -17,6 +17,7 @@ git switch dev
 git pull --ff-only origin dev
 git switch -c YOUR_ASSIGNED_BRANCH
 pnpm install --frozen-lockfile
+pnpm exec playwright install chromium
 pnpm dev
 ```
 

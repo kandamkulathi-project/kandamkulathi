@@ -13,6 +13,7 @@ git switch dev
 git pull --ff-only origin dev
 git switch -c YOUR_ASSIGNED_BRANCH
 pnpm install --frozen-lockfile
+pnpm exec playwright install chromium
 pnpm dev
 ```
 
@@ -34,6 +35,8 @@ Run `pnpm dev:mobile`. Use a compatible Expo Go for baseline preview where suppo
 `pnpm mobile:check` checks Expo dependency compatibility and public configuration. `pnpm --filter @kandamkulathi/mobile build` exports Android/iOS JavaScript; it does not compile, sign, submit or install a native app. Bundle/application IDs, signing, development-build profiles and real-device procedures require company accounts and must be added deliberately.
 
 ## Validation before PR
+
+Local install also enables the pre-commit hook. It runs full app/security/browser/docs checks and requires a clean staged working tree on a feature branch. Existing custom hooks are preserved and require deliberate integration. See [security automation](../security/SECURITY_AUTOMATION.md) for tool/browser setup, supported platforms, live-feed Internet requirements and blocked remote enforcement. Run `pnpm hooks:install` after moving or changing the local pnpm installation; run `pnpm precommit` to diagnose a failure. Local hooks are bypassable and do not replace server policies.
 
 ```sh
 pnpm verify

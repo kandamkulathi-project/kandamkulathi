@@ -16,4 +16,6 @@ All findings require triage; confirmed critical/high vulnerabilities and safety/
 
 Contain/stop harmful effects, preserve restricted evidence, assess exposure, rotate compromised secrets through the actual owner and reconcile providers/data. Follow [incident response](docs/operations/INCIDENT_RESPONSE.md). Legal/clinical reporting obligations are determined by the company reviewers using current applicable rules; do not invent deadlines.
 
-Before launch configure actual private reporting contacts, access recovery, dependency/security scanning, alert recipients, incident coverage and supported client/runtime inventory. These are Pending, not configured by this file.
+Free SAST, secret, dependency and Node checks plus local commit hooks are described in [security automation](docs/security/SECURITY_AUTOMATION.md). Every unremediated dependency severity blocks. Mandatory remote merge protection is blocked by the current private-repository GitHub plan and missing admin rights; do not treat workflow success as enforced protection. Scheduled scans activate after the workflow reaches the default branch.
+
+Before launch configure actual private reporting contacts, access recovery, alert recipients, incident coverage and supported client/runtime inventory. Those owner-controlled settings remain Pending.

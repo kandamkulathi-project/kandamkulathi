@@ -157,4 +157,19 @@ describe("security proof negative controls", () => {
       1,
     );
   });
+  it("blocks unremediated findings at every known severity", () => {
+    for (const severity of ["info", "low", "moderate", "high", "critical"]) {
+      assert.equal(assessAudit(report({ ...advisory, severity }), new Map()).blockers.length, 1);
+    }
+  });
+  it("rejects positive vulnerability counts with missing advisory details", () => {
+    assert.throws(
+      () => assessAudit({ ...report(), advisories: {} }, new Map()),
+      /omitted advisory/,
+    );
+    assert.throws(
+      () => assessAudit({ ...report(), metadata: { vulnerabilities: { high: -1 } } }, new Map()),
+      /Invalid vulnerability counts/,
+    );
+  });
 });

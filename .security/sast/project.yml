@@ -1,0 +1,45 @@
+rules:
+  - id: project.astro-raw-html
+    languages: [generic]
+    paths:
+      include: ['*.astro']
+    severity: ERROR
+    message: Astro raw HTML requires a reviewed sanitization boundary; use escaped bindings.
+    pattern-regex: '\bset:html\s*='
+  - id: project.dynamic-code-execution
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: Do not execute dynamic JavaScript; use validated typed handlers.
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: new Function(...)
+  - id: project.disabled-tls-verification
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: TLS certificate validation must remain enabled.
+    pattern-either:
+      - pattern: "{..., rejectUnauthorized: false, ...}"
+      - pattern: process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+  - id: project.raw-sql-interpolation
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: Parameterize SQL; never put interpolated input into raw SQL.
+    pattern-either:
+      - pattern: sql.raw(`...${...}...`)
+      - pattern: sql.raw($A + $B)
+  - id: project.hono-request-to-dangerous-sink
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: Request data reaches an HTML, SQL or command sink without a reviewed boundary.
+    mode: taint
+    pattern-sources:
+      - pattern: $C.req.query(...)
+      - pattern: $C.req.param(...)
+      - pattern: $C.req.header(...)
+      - pattern: await $C.req.text(...)
+      - pattern: await $C.req.json(...)
+    pattern-sinks:
+      - pattern: $C.html($VALUE, ...)
+      - pattern: sql.raw($VALUE)
+      - pattern: exec($VALUE, ...)
+      - pattern: execSync($VALUE, ...)

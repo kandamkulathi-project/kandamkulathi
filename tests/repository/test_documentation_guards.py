@@ -85,6 +85,26 @@ class RepositoryGuardTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'Unclosed'):
                     CHECK.check_markdown(path)
 
+    def test_missing_sast_and_missing_required_check_fail_the_repository_contract(self):
+        real_read = Path.read_text
+        def without_sast(path, *args, **kwargs):
+            text = real_read(path, *args, **kwargs)
+            if path == CHECK.ROOT/'.github/workflows/security.yml':
+                return text.replace('pnpm security:sast', 'disabled-command')
+            return text
+        with patch.object(Path, 'read_text', without_sast):
+            with self.assertRaisesRegex(ValueError, 'Security CI must execute pnpm security:sast'):
+                CHECK.check_application_contract()
+
+        def without_check(path, *args, **kwargs):
+            text = real_read(path, *args, **kwargs)
+            if path == CHECK.ROOT/'.github/branch-protection.json':
+                return text.replace('runtime-security', 'unrelated-check')
+            return text
+        with patch.object(Path, 'read_text', without_check):
+            with self.assertRaisesRegex(ValueError, 'all six actual checks'):
+                CHECK.check_application_contract()
+
 
 if __name__ == '__main__':
     unittest.main()

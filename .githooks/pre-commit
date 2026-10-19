@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) exec node.exe scripts/security/pre-commit.mjs ;;
+  *) exec node scripts/security/pre-commit.mjs ;;
+esac

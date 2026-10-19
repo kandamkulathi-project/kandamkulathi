@@ -1,0 +1,82 @@
+{
+  "opengrep": {
+    "version": "v1.31.0",
+    "platforms": {
+      "win32-x64": {
+        "url": "https://github.com/opengrep/opengrep/releases/download/v1.31.0/opengrep_windows_x86.exe",
+        "sha256": "fdd2e22549e7000ceb66976a01366db6910760b2aa4e457b6bda62545070d26a",
+        "binary": "opengrep.exe",
+        "binarySha256": "fdd2e22549e7000ceb66976a01366db6910760b2aa4e457b6bda62545070d26a",
+        "archive": false
+      },
+      "linux-x64": {
+        "url": "https://github.com/opengrep/opengrep/releases/download/v1.31.0/opengrep_manylinux_x86",
+        "sha256": "dbbe3c2058dbe600c449a8ba22ea79a1643a6660658400090d0323a8d0d31147",
+        "binary": "opengrep",
+        "binarySha256": "dbbe3c2058dbe600c449a8ba22ea79a1643a6660658400090d0323a8d0d31147",
+        "archive": false
+      },
+      "linux-arm64": {
+        "url": "https://github.com/opengrep/opengrep/releases/download/v1.31.0/opengrep_manylinux_aarch64",
+        "sha256": "2b713a29a00237f85408b83002fc111db5b94c7fa8d263f0a93184a960655d9d",
+        "binary": "opengrep",
+        "binarySha256": "2b713a29a00237f85408b83002fc111db5b94c7fa8d263f0a93184a960655d9d",
+        "archive": false
+      },
+      "darwin-x64": {
+        "url": "https://github.com/opengrep/opengrep/releases/download/v1.31.0/opengrep_osx_x86",
+        "sha256": "2f0d0c7a41a3e48dc02c30dabc4851bc37c18f021b46c9ae54b15177ece088ee",
+        "binary": "opengrep",
+        "binarySha256": "2f0d0c7a41a3e48dc02c30dabc4851bc37c18f021b46c9ae54b15177ece088ee",
+        "archive": false
+      },
+      "darwin-arm64": {
+        "url": "https://github.com/opengrep/opengrep/releases/download/v1.31.0/opengrep_osx_arm64",
+        "sha256": "035dd8fd2410fe68513916df0c2895257fffafcd5314b4a118484ce8db62bedb",
+        "binary": "opengrep",
+        "binarySha256": "035dd8fd2410fe68513916df0c2895257fffafcd5314b4a118484ce8db62bedb",
+        "archive": false
+      }
+    }
+  },
+  "gitleaks": {
+    "version": "v8.30.1",
+    "platforms": {
+      "win32-x64": {
+        "url": "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_windows_x64.zip",
+        "sha256": "d29144deff3a68aa93ced33dddf84b7fdc26070add4aa0f4513094c8332afc4e",
+        "binary": "gitleaks.exe",
+        "binarySha256": "17157e2ee8b76fc8b1d8bee607a250e34b8a8023c8bc81822d4b5ee4d78fcb7c",
+        "archive": true
+      },
+      "linux-x64": {
+        "url": "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz",
+        "sha256": "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb",
+        "binary": "gitleaks",
+        "binarySha256": "88f91962aa2f93ac6ab281d553b9e125f5197bbbce38f9f2437f7299c32e5509",
+        "archive": true
+      },
+      "linux-arm64": {
+        "url": "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_arm64.tar.gz",
+        "sha256": "e4a487ee7ccd7d3a7f7ec08657610aa3606637dab924210b3aee62570fb4b080",
+        "binary": "gitleaks",
+        "binarySha256": "00e91bbe655bd7c47753e8cfe61cb76ea1a5d7e7702fe161ee40102b46b3823b",
+        "archive": true
+      },
+      "darwin-x64": {
+        "url": "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_darwin_x64.tar.gz",
+        "sha256": "dfe101a4db2255fc85120ac7f3d25e4342c3c20cf749f2c20a18081af1952709",
+        "binary": "gitleaks",
+        "binarySha256": "cee01fea7173f1b779dff188e1c26ecbcb4027d394acc573b23aaf0be260e291",
+        "archive": true
+      },
+      "darwin-arm64": {
+        "url": "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_darwin_arm64.tar.gz",
+        "sha256": "b40ab0ae55c505963e365f271a8d3846efbc170aa17f2607f13df610a9aeb6a5",
+        "binary": "gitleaks",
+        "binarySha256": "ba52fb1bfabbcde42f032afad3d6e0b19dff8ed105229a16e7caa338bbc0e84f",
+        "archive": true
+      }
+    }
+  }
+}

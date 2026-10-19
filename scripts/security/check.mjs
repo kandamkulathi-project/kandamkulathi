@@ -67,10 +67,10 @@ try {
   assert.equal(
     assessment.blockers.length,
     0,
-    `Unremediated high/critical advisories: ${assessment.blockers.join(", ")}`,
+    `Unremediated advisories (any severity): ${assessment.blockers.join(", ")}`,
   );
   console.log(
-    "PASS: installed patch proofs and regressions; no unremediated high/critical findings in this audit.",
+    "PASS: installed patch proofs and regressions; no unremediated findings at any severity in this audit.",
   );
 } catch (error) {
   console.error(`FAIL: ${error.message}`);
