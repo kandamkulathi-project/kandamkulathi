@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "Kandamkulathi Dev",
+    "slug": "kandamkulathi",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "platforms": ["android", "ios"],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "permissions": []
+    },
+    "plugins": []
+  }
+}

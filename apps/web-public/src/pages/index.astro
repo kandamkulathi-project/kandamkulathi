@@ -1,0 +1,16 @@
+---
+// biome-ignore lint/correctness/noUnusedImports: Astro uses this component in the template below.
+import Welcome from "../components/Welcome";
+import "../styles/global.css";
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="description" content="Kandamkulathi team development preview." />
+    <title>Kandamkulathi · Development</title>
+  </head>
+  <body><Welcome client:load /></body>
+</html>

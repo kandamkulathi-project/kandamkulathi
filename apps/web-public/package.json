@@ -1,0 +1,25 @@
+{
+  "name": "@kandamkulathi/web-public",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev --host 127.0.0.1 --port 4321",
+    "build": "astro build",
+    "preview": "astro preview --host 127.0.0.1 --port 4321",
+    "typecheck": "astro check"
+  },
+  "dependencies": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "@kandamkulathi/i18n": "workspace:*",
+    "@kandamkulathi/ui": "workspace:*",
+    "astro": "7.4.1",
+    "@astrojs/react": "7.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@astrojs/check": "0.9.11"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@kandamkulathi/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "hono": "4.13.13",
+    "@kandamkulathi/contracts": "workspace:*"
+  }
+}

@@ -1,0 +1,31 @@
+name: Bug report
+description: Redacted reproducible product or documentation defect
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: "Security/clinical/privacy incidents and sensitive evidence go through SECURITY.md privately. Do not submit real patient data, secrets or exploit details here."
+  - type: input
+    id: trace
+    attributes:
+      label: "Requirement, package, phase and case/step/variation"
+    validations:
+      required: true
+  - type: input
+    id: candidate
+    attributes:
+      label: "Candidate/build/config and synthetic environment/provider mode"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: "Preconditions, exact steps and approved expected versus actual result"
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: "Concrete impact, redacted evidence references, owner and independent retest"
+    validations:
+      required: true

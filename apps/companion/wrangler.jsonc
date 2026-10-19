@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kandamkulathi-companion",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-19",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [],
+  "limits": {
+    "cpu_ms": 50
+  },
+  "vars": {
+    "APP_ENV": "local"
+  },
+  "observability": {
+    "enabled": false
+  }
+}

@@ -1,0 +1,15 @@
+# INACTIVE EXAMPLE. Real GitHub handles/teams have not been supplied or verified.
+# Copy to CODEOWNERS only after the company admin maps actual recognized handles.
+# Do not paste first names as imaginary GitHub usernames.
+# Sensitive changes need independent Mathew/Devadathan review under policy;
+# CODEOWNERS/protections must be configured to enforce actual routing.
+# Example path responsibilities (replace with actual accepted workspace paths):
+# *                         actual-repository-maintainer-team
+# /apps/core-api/           actual-mathew-team actual-devadathan-team
+# /apps/companion/          actual-mathew-team actual-devadathan-team
+# /packages/database/       actual-mathew-team actual-devadathan-team
+# /packages/domain/commerce/ actual-josin-team actual-mathew-team
+# /apps/mobile/             actual-devadathan-team actual-mathew-team
+# /docs/quality/            actual-tinu-team actual-technical-leads-team
+# /.github/                 actual-devadathan-team actual-mathew-team
+# /AGENTS.md                actual-technical-leads-team

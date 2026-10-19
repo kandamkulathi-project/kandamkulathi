@@ -1,0 +1,28 @@
+name: Implementation task
+description: Bounded existing-scope task with ownership and acceptance
+title: "[Task] "
+body:
+  - type: input
+    id: trace
+    attributes:
+      label: "Requirement, named package/output/phase and assigned branch"
+    validations:
+      required: true
+  - type: input
+    id: ownership
+    attributes:
+      label: "Owner, required independent reviewer and consumer/dependency"
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: "Concrete actions/boundaries, approved inputs and capacity impact"
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: "Exact expected behavior, canonical cases, negative/fault checks and handoff"
+    validations:
+      required: true
