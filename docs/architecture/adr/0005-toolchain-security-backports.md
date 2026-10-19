@@ -4,7 +4,7 @@
 
 ## Context
 
-The current published node-forge and braces packages have high-severity advisories with no published fixed versions. Both arrive through the approved Expo toolchain. The original CI runs were still queued with no execution logs during investigation; GitHub separately reported an Actions service incident. No repository test failure is inferred from a queued job.
+The current published node-forge and braces packages have high-severity advisories with no published fixed versions. Both arrive through the approved Expo toolchain. GitHub reported an Actions service incident that delayed result publication. When the documentation job log became available, it showed `P1-TIN-001: missing member task`: an ambiguous name glob selected Tinu's standalone test manual before her member plan on Linux. The checker now selects the six exact member documents; a reversed-glob-order regression protects portability. A queued status alone is never treated as a failed or passed test.
 
 Sources: [Forge advisory](https://github.com/advisories/GHSA-86w9-cpqp-85rv), [upstream Forge proposed fix](https://github.com/digitalbazaar/forge/pull/1152), [braces advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm), [upstream braces report/recommendation](https://github.com/micromatch/braces/issues/70), [pnpm native patch mechanism](https://pnpm.io/cli/patch), [GitHub status](https://www.githubstatus.com/).
 

@@ -20,6 +20,14 @@ REQ_IDS = {f'R{i:02}' for i in range(1, 39)}
 CASE_COUNTS = {1: 20, 2: 36, 3: 30}
 MEMBERS = {'MAT': 'Mathew', 'JOS': 'Josin', 'DEV': 'Devadathan',
            'PAU': 'Paul', 'DEN': 'Denzil', 'TIN': 'Tinu'}
+MEMBER_DOCUMENTS = {
+    'MAT': 'Kandamkulathi_05_Mathew_All_Phases.md',
+    'JOS': 'Kandamkulathi_06_Josin_All_Phases.md',
+    'DEV': 'Kandamkulathi_07_Devadathan_All_Phases.md',
+    'PAU': 'Kandamkulathi_08_Paul_All_Phases.md',
+    'DEN': 'Kandamkulathi_09_Denzil_All_Phases.md',
+    'TIN': 'Kandamkulathi_10_Tinu_QA_and_Test_Cases_All_Phases.md',
+}
 ALLOCATION = {
     1: {'MAT': (18, 4, 0, 2), 'JOS': (17, 4, 1, 2), 'DEV': (17, 4, 1, 2),
         'PAU': (16, 4, 2, 2), 'DEN': (16, 4, 2, 2), 'TIN': (8, 12, 2, 2)},
@@ -162,6 +170,11 @@ def bootstrap_source_findings(paths: list[Path]) -> list[str]:
     return found
 
 
+def member_plan_paths() -> dict[str, Path]:
+    # Tinu also owns document 11; broad name globs depend on filesystem ordering.
+    return {code: PLAN/name for code, name in MEMBER_DOCUMENTS.items()}
+
+
 def check_plans() -> tuple[int, int]:
     current = sorted(PLAN.glob('Kandamkulathi_[0-9][0-9]_*.md'))
     require(len(current) == 12, 'Expected the 12 reviewed current documents')
@@ -182,8 +195,7 @@ def check_plans() -> tuple[int, int]:
     branches = set()
     named = set()
     legacy = set()
-    member_paths = {c: next(PLAN.glob(f'Kandamkulathi_*_{name}_*.md'))
-                    for c, name in MEMBERS.items()}
+    member_paths = member_plan_paths()
     for phase in (1, 2, 3):
         phase_path = next(PLAN.glob(f'Kandamkulathi_0{phase+1}_Phase*'))
         text = phase_path.read_text(encoding='utf-8')

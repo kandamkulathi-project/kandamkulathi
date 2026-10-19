@@ -25,4 +25,5 @@ Documentation bootstrap only. No application implementation, production deployme
 - Added exact-version pnpm source patches for the two high Expo-toolchain findings, preserving all direct versions, stack choices, company requirements and team assignments.
 - Added real-library signature/glob regressions and fail-closed proof-policy controls. Original vulnerable libraries failed nine cases before patching; the 15 library tests passed after patching.
 - Replaced the registry-only dependency decision with installed-source/patch/advisory proof plus executed regressions and a fresh full scan. Raw findings remain visible and are retained as a CI artifact; moderate findings remain Open.
-- GitHub's initial runs were queued without execution results during an Actions incident. No remote success or repository test failure is inferred from that queue. Independent senior review is required before merge.
+- Fixed the Linux documentation failure `P1-TIN-001: missing member task`: the checker now selects the six exact member documents instead of an order-dependent name glob that could choose Tinu's standalone test manual. Added a reversed-order regression test.
+- GitHub's Actions incident delayed result publication. Remote verification and independent senior review remain required before merge.

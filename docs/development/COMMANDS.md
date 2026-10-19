@@ -24,7 +24,7 @@ Run from repository root with Node 24.22.0/pnpm 10.34.7. All application command
 | CI E2E after build | `pnpm exec playwright test` | Same tests; assumes current build artifacts exist. |
 | Offline SQL generation | `pnpm db:generate` | Generates SQL from reviewed Drizzle definitions. Namespaces-only starter is not an implemented schema. No connection/migration/push. |
 | Docs and traceability | `python scripts/check_repository.py` | Links, 38 requirements, 109 package/branch assignments, 480 hours, case IDs, limited secret patterns and CI wiring. No app execution claim. |
-| Docs guard negative controls | `python -m unittest discover -s tests/repository -v` | Missing app CI contract, portable links, source inventory, secret redaction and fenced examples. |
+| Docs guard negative controls | `python -m unittest discover -s tests/repository -v` | Ambiguous member/manual selection under reversed filesystem order, missing app CI contract, portable links, source inventory, secret redaction and fenced examples. |
 | Diff/state | `git diff --check`, `git status --short --branch` | Review local state; no destructive action. |
 
 ## Continuous integration
