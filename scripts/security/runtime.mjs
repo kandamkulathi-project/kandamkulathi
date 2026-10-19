@@ -3,7 +3,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import semver from "semver";
-import { root } from "./tools.mjs";
+import { fetchBytes, root } from "./tools.mjs";
 
 export const sources = {
   advisories: "https://raw.githubusercontent.com/nodejs/security-wg/main/vuln/core/index.json",
@@ -58,12 +58,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const data = Object.fromEntries(
       await Promise.all(
         Object.entries(sources).map(async ([key, url]) => {
-          const response = await fetch(url, {
-            signal: AbortSignal.timeout(30000),
-            cache: "no-store",
-          });
-          assert(response.ok, `Node ${key} feed unavailable: HTTP ${response.status}`);
-          return [key, await response.json()];
+          return [key, JSON.parse(await fetchBytes(url))];
         }),
       ),
     );

@@ -2,11 +2,43 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { sha256 } from "./policy.mjs";
 
 export const root = fileURLToPath(new URL("../../", import.meta.url));
 const manifest = JSON.parse(readFileSync(join(root, ".security/tools.json"), "utf8"));
+
+export async function fetchBytes(url, transport = fetch, pause = delay) {
+  assert.equal(new URL(url).protocol, "https:", "Security downloads require HTTPS");
+  let failure;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    let response;
+    try {
+      response = await transport(url, { signal: AbortSignal.timeout(120000), cache: "no-store" });
+    } catch (error) {
+      failure = error;
+    }
+    if (response) {
+      if (!response.ok) {
+        // Retry temporary read failures only; authorization/not-found responses fail immediately.
+        assert(
+          response.status === 429 || response.status >= 500,
+          `Security download rejected: HTTP ${response.status}`,
+        );
+        failure = new Error(`HTTP ${response.status}`);
+      } else {
+        try {
+          return Buffer.from(await response.arrayBuffer());
+        } catch (error) {
+          failure = error;
+        }
+      }
+    }
+    if (attempt < 2) await pause((attempt + 1) * 1000);
+  }
+  throw new Error("Security download failed after three attempts", { cause: failure });
+}
 
 export function cachedTool(name) {
   const release = manifest[name];
@@ -39,9 +71,8 @@ export async function tool(name) {
   if (!existsSync(binary)) {
     const url = new URL(artifact.url);
     assert.equal(url.origin, "https://github.com");
-    const response = await fetch(url, { signal: AbortSignal.timeout(120000) });
-    assert(response.ok, `Scanner download failed: HTTP ${response.status}`);
-    const bytes = Buffer.from(await response.arrayBuffer());
+    const bytes = await fetchBytes(url);
+    // Digest verification is outside retry handling: untrusted bytes must never be accepted.
     assert.equal(sha256(bytes), artifact.sha256, "Scanner download checksum mismatch");
     if (artifact.archive) {
       const archive = join(location, url.pathname.split("/").at(-1));
