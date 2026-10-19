@@ -11,7 +11,7 @@ This private repository contains the runnable starter and the complete reviewed 
 Use Node **24.22.0** and pnpm **10.34.7**. Python 3.13 runs documentation checks. Enable pnpm through Corepack if your Node installation includes it, or install the exact pnpm version using your approved package-manager setup.
 
 ```sh
-git clone https://github.com/paulfrancis007/kandamkulathi.git
+git clone https://github.com/kandamkulathi-project/kandamkulathi.git
 cd kandamkulathi
 git switch dev
 git pull --ff-only origin dev

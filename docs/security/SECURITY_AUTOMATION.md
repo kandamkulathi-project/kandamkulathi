@@ -39,17 +39,17 @@ Repository maintainers must enable GitHub Actions failure notifications for work
 
 ## Remote enforcement — currently blocked
 
-On 2026-10-19 the API reported WRITE access without ADMIN, unprotected `dev`/`main`, and HTTP 403: `Upgrade to GitHub Pro or make this repository public to enable this feature.` This private personal repository cannot enforce protected branches on its current free GitHub plan. No repository visibility change, paid upgrade, credential replacement or merge bypass is authorized by this document. Hooks and a workflow cannot simulate server protection.
+On 2026-10-19 the API reported WRITE access without ADMIN, unprotected `dev`/`main`, and HTTP 403: `Upgrade to GitHub Pro or make this repository public to enable this feature.` During publication GitHub reported an owner transfer to the now organization-owned private repository `kandamkulathi-project/kandamkulathi`; this change did not alter visibility or our permissions. Rechecking both canonical protection endpoints returned HTTP 404, and the rulesets endpoint still returned the entitlement error. GitHub's [protected-branch availability](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches) requires an eligible organization plan such as Team/Enterprise for private organization repositories. The API's generic Pro wording does not establish organization eligibility. No visibility change, paid upgrade, credential replacement or merge bypass was performed. Hooks and a workflow cannot simulate server protection.
 
 The reviewed candidate configuration is [branch-protection.json](../../.github/branch-protection.json). It requires all six contexts from the observed GitHub Actions app (15368), an up-to-date candidate, one independent approving review, stale-approval dismissal, last-push approval, conversation resolution and admin enforcement; force pushes/deletion are disabled. It permits merge commits for phase ancestry and does not invent CODEOWNERS handles. No production deployment is enabled.
 
 After the repository owner obtains an eligible private-repository GitHub plan and uses an admin account, inspect existing policies, then apply the candidate to each shared branch:
 
 ```sh
-gh api --method PUT repos/paulfrancis007/kandamkulathi/branches/dev/protection --input .github/branch-protection.json
-gh api --method PUT repos/paulfrancis007/kandamkulathi/branches/main/protection --input .github/branch-protection.json
-gh api repos/paulfrancis007/kandamkulathi/branches/dev/protection
-gh api repos/paulfrancis007/kandamkulathi/branches/main/protection
+gh api --method PUT repos/kandamkulathi-project/kandamkulathi/branches/dev/protection --input .github/branch-protection.json
+gh api --method PUT repos/kandamkulathi-project/kandamkulathi/branches/main/protection --input .github/branch-protection.json
+gh api repos/kandamkulathi-project/kandamkulathi/branches/dev/protection
+gh api repos/kandamkulathi-project/kandamkulathi/branches/main/protection
 ```
 
 The PUT replaces a classic rule: preserve or strengthen any policies an owner added after this candidate was prepared. Verify the actual check contexts from a successful PR, reviews and restrictions returned by GitHub. Test that a deliberately failing test PR is blocked, restore it, then verify a reviewed passing PR can merge. Never describe the payload/checklist alone as active protection. Until activation, an owner/team policy must refuse manual merges or direct pushes when a check is missing/failing, but this remains procedural and bypassable.

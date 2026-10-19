@@ -7,7 +7,7 @@ Install Git, Node **24.22.0**, pnpm **10.34.7** and Python **3.13**. Exact Node/
 ## First checkout
 
 ```sh
-git clone https://github.com/paulfrancis007/kandamkulathi.git
+git clone https://github.com/kandamkulathi-project/kandamkulathi.git
 cd kandamkulathi
 git switch dev
 git pull --ff-only origin dev

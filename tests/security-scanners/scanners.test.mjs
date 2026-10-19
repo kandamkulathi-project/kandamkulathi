@@ -117,6 +117,8 @@ describe("real security scanner end-to-end negative controls", () => {
     const { folder, cleanup } = fixture();
     try {
       assert.equal(execute("git", ["init"], folder).status, 0);
+      // Developer signing settings must not make synthetic fixture commits depend on a private key.
+      assert.equal(execute("git", ["config", "commit.gpgsign", "true"], folder).status, 0);
       const fake = "gh" + "p_" + "7Aq9Zb6Lr2Tc4Vs8Np3Dw5He1Mk0Jf6Yu9Rx";
       writeFileSync(join(folder, "removed.txt"), `GITHUB_TOKEN=${fake}\n`);
       assert.equal(execute("git", ["add", "removed.txt"], folder).status, 0);
@@ -125,6 +127,8 @@ describe("real security scanner end-to-end negative controls", () => {
         "user.name=Synthetic Security Test",
         "-c",
         "user.email=synthetic@example.invalid",
+        "-c",
+        "commit.gpgsign=false",
         "-c",
         "core.hooksPath=/dev/null",
         "commit",
