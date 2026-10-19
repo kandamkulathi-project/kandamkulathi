@@ -51,5 +51,15 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Fail visibly on unresolved high or critical advisories
-        run: pnpm audit --audit-level high
+      - name: Test fail-closed security verification policy
+        run: pnpm test:security
+      - name: Verify actual patch sources, exploits and full registry audit
+        run: pnpm security:check
+      - name: Retain unmodified registry findings for review
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: dependency-audit-${{ github.run_id }}
+          path: test-results/dependency-audit.json
+          retention-days: 7
+          if-no-files-found: warn

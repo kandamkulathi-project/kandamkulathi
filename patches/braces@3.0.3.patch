@@ -1,0 +1,19 @@
+diff --git a/lib/parse.js b/lib/parse.js
+index 3a6988e629f52aee6609dc5ec290a5e9ff47cecb..920dd2befe3f1f9299ac54693aedd89d79e3585f 100644
+--- a/lib/parse.js
++++ b/lib/parse.js
+@@ -55,6 +55,14 @@ const parse = (input, options = {}) => {
+ 
+   const advance = () => input[index++];
+   const push = node => {
++    // Bound every parsed container before recursive AST walkers can consume it.
++    // Includes parentheses as well as braces; quoted/escaped text is unchanged.
++    if (node.nodes && stack.length > 100) {
++      const error = new SyntaxError('Brace AST nesting exceeds maximum depth (100)');
++      error.code = 'ERR_BRACES_MAX_DEPTH';
++      throw error;
++    }
++
+     if (node.type === 'text' && prev.type === 'dot') {
+       prev.type = 'text';
+     }
