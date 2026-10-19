@@ -314,6 +314,9 @@ def check_application_contract() -> None:
         require(command in security, f'Security CI must execute {command}')
     require('schedule:' in security and 'fetch-depth: 0' in security,
             'Scheduled security and complete secret-history fetch are required')
+    sast_job = security.partition('  sast:\n')[2].partition('\n  secret-scanning:')[0]
+    require('package-manager-cache: false' in sast_job and 'cache: pnpm' not in sast_job,
+            'Scanner-only SAST job must disable unused package-manager caching')
     for command in ('security:sast', 'security:secrets', 'security:runtime',
                     'test:security:scanners', 'hooks:install', 'precommit'):
         require(scripts.get(command), f'Missing security command: {command}')

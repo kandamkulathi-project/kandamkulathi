@@ -96,6 +96,17 @@ class RepositoryGuardTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Security CI must execute pnpm security:sast'):
                 CHECK.check_application_contract()
 
+    def test_scanner_only_job_cannot_save_an_uncreated_dependency_cache(self):
+        real_read = Path.read_text
+        def unused_cache(path, *args, **kwargs):
+            text = real_read(path, *args, **kwargs)
+            if path == CHECK.ROOT/'.github/workflows/security.yml':
+                return text.replace('package-manager-cache: false', 'cache: pnpm', 1)
+            return text
+        with patch.object(Path, 'read_text', unused_cache):
+            with self.assertRaisesRegex(ValueError, 'disable unused package-manager caching'):
+                CHECK.check_application_contract()
+
         def without_check(path, *args, **kwargs):
             text = real_read(path, *args, **kwargs)
             if path == CHECK.ROOT/'.github/branch-protection.json':
