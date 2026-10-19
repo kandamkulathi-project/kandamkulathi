@@ -20,9 +20,11 @@
     "typecheck": "tsc --noEmit && pnpm -r typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:security": "node --test tests/security/*.test.mjs",
+    "security:check": "node scripts/security/check.mjs",
     "build": "pnpm -r --if-present build",
     "test:e2e": "pnpm build && playwright test",
-    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm test:security && pnpm build",
     "mobile:check": "pnpm --filter @kandamkulathi/mobile check",
     "db:generate": "pnpm --filter @kandamkulathi/database generate"
   },

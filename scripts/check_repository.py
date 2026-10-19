@@ -14,11 +14,20 @@ from urllib.parse import unquote, urlsplit
 ROOT = Path(__file__).resolve().parents[1]
 PLAN = ROOT / 'docs' / 'implementation'
 SKIP_DIRS = {'.git', 'node_modules', '.venv', '__pycache__', 'dist', 'build',
-             '.wrangler', '.expo', '.next', '.pnpm-store', 'coverage', '.astro', '.vite'}
+             '.wrangler', '.expo', '.next', '.pnpm-store', 'coverage', '.astro', '.vite',
+             '.local-data', 'test-results', 'playwright-report', 'private-evidence', 'backups', 'exports'}
 REQ_IDS = {f'R{i:02}' for i in range(1, 39)}
 CASE_COUNTS = {1: 20, 2: 36, 3: 30}
 MEMBERS = {'MAT': 'Mathew', 'JOS': 'Josin', 'DEV': 'Devadathan',
            'PAU': 'Paul', 'DEN': 'Denzil', 'TIN': 'Tinu'}
+MEMBER_DOCUMENTS = {
+    'MAT': 'Kandamkulathi_05_Mathew_All_Phases.md',
+    'JOS': 'Kandamkulathi_06_Josin_All_Phases.md',
+    'DEV': 'Kandamkulathi_07_Devadathan_All_Phases.md',
+    'PAU': 'Kandamkulathi_08_Paul_All_Phases.md',
+    'DEN': 'Kandamkulathi_09_Denzil_All_Phases.md',
+    'TIN': 'Kandamkulathi_10_Tinu_QA_and_Test_Cases_All_Phases.md',
+}
 ALLOCATION = {
     1: {'MAT': (18, 4, 0, 2), 'JOS': (17, 4, 1, 2), 'DEV': (17, 4, 1, 2),
         'PAU': (16, 4, 2, 2), 'DEN': (16, 4, 2, 2), 'TIN': (8, 12, 2, 2)},
@@ -161,6 +170,11 @@ def bootstrap_source_findings(paths: list[Path]) -> list[str]:
     return found
 
 
+def member_plan_paths() -> dict[str, Path]:
+    # Tinu also owns document 11; broad name globs depend on filesystem ordering.
+    return {code: PLAN/name for code, name in MEMBER_DOCUMENTS.items()}
+
+
 def check_plans() -> tuple[int, int]:
     current = sorted(PLAN.glob('Kandamkulathi_[0-9][0-9]_*.md'))
     require(len(current) == 12, 'Expected the 12 reviewed current documents')
@@ -181,8 +195,7 @@ def check_plans() -> tuple[int, int]:
     branches = set()
     named = set()
     legacy = set()
-    member_paths = {c: next(PLAN.glob(f'Kandamkulathi_*_{name}_*.md'))
-                    for c, name in MEMBERS.items()}
+    member_paths = member_plan_paths()
     for phase in (1, 2, 3):
         phase_path = next(PLAN.glob(f'Kandamkulathi_0{phase+1}_Phase*'))
         text = phase_path.read_text(encoding='utf-8')
@@ -272,6 +285,10 @@ def check_application_contract() -> None:
     """Validate CI wiring only; the separate application job actually executes it."""
     for rel in ('package.json', 'pnpm-workspace.yaml', 'pnpm-lock.yaml', '.node-version',
                 '.github/workflows/application.yml', 'vitest.config.ts', 'playwright.config.ts',
+                'security-remediations.json', 'scripts/security/check.mjs',
+                'scripts/security/policy.mjs', 'tests/security/policy.test.mjs',
+                'tests/security/toolchain.test.mjs', 'patches/node-forge@1.4.0.patch',
+                'patches/braces@3.0.3.patch',
                 'tests/unit/money.test.ts', 'tests/integration/http.test.ts',
                 'tests/e2e/starter.spec.ts'):
         require(exact_path_exists(ROOT/rel), f'Application scaffold requires {rel}')
@@ -279,14 +296,14 @@ def check_application_contract() -> None:
     require(package.get('private') is True and package.get('packageManager', '').startswith('pnpm@'),
             'Application must be private with a pinned package manager')
     scripts = package.get('scripts', {})
-    for command in ('lint', 'typecheck', 'test', 'build', 'verify', 'test:e2e', 'mobile:check'):
+    for command in ('lint', 'typecheck', 'test', 'test:security', 'security:check', 'build', 'verify', 'test:e2e', 'mobile:check'):
         require(scripts.get(command) and not re.search(r'\becho\b|\|\|\s*true', scripts[command]),
                 f'Missing/placeholder application command: {command}')
     for name in ('web-public', 'workspaces', 'mobile', 'core-api', 'companion'):
         require(exact_path_exists(ROOT/f'apps/{name}/package.json'), f'Missing application: {name}')
     workflow = (ROOT/'.github/workflows/application.yml').read_text(encoding='utf-8')
     for command in ('pnpm install --frozen-lockfile', 'pnpm verify', 'pnpm mobile:check',
-                    'pnpm audit --audit-level high', 'pnpm exec playwright test'):
+                    'pnpm security:check', 'pnpm exec playwright test'):
         require(command in workflow, f'Application CI must execute {command}')
 
 

@@ -6,7 +6,7 @@ A trusted Ayurvedic healthcare institution serving generations since 1847, dedic
 
 This private repository contains the runnable starter and the complete reviewed implementation, member and QA documents. **Business features and all phase acceptance are Pending. This is not a production release.** No live accounts, deployment, charges, messages, AI responses or patient data are enabled.
 
-**Open security findings:** the current Expo development-tool dependency tree has two high-severity advisories without published fixes. The separate dependency-audit CI check remains failing; review [dependency risks](docs/security/DEPENDENCY_RISKS.md). No phase or production approval is granted by this bootstrap.
+**Security status:** the two high Expo-toolchain findings have committed local source patches, installed-file verification and regression tests; independent senior review is Pending. The raw registry audit still reports the original versions, and two moderate findings remain Open. See [dependency remediation](docs/security/DEPENDENCY_RISKS.md); no phase or production approval is implied.
 
 Use Node **24.22.0** and pnpm **10.34.7**. Python 3.13 runs documentation checks. Enable pnpm through Corepack if your Node installation includes it, or install the exact pnpm version using your approved package-manager setup.
 
@@ -24,6 +24,7 @@ Use the exact branch in your [member plan](docs/implementation/INDEX.md) instead
 
 ```sh
 pnpm verify
+pnpm security:check
 pnpm mobile:check
 pnpm exec playwright install chromium
 pnpm test:e2e

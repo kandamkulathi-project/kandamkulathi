@@ -14,6 +14,19 @@ SPEC.loader.exec_module(CHECK)
 
 
 class RepositoryGuardTests(unittest.TestCase):
+    def test_tinu_member_selection_is_independent_of_filesystem_glob_order(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            qa = root/'Kandamkulathi_11_Tinu_Detailed_Phase_Wise_Test_Cases.md'
+            member = root/'Kandamkulathi_10_Tinu_QA_and_Test_Cases_All_Phases.md'
+            qa.write_text('# Detailed test manual, not a member plan\n', encoding='utf-8')
+            member.write_text('# Tinu member plan\n', encoding='utf-8')
+            # Reproduce Linux returning the standalone manual before the member plan.
+            with patch.object(CHECK, 'PLAN', root), patch.object(Path, 'glob', return_value=iter([qa, member])):
+                selected = CHECK.member_plan_paths()
+            self.assertEqual(selected['TIN'], member)
+            self.assertNotEqual(selected['TIN'], qa)
+
     def test_portable_links_reject_linux_case_mismatch_and_missing_target(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

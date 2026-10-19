@@ -38,7 +38,7 @@ Run `pnpm dev:mobile`. Use a compatible Expo Go for baseline preview where suppo
 ```sh
 pnpm verify
 pnpm mobile:check
-pnpm audit --audit-level high
+pnpm security:check
 pnpm exec playwright install chromium
 pnpm test:e2e
 python scripts/check_repository.py
@@ -46,7 +46,7 @@ python -m unittest discover -s tests/repository -v
 git diff --check
 ```
 
-Linux may require `pnpm exec playwright install --with-deps chromium`; CI uses that form. E2E owns ports 4321/5173/8787/8788 and refuses reuse; stop `pnpm dev` first. Tests use synthetic local requests and make no real provider/database calls. [Command registry](COMMANDS.md) describes precisely what is covered and still Pending.
+Linux may require `pnpm exec playwright install --with-deps chromium`; CI uses that form. E2E owns ports 4321/5173/8787/8788 and refuses reuse; stop `pnpm dev` first. Tests use synthetic local requests and make no real provider/database calls. Installation applies the committed exact-version security patches; `pnpm security:check` verifies actual source and retains the raw registry report. Plain `pnpm audit --audit-level high` remains available and currently flags the original versions despite local source fixes; see [dependency remediation](../security/DEPENDENCY_RISKS.md). Never add ignore IDs or refresh hashes simply to get a green result. [Command registry](COMMANDS.md) describes precisely what is covered and still Pending.
 
 ## Next foundation work
 

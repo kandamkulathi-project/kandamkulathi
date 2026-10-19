@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "remediations": [
+    {
+      "advisory": "GHSA-86w9-cpqp-85rv",
+      "advisorySha256": "e1308fc0aa6eb08bd61e8a96b0b3f7b074239a8de4476299b8eb176824853968",
+      "package": "node-forge",
+      "version": "1.4.0",
+      "patch": "patches/node-forge@1.4.0.patch",
+      "patchSha256": "0261690f286c02f6ad566eaad323f8fac7dde27fc78f3c7edd841890f726d302",
+      "files": {
+        "lib/rsa.js": "9f3abdfdb8a76303a2b7885cbc5455782b2ef82522c86a6f3dad0e23a06bcc65"
+      }
+    },
+    {
+      "advisory": "GHSA-vfj7-8cjw-p6xm",
+      "advisorySha256": "046028d5d21e2ca8f613176c57876c9020f1449ec459c2ca47d1be094c25425a",
+      "package": "braces",
+      "version": "3.0.3",
+      "patch": "patches/braces@3.0.3.patch",
+      "patchSha256": "efbc9e5fa98fa572bb867341e0c43accff14ec4453ab6310600c8147b37ce90e",
+      "files": {
+        "lib/parse.js": "5f8d4bfd7257720d4f424a6b4f8e9413e203dbaca1e1a4fa8655ebb32d912d97"
+      }
+    }
+  ]
+}
