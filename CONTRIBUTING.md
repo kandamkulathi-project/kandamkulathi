@@ -8,7 +8,7 @@ Choose the named phase package/R/output IDs, read its reviewer/input/acceptance 
 
 ## Every change
 
-Use the [security automation](docs/security/SECURITY_AUTOMATION.md) setup and local commit gate. It repeats application and security verification before commits; stage intended files and resolve findings rather than bypassing the hook. Six CI contexts must pass before a reviewed merge; owner activation of actual server enforcement remains blocked by GitHub plan/admin access.
+Use the [security automation](docs/security/SECURITY_AUTOMATION.md) setup and local commit gate. It repeats application and security verification before commits; stage intended files and resolve findings rather than bypassing the hook. Six CI contexts must pass before a reviewed merge; actual server enforcement remains blocked by GitHub plan eligibility despite admin access.
 
 1. Agree shared API/event/schema/locale contracts before consumers diverge. Implement the smallest complete bounded slice, including negative/current-state/authorization/error behavior.
 2. Cover actual changed invariants and failure modes with appropriate tests. Use synthetic data and real transaction/RLS/native proofs when those are the guarantee. Never fabricate a test run.
