@@ -36,7 +36,15 @@ export function platformConfig(input: Record<string, unknown>): PlatformConfig {
       config.RESOURCE_NAMESPACE === prefix ||
       (config.APP_ENV === "preview" && config.RESOURCE_NAMESPACE.startsWith(`${prefix}-`))
     ) ||
-    ["DATABASE_ADMIN_URL", "DATABASE_MIGRATION_URL", "BACKUP_KEY_B64"].some((key) => input[key]) ||
+    [
+      "DATABASE_ADMIN_URL",
+      "DATABASE_MIGRATION_URL",
+      "DATABASE_BACKUP_URL",
+      "DATABASE_RESTORE_URL",
+      "PLATFORM_TEST_ADMIN_URL",
+      "BACKUP_KEY_B64",
+    ].some((key) => input[key]) ||
+    (config.APP_ENV !== "local" && Boolean(input.LOCAL_DATABASE_PROXY)) ||
     (config.APP_ENV !== "production" &&
       (config.PROVIDER_MODE === "live" ||
         config.ALLOW_LIVE_SENDS === "true" ||
@@ -47,6 +55,12 @@ export function platformConfig(input: Record<string, unknown>): PlatformConfig {
     throw new ConfigurationError();
   for (const value of [config.DATABASE_URL, config.DATABASE_WORKER_URL]) {
     if (value) databaseTarget(value, config.APP_ENV);
+  }
+  if (config.DATABASE_URL && config.DATABASE_WORKER_URL) {
+    const api = new URL(config.DATABASE_URL);
+    const jobs = new URL(config.DATABASE_WORKER_URL);
+    if (api.host !== jobs.host || api.pathname !== jobs.pathname || api.username === jobs.username)
+      throw new ConfigurationError();
   }
   return config;
 }
@@ -68,6 +82,7 @@ export function databaseTarget(value: string, environment: Environment): URL {
       (!local &&
         (!/^[a-z0-9-]+-pooler\.[a-z0-9.-]+\.neon\.tech$/.test(url.hostname) ||
           url.searchParams.get("sslmode") !== "verify-full" ||
+          url.searchParams.getAll("sslmode").length !== 1 ||
           (url.port !== "" && url.port !== "5432")))
     )
       throw new ConfigurationError();

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### P1-DEV-001 local platform foundation (independent review Pending)
+
+- Added isolated environment/resource/provider guards, approved-field telemetry, SLI reporting and a local synthetic alert receiver test.
+- Added Neon PostgreSQL 17 event-scoped transactions, separate non-owner roles, immutable controlled migrations, transport RLS/column controls and leased/idempotent Cron/Queue delivery with explicit retries/DLQs.
+- Added consistent-snapshot AES-256-GCM export, isolated authenticated restore, synthetic probe seed/reset, target deployment locks and versioned artifact/compatibility/dry-build tooling.
+- Added real PostgreSQL and local workerd Cron/Queue E2E checks to the existing application CI and local commit gate; added a loopback-only k6 liveness smoke and setup/handoff evidence.
+- User selected local completion. No company provisioning/deployment, hosted database/alert/rollback proof, domain completion or phase acceptance is implied.
+
 ### Security automation (independent review Pending)
 
 - Added checksum-pinned free Opengrep/Gitleaks scans, fixed vendored rules, live official Node security checks and real scanner negative controls.
@@ -19,7 +27,7 @@
 
 ### Status
 
-Documentation bootstrap only. No application implementation, production deployment, provider approval or application test pass is claimed. Record application changes with R/package IDs and actual validation evidence as implementation proceeds. No released version exists in this changelog.
+Application starter and local platform implementation exist with the scoped evidence above. No released version, company production deployment, provider approval or phase acceptance is claimed. Record subsequent changes with R/package IDs and actual validation evidence.
 
 ## 2026-10-19 — Initial application starter
 

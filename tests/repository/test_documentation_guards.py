@@ -67,6 +67,19 @@ class RepositoryGuardTests(unittest.TestCase):
                 actual = set(CHECK.bootstrap_source_findings([root/name for name in names]))
             self.assertEqual(actual, {'migration.sql', 'server.py', 'package.json', 'apps/api/config.json'})
 
+    def test_platform_tests_cannot_be_removed_from_application_ci_or_commit_gate(self):
+        real_read = Path.read_text
+        for target, before, after, message in (
+            ('.github/workflows/application.yml', 'pnpm test:platform', 'disabled-platform-test', 'Application CI must execute pnpm test:platform'),
+            ('scripts/security/pre-commit.mjs', '"test:platform"', '"disabled-platform-test"', 'Local commit gate must execute platform tests'),
+        ):
+            def without_platform(path, *args, **kwargs):
+                content = real_read(path, *args, **kwargs)
+                return content.replace(before, after) if path == CHECK.ROOT/target else content
+            with patch.object(Path, 'read_text', without_platform):
+                with self.assertRaisesRegex(ValueError, message):
+                    CHECK.check_application_contract()
+
     def test_environment_example_rejects_live_flags_and_secret_values(self):
         CHECK.check_env_example('RESOURCE_NAMESPACE=kandamkulathi-local\nPROVIDER_MODE=stub\nDATABASE_URL=')
         for example in ('RESOURCE_NAMESPACE=kandamkulathi-production', 'ALLOW_LIVE_SENDS=true',

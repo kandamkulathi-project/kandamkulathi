@@ -40,11 +40,38 @@ describe("environment isolation", () => {
     },
   );
   it("keeps administrative and recovery secrets out of Workers", () => {
-    for (const key of ["DATABASE_ADMIN_URL", "DATABASE_MIGRATION_URL", "BACKUP_KEY_B64"]) {
+    for (const key of [
+      "DATABASE_ADMIN_URL",
+      "DATABASE_MIGRATION_URL",
+      "DATABASE_BACKUP_URL",
+      "DATABASE_RESTORE_URL",
+      "PLATFORM_TEST_ADMIN_URL",
+      "BACKUP_KEY_B64",
+    ]) {
       expect(() => platformConfig({ ...sandbox, [key]: "sensitive-value" })).toThrow(
         "Platform configuration is invalid.",
       );
     }
+  });
+  it("requires separate runtime logins targeting the same database", () => {
+    const DATABASE_URL = "postgresql://api:synthetic@127.0.0.1/k_local";
+    expect(() =>
+      platformConfig({ APP_ENV: "local", DATABASE_URL, DATABASE_WORKER_URL: DATABASE_URL }),
+    ).toThrow(ConfigurationError);
+    expect(() =>
+      platformConfig({
+        APP_ENV: "local",
+        DATABASE_URL,
+        DATABASE_WORKER_URL: "postgresql://jobs:synthetic@127.0.0.1/k_other",
+      }),
+    ).toThrow(ConfigurationError);
+    expect(() =>
+      platformConfig({
+        APP_ENV: "local",
+        DATABASE_URL,
+        DATABASE_WORKER_URL: "postgresql://jobs:synthetic@127.0.0.1/k_local",
+      }),
+    ).not.toThrow();
   });
   it("requires explicit live operation grants, even in production", () => {
     const config = platformConfig({
@@ -70,6 +97,7 @@ describe("environment isolation", () => {
       url.replace("verify-full", "no-verify"),
       url.replace("runtime", "neondb_owner"),
       `${url}&options=-c%20role%3Dpostgres`,
+      `${url}&sslmode=no-verify`,
       "postgresql://runtime:synthetic@127.0.0.1/k_dev",
     ]) {
       expect(() => databaseTarget(bad, "dev")).toThrow(ConfigurationError);

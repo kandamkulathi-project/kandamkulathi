@@ -307,14 +307,14 @@ def check_application_contract() -> None:
     require(package.get('private') is True and package.get('packageManager', '').startswith('pnpm@'),
             'Application must be private with a pinned package manager')
     scripts = package.get('scripts', {})
-    for command in ('lint', 'typecheck', 'test', 'test:security', 'security:check', 'build', 'verify', 'test:e2e', 'mobile:check'):
+    for command in ('lint', 'typecheck', 'test', 'test:security', 'security:check', 'build', 'verify', 'test:e2e', 'mobile:check', 'test:platform'):
         require(scripts.get(command) and not re.search(r'\becho\b|\|\|\s*true', scripts[command]),
                 f'Missing/placeholder application command: {command}')
     for name in ('web-public', 'workspaces', 'mobile', 'core-api', 'companion'):
         require(exact_path_exists(ROOT/f'apps/{name}/package.json'), f'Missing application: {name}')
     workflow = (ROOT/'.github/workflows/application.yml').read_text(encoding='utf-8')
     for command in ('pnpm install --frozen-lockfile', 'pnpm verify', 'pnpm mobile:check',
-                    'pnpm security:check', 'pnpm exec playwright test'):
+                    'pnpm security:check', 'pnpm exec playwright test', 'pnpm test:platform'):
         require(command in workflow, f'Application CI must execute {command}')
     security_path = ROOT/'.github/workflows/security.yml'
     require(exact_path_exists(security_path), 'Security workflow is required')
@@ -334,6 +334,8 @@ def check_application_contract() -> None:
     require(scripts.get('prepare') == 'node scripts/security/install-hooks.mjs',
             'Local installation must configure commit checks')
     require(exact_path_exists(ROOT/'.githooks/pre-commit'), 'Commit hook is required')
+    require('"test:platform"' in (ROOT/'scripts/security/pre-commit.mjs').read_text(encoding='utf-8'),
+            'Local commit gate must execute platform tests')
     policy = json.loads((ROOT/'.github/branch-protection.json').read_text(encoding='utf-8'))
     required = {item['context'] for item in policy['required_status_checks']['checks']}
     require(required == {'application-checks', 'dependency-audit', 'repository-docs',

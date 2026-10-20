@@ -29,6 +29,8 @@ The `.githooks/pre-commit` gate refuses commits on `dev`/`main`, detached commit
 
 Local Git hooks are bypassable and cannot supply server enforcement. Never use a bypass to integrate failing changes. CI repeats security checks independently.
 
+P1-DEV-001 additionally runs `pnpm test:platform` in the local commit gate and `application-checks`: configure the explicit isolated PostgreSQL 17 test URL and matching client tools through [platform setup](../development/PLATFORM_FOUNDATION.md). This pack proves actual role/transaction/lease/recovery behavior and local Cron/Queue execution; an unavailable database fails instead of skipping. No new required check context is introduced: these tests are part of the existing `application-checks` context.
+
 ## PR and scheduled checks
 
 PRs targeting `dev`/`main`, pushes to those branches and manual runs execute the application/documentation/security workflows. The security workflow has no path filters or privileged `pull_request_target`, uses read-only permissions and pinned actions, and has no deployment/scanner-service secrets. Required check names are `application-checks`, `dependency-audit`, `repository-docs`, `sast`, `secret-scanning`, `runtime-security`.

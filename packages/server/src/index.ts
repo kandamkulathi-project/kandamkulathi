@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
-import { platformConfig } from "./config";
+import { environmentSchema, platformConfig } from "./config";
 import { emitEvent, type LogSink, routeCategory } from "./observability";
 
 type Runtime = { Bindings: { APP_ENV?: string }; Variables: { requestId: string } };
@@ -20,6 +20,8 @@ export function createService(service: Service, sink?: LogSink) {
     try {
       environment = platformConfig(context.env ?? {}).APP_ENV;
     } catch {
+      const knownEnvironment = environmentSchema.safeParse(context.env?.APP_ENV);
+      if (knownEnvironment.success) environment = knownEnvironment.data;
       if (context.req.path !== "/health/live") {
         const response = context.json(
           {
@@ -38,6 +40,18 @@ export function createService(service: Service, sink?: LogSink) {
             environment,
             status: 503,
             requestId: context.get("requestId"),
+          },
+          sink,
+        );
+        emitEvent(
+          {
+            event: "http_request",
+            service,
+            environment,
+            status: 503,
+            requestId: context.get("requestId"),
+            durationMs: performance.now() - started,
+            route: routeCategory(context.req.path),
           },
           sink,
         );

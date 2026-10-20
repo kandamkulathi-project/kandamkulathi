@@ -8,10 +8,15 @@
     "generate": "drizzle-kit generate"
   },
   "exports": {
-    ".": "./src/schema.ts"
+    ".": "./src/schema.ts",
+    "./client": "./src/client.ts",
+    "./outbox": "./src/outbox.ts"
   },
   "dependencies": {
-    "drizzle-orm": "0.45.4"
+    "drizzle-orm": "0.45.4",
+    "@neondatabase/serverless": "1.2.0",
+    "@kandamkulathi/server": "workspace:*",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "drizzle-kit": "0.31.11"

@@ -71,4 +71,17 @@ describe.each(["core-api", "companion"] as const)("%s HTTP boundary", (service) 
       ),
     ).not.toMatch(/DATABASE|password|token/);
   });
+  it("counts misconfiguration responses as failed core requests", async () => {
+    const records: Readonly<Record<string, unknown>>[] = [];
+    const observed = createService(service, (record) => records.push(record));
+    await observed.request("http://localhost/v1/orders", undefined, { APP_ENV: "staging" });
+    expect(records).toContainEqual(
+      expect.objectContaining({
+        event: "http_request",
+        environment: "staging",
+        status: 503,
+        sliFailure: true,
+      }),
+    );
+  });
 });

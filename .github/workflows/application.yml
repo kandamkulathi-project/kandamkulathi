@@ -14,11 +14,25 @@ jobs:
   application-checks:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17.10-bookworm@sha256:9b18b78397054fce88a9552e9d5a3ad5bb7fd258c5b3cc1c5028e46373d6ea8f
+        env:
+          POSTGRES_PASSWORD: synthetic-ci-only
+        ports:
+          - "127.0.0.1:5432:5432"
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       CI: 'true'
       WRANGLER_SEND_METRICS: 'false'
       EXPO_NO_TELEMETRY: '1'
       ASTRO_TELEMETRY_DISABLED: '1'
+      PLATFORM_TEST_ADMIN_URL: postgresql://postgres:synthetic-ci-only@127.0.0.1:5432/postgres
+      PG_BIN_DIR: /usr/lib/postgresql/17/bin
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -38,6 +52,16 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser and actual local workerd smoke tests
         run: pnpm exec playwright test
+      - name: Ensure matching PostgreSQL client tools
+        run: |
+          if [ ! -x "$PG_BIN_DIR/pg_dump" ]; then
+            sudo apt-get update
+            sudo apt-get install --yes postgresql-client-17
+          fi
+          "$PG_BIN_DIR/pg_dump" --version
+          "$PG_BIN_DIR/pg_restore" --version
+      - name: Real PostgreSQL roles, transactions, leases, encrypted recovery and Cron/Queue E2E
+        run: pnpm test:platform
   dependency-audit:
     runs-on: ubuntu-latest
     timeout-minutes: 15
