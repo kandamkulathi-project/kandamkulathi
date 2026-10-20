@@ -32,7 +32,7 @@ Replace the placeholder with your exact [phase/member branch](../implementation/
 
 Run `pnpm dev:mobile`. Use a compatible Expo Go for baseline preview where supported; production development builds and actual Android/iOS SDK proofs remain Devadathan's P1 work. Android emulator requires Android Studio; iOS simulator/native builds require macOS/Xcode. This Windows checkout cannot prove iOS native operation. A physical device needs permitted LAN access to Metro; do not expose local APIs publicly or use production records. No API URL is embedded in the starter mobile bundle.
 
-`pnpm mobile:check` checks Expo dependency compatibility and public configuration. `pnpm --filter @kandamkulathi/mobile build` exports Android/iOS JavaScript; it does not compile, sign, submit or install a native app. Bundle/application IDs, signing, development-build profiles and real-device procedures require company accounts and must be added deliberately.
+`pnpm mobile:check` checks Expo dependency compatibility and public configuration. `pnpm --filter @kandamkulathi/mobile build` exports Android/iOS JavaScript; it does not compile, sign, submit or install a native app. P1-DEV-002 adds validated local example IDs, company-input guards, EAS profiles and permission/storage adapters. See [client setup and handoff](CLIENT_FOUNDATION.md) and the [native readiness register](../operations/NATIVE_READINESS.md) before preparing a company build. Cloud setup, signing, provider SDK compilation and real-device verification remain Pending.
 
 ## Validation before PR
 

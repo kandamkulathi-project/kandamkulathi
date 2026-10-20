@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### P1-DEV-002 local client foundation (review and real-device proof Pending)
+
+- Added shared session/grant, single-use callback, notification-reference and cited-reply contracts; uncached request states and expiry/background invalidation without fake sign-in or payment success.
+- Added reusable controls, workspace navigation, editable Companion draft shell, complete development label keys and bundled licensed Malayalam/Tamil fonts.
+- Added Expo-matched secure storage, browser return, linking, camera/audio/notification/font modules, isolated company-input build guards and native transport/backup/background-audio policy.
+- Added permission/capture cleanup regressions, actual Expo native config-plugin inspection, browser access/expiry/layout/lifecycle tests and explicit junior/domain handoffs. Cloud/provider/native SDK compilation, actual device/store proof and all phase acceptance remain Pending.
+
 ### Security automation (independent review Pending)
 
 - Added checksum-pinned free Opengrep/Gitleaks scans, fixed vendored rules, live official Node security checks and real scanner negative controls.

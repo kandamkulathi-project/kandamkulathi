@@ -1,0 +1,18 @@
+@font-face {
+  font-family: "Noto Sans Malayalam";
+  src: url("./NotoSansMalayalam.ttf") format("truetype");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Noto Sans Tamil";
+  src: url("./NotoSansTamil.ttf") format("truetype");
+  font-weight: 100 900;
+  font-display: swap;
+}
+html:lang(ml) {
+  font-family: "Noto Sans Malayalam", system-ui, sans-serif;
+}
+html:lang(ta) {
+  font-family: "Noto Sans Tamil", system-ui, sans-serif;
+}

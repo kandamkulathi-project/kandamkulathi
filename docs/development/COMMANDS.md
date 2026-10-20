@@ -11,10 +11,10 @@ Run from repository root with Node 24.22.0/pnpm 10.34.7. All application command
 | Lint and formatting check | `pnpm lint` | Biome supported code/config files; docs/Python checked separately. |
 | Format supported files | `pnpm format` | Writes formatting changes. Review resulting diff. |
 | Typecheck all workspaces | `pnpm typecheck` | Strict TS, Astro diagnostics and Expo TS; no credentials. |
-| Unit + HTTP boundary tests | `pnpm test` | Integer arithmetic/invalid values, actual Hono request routing, deny/unavailable/CORS/size/error/cache behavior. Node test runtime, not database proof. |
+| Unit + HTTP/client boundary tests | `pnpm test` | Integer arithmetic, Hono HTTP safety, strict session/grant/return/link contracts, storage ordering, locale formatting and capture cancellation/cleanup. Node runtime and synthetic ports; not native-device/database proof. |
 | Interactive focused tests | `pnpm test:watch` | Vitest watch; stop manually. |
 | Build starter artifacts | `pnpm build` | Static Astro/Vite assets, Expo Android/iOS JS exports and both Worker dry bundles. Writes ignored `dist` output; no deploy/native signing. |
-| Security regressions and policy controls | `pnpm test:security` | Real Expo-resolved Forge/braces tests and negative controls for patch-aware decisions. Synthetic keys/patterns only. |
+| Security regressions and policy controls | `pnpm test:security` | Expo-resolved Forge/braces and patch-decision regressions; mobile input/secret guards and actual Expo iOS/Android plugin introspection for local/dev fixtures. No native compilation or signing. |
 | Verified dependency decision | `pnpm security:check` | Checks installed source/patch/advisory fingerprints, runs exploit regressions, scans the full registry and saves untouched JSON in ignored `test-results`. Any unremediated severity or missing proof fails. |
 | Local commit gate | `pnpm precommit` | Full application/security/browser/docs verification of staged-clean inputs; refuses shared-branch commits. Installed automatically by local `pnpm install`, or `pnpm hooks:install`. |
 | Security tool setup | `pnpm security:tools` | Downloads fixed official Opengrep/Gitleaks releases; verifies artifact and executable hashes. Cached binaries are rechecked before use. |
