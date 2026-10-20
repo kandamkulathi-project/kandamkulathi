@@ -7,10 +7,13 @@
     "typecheck": "tsc --noEmit"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./config": "./src/config.ts",
+    "./observability": "./src/observability.ts"
   },
   "dependencies": {
     "hono": "4.13.13",
+    "zod": "4.6.7",
     "@kandamkulathi/contracts": "workspace:*"
   }
 }

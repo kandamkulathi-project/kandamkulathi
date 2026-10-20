@@ -35,7 +35,9 @@
     "test:e2e": "pnpm build && playwright test",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm test:security && pnpm build",
     "mobile:check": "pnpm --filter @kandamkulathi/mobile check",
-    "db:generate": "pnpm --filter @kandamkulathi/database generate"
+    "db:generate": "pnpm --filter @kandamkulathi/database generate",
+    "platform:manifest": "node scripts/platform/manifest.mjs",
+    "platform:render": "node scripts/platform/render-config.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

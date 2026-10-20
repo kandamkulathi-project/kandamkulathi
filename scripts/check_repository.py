@@ -60,6 +60,17 @@ def require(condition: bool, message: str) -> None:
         raise ValueError(message)
 
 
+def check_env_example(example: str) -> None:
+    public_defaults = {'APP_ENV': 'local', 'RESOURCE_NAMESPACE': 'kandamkulathi-local',
+                       'PROVIDER_MODE': 'stub', 'ALLOW_LIVE_SENDS': 'false',
+                       'ALLOW_LIVE_PAYMENTS': 'false'}
+    for line in example.splitlines():
+        if '=' in line and not line.lstrip().startswith('#'):
+            key, value = (part.strip() for part in line.split('=', 1))
+            require(value == public_defaults.get(key, ''),
+                    '.env.example must use exact safe public defaults and empty secrets')
+
+
 def files_under(root: Path) -> list[Path]:
     paths = []
     for current, folders, names in os.walk(root):
@@ -351,12 +362,7 @@ def main() -> int:
             findings = secret_findings(path.read_text(encoding='utf-8'))
             require(not findings, f'{path.relative_to(ROOT)}: possible restricted secret pattern; inspect privately')
         example = (ROOT/'.env.example').read_text(encoding='utf-8')
-        public_defaults = {'APP_ENV', 'PROVIDER_MODE', 'ALLOW_LIVE_SENDS', 'ALLOW_LIVE_PAYMENTS'}
-        for line in example.splitlines():
-            if '=' in line and not line.lstrip().startswith('#'):
-                key, value = line.split('=', 1)
-                require(key.strip() in public_defaults or not value.strip(),
-                        '.env.example must have empty secret/provider/config values')
+        check_env_example(example)
         for workflow_path in (ROOT/'.github/workflows').glob('*.yml'):
             workflow = workflow_path.read_text(encoding='utf-8')
             require('contents: read' in workflow and 'persist-credentials: false' in workflow,

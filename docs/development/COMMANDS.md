@@ -30,6 +30,8 @@ Run from repository root with Node 24.22.0/pnpm 10.34.7. All application command
 | Browser + actual Worker runtime | `pnpm test:e2e` | Builds, then Chromium UI/locale/mobile-width tests and actual local workerd requests; owns four ports, no reused servers. |
 | CI E2E after build | `pnpm exec playwright test` | Same tests; assumes current build artifacts exist. |
 | Offline SQL generation | `pnpm db:generate` | Generates SQL from reviewed Drizzle definitions. Namespaces-only starter is not an implemented schema. No connection/migration/push. |
+| Validate planned resource inventory | `pnpm platform:manifest config/environments/dev.json` | Identifiers only; use `--provisioned` to require actual account/endpoint/review evidence. No network/mutation. |
+| Render isolated Worker configuration | `pnpm platform:render config/environments/dev.json core-api .local-data/platform/dev-core.json` | Writes ignored configuration with exact inventory bindings, no secrets/provisioning/deployment. Companion is rendered separately. |
 | Docs and traceability | `python scripts/check_repository.py` | Links, 38 requirements, 109 package/branch assignments, 480 hours, case IDs, limited secret patterns and CI wiring. No app execution claim. |
 | Docs guard negative controls | `python -m unittest discover -s tests/repository -v` | Ambiguous member/manual selection under reversed filesystem order, missing app CI contract, portable links, source inventory, secret redaction and fenced examples. |
 | Diff/state | `git diff --check`, `git status --short --branch` | Review local state; no destructive action. |
@@ -43,3 +45,5 @@ The independent `dependency-audit` job executes the security test pack and `pnpm
 Database/RLS/transactions/concurrency, real WorkOS sessions/MFA, live provider callbacks, native signed builds/device SDK tests, AI evals, security assessment, load/soak/recovery and phase acceptance are **not implemented by this starter**. Each responsible member must add real commands/resources/evidence with their feature. No fake passing migration, security, load or provider script exists. Clinical/finance and real-device cases remain in the canonical manual.
 
 For each new operational/test command record workspace/runtime, inputs, provider mode/resources, synthetic fixtures/reset, expected result, side effects, owner, CI job and validated candidate. Only mark a phase/requirement Passed with its own executed evidence.
+
+P1-DEV-001 additions and remaining company-resource verification are tracked in [platform evidence](../operations/P1_PLATFORM_FOUNDATION.md). Runtime isolation, metadata-only telemetry and resource rendering are implemented; a passing manifest is not proof of remote ownership, live integration or a phase gate.

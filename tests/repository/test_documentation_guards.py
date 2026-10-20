@@ -67,6 +67,13 @@ class RepositoryGuardTests(unittest.TestCase):
                 actual = set(CHECK.bootstrap_source_findings([root/name for name in names]))
             self.assertEqual(actual, {'migration.sql', 'server.py', 'package.json', 'apps/api/config.json'})
 
+    def test_environment_example_rejects_live_flags_and_secret_values(self):
+        CHECK.check_env_example('RESOURCE_NAMESPACE=kandamkulathi-local\nPROVIDER_MODE=stub\nDATABASE_URL=')
+        for example in ('RESOURCE_NAMESPACE=kandamkulathi-production', 'ALLOW_LIVE_SENDS=true',
+                        'PROVIDER_MODE=live', 'DATABASE_URL=synthetic-credential'):
+            with self.assertRaisesRegex(ValueError, 'exact safe public defaults'):
+                CHECK.check_env_example(example)
+
     def test_obvious_secret_detection_does_not_return_the_value(self):
         token = 'sk-' + 'A'*32
         findings = CHECK.secret_findings('OPENAI_API_KEY=' + token)
