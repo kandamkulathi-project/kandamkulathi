@@ -18,6 +18,7 @@ These rules apply throughout this repository. Follow the current user request an
 - Run `pnpm verify` and `pnpm test:e2e` for application implementations; run relevant mobile/security checks from the [command registry](docs/development/COMMANDS.md).
 - For documentation-only changes, run the repository/documentation checks and inspect the diff; application tests are unnecessary unless behavior changes.
 - Never skip failing required tests, weaken assertions or suppress security findings to obtain a passing result. Report failed and unrun checks accurately.
+- Install local hooks and follow [security automation](docs/security/SECURITY_AUTOMATION.md); resolve SAST, secret, runtime and dependency failures before committing or merging.
 
 ## Commits and delivery
 - Commit after every completed implementation, once its checks pass. Include its tests and relevant documentation in the same focused commit.

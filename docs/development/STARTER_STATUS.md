@@ -2,7 +2,7 @@
 
 **Baseline:** 2026-10-19. Purpose: give all six members the same runnable code and reviewed documents. No G1/G2/G3 approval, completed requirement, live service or production deployment is implied. All R01–R38 and existing assignments remain required.
 
-**Audit status:** the original two high Expo-toolchain findings have local source backports and executed regressions, with independent review Pending. The registry still reports the original base versions; two moderate findings remain Open. [Dependency remediation](../security/DEPENDENCY_RISKS.md) and [ADR 0005](../architecture/adr/0005-toolchain-security-backports.md) explain the verified-source decision and unchanged raw findings. A passed verification check is not upstream remediation, independent review or phase approval.
+**Audit status:** the original two high Expo-toolchain findings have local source backports and executed regressions, with independent review Pending. The registry still reports the original base versions; the two moderate findings have been removed with targeted esbuild/uuid fixed-release overrides and real parent-resolved tests. [Dependency remediation](../security/DEPENDENCY_RISKS.md) and [ADR 0005](../architecture/adr/0005-toolchain-security-backports.md) explain the verified-source decision and unchanged raw findings. A passed verification check is not upstream remediation, independent review or phase approval.
 
 ## Implemented foundation
 

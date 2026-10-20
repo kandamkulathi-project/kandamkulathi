@@ -305,6 +305,29 @@ def check_application_contract() -> None:
     for command in ('pnpm install --frozen-lockfile', 'pnpm verify', 'pnpm mobile:check',
                     'pnpm security:check', 'pnpm exec playwright test'):
         require(command in workflow, f'Application CI must execute {command}')
+    security_path = ROOT/'.github/workflows/security.yml'
+    require(exact_path_exists(security_path), 'Security workflow is required')
+    security = security_path.read_text(encoding='utf-8')
+    for command in ('pnpm test:security:scanners', 'pnpm security:sast',
+                    'node scripts/security/scan.mjs secrets', 'pnpm security:runtime',
+                    'pnpm security:check'):
+        require(command in security, f'Security CI must execute {command}')
+    require('schedule:' in security and 'fetch-depth: 0' in security,
+            'Scheduled security and complete secret-history fetch are required')
+    sast_job = security.partition('  sast:\n')[2].partition('\n  secret-scanning:')[0]
+    require('package-manager-cache: false' in sast_job and 'cache: pnpm' not in sast_job,
+            'Scanner-only SAST job must disable unused package-manager caching')
+    for command in ('security:sast', 'security:secrets', 'security:runtime',
+                    'test:security:scanners', 'hooks:install', 'precommit'):
+        require(scripts.get(command), f'Missing security command: {command}')
+    require(scripts.get('prepare') == 'node scripts/security/install-hooks.mjs',
+            'Local installation must configure commit checks')
+    require(exact_path_exists(ROOT/'.githooks/pre-commit'), 'Commit hook is required')
+    policy = json.loads((ROOT/'.github/branch-protection.json').read_text(encoding='utf-8'))
+    required = {item['context'] for item in policy['required_status_checks']['checks']}
+    require(required == {'application-checks', 'dependency-audit', 'repository-docs',
+                         'sast', 'secret-scanning', 'runtime-security'},
+            'Protection candidate must require all six actual checks')
 
 
 def main() -> int:
@@ -313,6 +336,8 @@ def main() -> int:
             require(exact_path_exists(ROOT/rel), f'Missing required file: {rel}')
         require((ROOT/'AGENTS.md').stat().st_size < 24*1024,
                 'Root AGENTS.md too large; move detailed procedure into linked docs')
+        require(len((ROOT/'AGENTS.md').read_text(encoding='utf-8').splitlines()) < 50,
+                'AGENTS.md must remain under 50 lines')
         paths = files_under(ROOT)
         application = bootstrap_source_findings(paths)
         if application:

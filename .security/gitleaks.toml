@@ -1,0 +1,3 @@
+title = "Kandamkulathi: default Gitleaks rules, no baseline or allowlist"
+[extend]
+useDefault = true

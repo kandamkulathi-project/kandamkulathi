@@ -4,6 +4,8 @@
 
 ## PRs and critical review
 
+Install and use the [local commit/security gates](../security/SECURITY_AUTOMATION.md). A commit is blocked until lint, tests, builds, SAST, secrets, dependency/Node and documentation checks pass; stage intended files and keep unrelated work outside the candidate. GitHub plan eligibility currently prevents activating mandatory branch policies despite admin access. The reviewed [policy payload](../../.github/branch-protection.json) is prepared, not enforced; an eligible private-organization plan is required. CI runs do not by themselves prevent merges.
+
 Protect shared branches from direct/force pushes and unreviewed merges; require actual relevant checks and stale-approval dismissal. Mathew/Devadathan peer-review critical changes; Mathew reviews Josin's sensitive commerce; Devadathan reviews junior UI with clinical/commerce input. Record company approvals separately from code review. No author self-approval. PR body includes R/package/output, before/after, checks with real evidence, migrations/provider/privacy/clinical impact, rollback and dependent owners.
 
 Do not use automatic production deploy on all `main` changes. Required check names must match the actual configured CI; documentation-only success is not an app release check. [Repository settings](../governance/REPOSITORY_SETTINGS.md) lists remote activation work and actual GitHub handle mapping still Pending.

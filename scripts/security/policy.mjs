@@ -109,6 +109,21 @@ export function assessAudit(report, verified) {
     0,
     "Muted registry advisories are forbidden",
   );
+  const counts = Object.entries(report.metadata.vulnerabilities);
+  assert(
+    counts.length > 0 &&
+      counts.every(
+        ([severity, count]) =>
+          ["info", "low", "moderate", "high", "critical"].includes(severity) &&
+          Number.isSafeInteger(count) &&
+          count >= 0,
+      ),
+    "Invalid vulnerability counts",
+  );
+  assert(
+    counts.every(([, count]) => count === 0) || Object.keys(report.advisories).length > 0,
+    "Audit omitted advisory details despite reporting vulnerabilities",
+  );
   const findings = [];
   const blockers = [];
   for (const advisory of Object.values(report.advisories)) {
@@ -132,7 +147,7 @@ export function assessAudit(report, verified) {
       severity: advisory.severity,
       state,
     });
-    if (["high", "critical"].includes(advisory.severity) && !matches) blockers.push(advisory.title);
+    if (!matches) blockers.push(advisory.title);
   }
   return { findings, blockers };
 }

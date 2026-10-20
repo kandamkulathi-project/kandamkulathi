@@ -1,0 +1,107 @@
+name: Security
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+  workflow_dispatch:
+  # GitHub starts schedules only from the default branch (currently main).
+  schedule:
+    - cron: '23 2 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: security-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+jobs:
+  sast:
+    name: ${{ matrix.target == 'candidate' && 'sast' || format('scheduled-sast-{0}', matrix.target) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ github.event_name == 'schedule' && fromJSON('["dev","main"]') || fromJSON('["candidate"]') }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: ${{ matrix.target == 'candidate' && github.ref || matrix.target }}
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - name: Prove scanners detect malicious fixtures and reject malformed source
+        run: pnpm test:security:scanners
+      - name: Scan source and workflow code with pinned offline rules
+        run: pnpm security:sast
+  secret-scanning:
+    name: ${{ matrix.target == 'candidate' && 'secret-scanning' || format('scheduled-secrets-{0}', matrix.target) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ github.event_name == 'schedule' && fromJSON('["dev","main"]') || fromJSON('["candidate"]') }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ matrix.target == 'candidate' && github.ref || matrix.target }}
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+      - name: Scan complete Git history and indexed files; never print credentials
+        run: node scripts/security/scan.mjs secrets
+  runtime-security:
+    name: ${{ matrix.target == 'candidate' && 'runtime-security' || format('scheduled-runtime-{0}', matrix.target) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ github.event_name == 'schedule' && fromJSON('["dev","main"]') || fromJSON('["candidate"]') }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: ${{ matrix.target == 'candidate' && github.ref || matrix.target }}
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm security:runtime
+  scheduled-dependencies:
+    if: github.event_name == 'schedule'
+    name: scheduled-dependencies-${{ matrix.target }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [dev, main]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: ${{ matrix.target }}
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:security
+      - run: pnpm security:check
+      - name: Retain untouched advisory report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: scheduled-dependency-audit-${{ matrix.target }}-${{ github.run_id }}
+          path: test-results/dependency-audit.json
+          retention-days: 7
+          if-no-files-found: warn

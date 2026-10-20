@@ -22,6 +22,15 @@
     "test:watch": "vitest",
     "test:security": "node --test tests/security/*.test.mjs",
     "security:check": "node scripts/security/check.mjs",
+    "security:tools": "node scripts/security/tools.mjs",
+    "security:sast": "node scripts/security/scan.mjs sast",
+    "security:secrets": "node scripts/security/scan.mjs secrets",
+    "security:secrets:staged": "node scripts/security/scan.mjs staged",
+    "security:runtime": "node scripts/security/runtime.mjs",
+    "test:security:scanners": "node --test tests/security-scanners/*.test.mjs",
+    "hooks:install": "node scripts/security/install-hooks.mjs",
+    "prepare": "node scripts/security/install-hooks.mjs",
+    "precommit": "node scripts/security/pre-commit.mjs",
     "build": "pnpm -r --if-present build",
     "test:e2e": "pnpm build && playwright test",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm test:security && pnpm build",
@@ -33,6 +42,7 @@
     "@playwright/test": "1.64.1",
     "@types/node": "24.19.2",
     "concurrently": "10.0.6",
+    "semver": "7.8.5",
     "typescript": "6.0.3",
     "vitest": "5.0.5"
   }

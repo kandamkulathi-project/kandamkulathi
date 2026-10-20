@@ -21,7 +21,7 @@ Start with [AGENTS](../AGENTS.md), [repository README](../readme.md) and [setup]
 
 ## Security, operations and governance
 
-- [Security reporting](../SECURITY.md), [data handling](security/DATA_HANDLING.md), [secrets/access](security/ACCESS_AND_SECRETS.md), [security review](security/SECURITY_REVIEW_CHECKLIST.md).
+- [Security reporting](../SECURITY.md), [automation and enforcement](security/SECURITY_AUTOMATION.md), [data handling](security/DATA_HANDLING.md), [secrets/access](security/ACCESS_AND_SECRETS.md), [security review](security/SECURITY_REVIEW_CHECKLIST.md).
 - [Environments](operations/ENVIRONMENTS.md), [release](operations/RELEASE_RUNBOOK.md), [recovery](operations/BACKUP_AND_RECOVERY.md), [incidents](operations/INCIDENT_RESPONSE.md), [SLIs/SLOs](operations/OBSERVABILITY_AND_SLOS.md), [maintenance/handover](operations/MAINTENANCE_AND_HANDOVER.md).
 - [Owners/decisions](governance/DECISIONS_AND_OWNERS.md), [GitHub settings](governance/REPOSITORY_SETTINGS.md), [external readiness](governance/EXTERNAL_READINESS_REGISTER.md), [provider manifest](templates/PROVIDER_ENVIRONMENT_MANIFEST.md), [model/KB manifest](templates/MODEL_KB_MANIFEST.md), [task template](templates/TASK_TEMPLATE.md).
 
