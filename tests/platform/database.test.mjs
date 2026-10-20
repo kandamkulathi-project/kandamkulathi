@@ -157,6 +157,15 @@ test("runtime refuses combined groups and application database/table ownership",
   } finally {
     await change("ALTER DATABASE %I OWNER TO %I", [name, new URL(fixture.sourceUrl).username]);
   }
+  await change("GRANT %I TO %I", ["pg_read_server_files", login]);
+  try {
+    await assert.rejects(
+      fixture.runtime("core", async () => {}),
+      /role or version/,
+    );
+  } finally {
+    await change("REVOKE %I FROM %I", ["pg_read_server_files", login]);
+  }
 });
 
 test("atomic enqueue rolls back with its transaction and refuses autocommit", async () => {

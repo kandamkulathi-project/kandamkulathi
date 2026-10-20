@@ -14,4 +14,9 @@ BEGIN
     AND (rolcanlogin OR rolsuper OR rolcreatedb OR rolcreaterole OR rolreplication OR rolbypassrls)) THEN
     RAISE EXCEPTION 'Unsafe existing platform role';
   END IF;
+  IF EXISTS (SELECT 1 FROM pg_roles r JOIN pg_roles d ON d.oid <> r.oid
+    AND pg_has_role(r.oid,d.oid,'MEMBER')
+    WHERE r.rolname IN ('k_core_runtime','k_jobs_runtime','k_backup_runtime')) THEN
+    RAISE EXCEPTION 'Runtime profiles must not inherit other roles';
+  END IF;
 END $$;

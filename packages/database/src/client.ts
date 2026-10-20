@@ -1,6 +1,7 @@
 import { databaseTarget, type Environment } from "@kandamkulathi/server/config";
 import { Client } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-serverless";
+import { roleProofSql } from "./roles.ts";
 import * as schema from "./schema.ts";
 
 export type DatabaseClient = Client;
@@ -42,27 +43,14 @@ export async function withDatabase<T>(
     const result = await client.query<{
       permitted: boolean;
       privileged: boolean;
-      owns_schema: boolean;
+      owns_objects: boolean;
       major: number;
-    }>(
-      `SELECT pg_has_role(current_user, $1, 'MEMBER') AS permitted,
-      (r.rolsuper OR r.rolbypassrls OR r.rolcreaterole OR r.rolcreatedb OR r.rolreplication) AS privileged,
-      (EXISTS (SELECT 1 FROM pg_namespace n WHERE n.nspname IN ('core','clinical','engagement','platform')
-        AND pg_has_role(current_user, n.nspowner, 'MEMBER')) OR
-       EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
-         WHERE n.nspname IN ('core','clinical','engagement','platform') AND pg_has_role(current_user,c.relowner,'MEMBER')) OR
-       EXISTS (SELECT 1 FROM pg_database d WHERE d.datname=current_database() AND pg_has_role(current_user,d.datdba,'MEMBER')) OR
-       (pg_has_role(current_user,'k_core_runtime','MEMBER')::integer + pg_has_role(current_user,'k_jobs_runtime','MEMBER')::integer +
-         pg_has_role(current_user,'k_backup_runtime','MEMBER')::integer) <> 1) AS owns_schema,
-      current_setting('server_version_num')::integer / 10000 AS major
-      FROM pg_roles r WHERE r.rolname = current_user`,
-      [group],
-    );
+    }>(roleProofSql, [group]);
     const identity = result.rows[0];
     if (
       !identity?.permitted ||
       identity.privileged ||
-      identity.owns_schema ||
+      identity.owns_objects ||
       identity.major !== 17
     ) {
       throw new Error("Runtime database role or version is invalid.");

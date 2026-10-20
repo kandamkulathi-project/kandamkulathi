@@ -16,6 +16,7 @@ import {
 import { dirname, join, resolve } from "node:path";
 import { finished, pipeline } from "node:stream/promises";
 import { pathToFileURL } from "node:url";
+import { roleProofSql } from "../../packages/database/src/roles.ts";
 import { digest, migrationFiles, operationTarget, withAdmin } from "./database.mjs";
 import { privatePath } from "./files.mjs";
 import { readManifest } from "./manifest.mjs";
@@ -175,11 +176,11 @@ export async function exportEncrypted({
     );
     await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
     try {
-      const role = (
-        await client.query(`SELECT pg_has_role(current_user,'k_backup_runtime','MEMBER') AS allowed,
-        r.rolsuper OR r.rolbypassrls OR r.rolcreatedb OR r.rolcreaterole AS privileged FROM pg_roles r WHERE r.rolname=current_user`)
-      ).rows[0];
-      assert(role?.allowed && !role.privileged, "Use the restricted backup login");
+      const role = (await client.query(roleProofSql, ["k_backup_runtime"])).rows[0];
+      assert(
+        role?.permitted && !role.privileged && !role.owns_objects && role.major === 17,
+        "Use the restricted non-owner backup login",
+      );
       const target = (
         await client.query(
           "SELECT environment,namespace,dataset_class FROM platform.environment WHERE singleton",

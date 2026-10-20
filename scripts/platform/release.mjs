@@ -9,6 +9,23 @@ import { readManifest } from "./manifest.mjs";
 import { renderConfig } from "./render-config.mjs";
 
 export { privatePath } from "./files.mjs";
+export function captureCandidate(cwd = process.cwd()) {
+  const env = { ...process.env };
+  for (const key of ["GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR"])
+    delete env[key];
+  const options = { cwd, env, encoding: "utf8", windowsHide: true, timeout: 10000 };
+  const status = spawnSync("git", ["status", "--porcelain"], options);
+  assert.equal(status.status, 0);
+  assert.equal(status.stdout.trim(), "", "Commit verified inputs before preparing a candidate");
+  const revision = spawnSync("git", ["rev-parse", "HEAD"], options);
+  assert.equal(revision.status, 0);
+  const sha = revision.stdout.trim();
+  assert.match(sha, /^[a-f0-9]{40}$/);
+  return sha;
+}
+export function assertCandidateUnchanged(expected, cwd = process.cwd()) {
+  assert.equal(captureCandidate(cwd), expected, "Git candidate changed during artifact build");
+}
 
 export function prepareArtifact({ sourceSha, manifest, output, bundles }) {
   assert.match(sourceSha, /^[a-f0-9]{40}$/);
@@ -119,18 +136,14 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       ["prepare", "check", "dry-run"].includes(action),
       "Explicit local release action required",
     );
-    const manifest = readManifest(manifestPath);
+    const manifest = readManifest(manifestPath, { provisioned: action === "check" });
     assert.notEqual(
       manifest.environment,
       "production",
       "P1 release tooling cannot operate production",
     );
     if (action === "prepare") {
-      const status = spawnSync("git", ["status", "--porcelain"], { encoding: "utf8" });
-      const revision = spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" });
-      assert.equal(status.status, 0);
-      assert.equal(status.stdout.trim(), "", "Commit verified inputs before preparing a candidate");
-      assert.equal(revision.status, 0);
+      const sourceSha = captureCandidate();
       assert.equal(
         process.versions.node,
         readFileSync(".node-version", "utf8").trim(),
@@ -152,11 +165,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
         );
         assert.equal(build.status, 0, "Fresh Worker dry build required");
       }
-      const unchanged = spawnSync("git", ["status", "--porcelain"], { encoding: "utf8" });
-      assert.equal(unchanged.status, 0);
-      assert.equal(unchanged.stdout.trim(), "", "Inputs changed during artifact preparation");
+      assertCandidateUnchanged(sourceSha);
       const artifact = prepareArtifact({
-        sourceSha: revision.stdout.trim(),
+        sourceSha,
         manifest,
         output: artifactPath,
         bundles: {
