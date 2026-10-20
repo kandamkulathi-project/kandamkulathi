@@ -316,6 +316,14 @@ def check_application_contract() -> None:
     for command in ('pnpm install --frozen-lockfile', 'pnpm verify', 'pnpm mobile:check',
                     'pnpm security:check', 'pnpm exec playwright test', 'pnpm test:platform'):
         require(command in workflow, f'Application CI must execute {command}')
+    repository = 'https://apt.postgresql.org/pub/repos/apt'
+    signed_key = 'signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc'
+    require(repository in workflow and signed_key in workflow and
+            'https://www.postgresql.org/media/keys/ACCC4CF8.asc' in workflow and
+            'apt-get install --yes postgresql-client-17' in workflow and
+            workflow.index(repository) < workflow.index('apt-get install --yes postgresql-client-17') and
+            not re.search(r'trusted\s*=\s*yes|--allow-unauthenticated', workflow),
+            'PostgreSQL 17 client fallback requires its official signed repository before installation')
     security_path = ROOT/'.github/workflows/security.yml'
     require(exact_path_exists(security_path), 'Security workflow is required')
     security = security_path.read_text(encoding='utf-8')
