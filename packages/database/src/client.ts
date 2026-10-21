@@ -71,10 +71,14 @@ export async function withDatabase<T>(
 
 /** Callback contains bounded database work only; publish/provider calls run after commit. No automatic retry. */
 export async function transaction<T>(client: Client, callback: () => Promise<T>): Promise<T> {
-  if (inTransaction(client)) throw new Error("Nested platform transactions are not supported.");
-  await client.query("BEGIN");
+  if (inTransaction(client))
+    throw new Error("Overlapping or nested platform transactions are not supported.");
+  // Reserve synchronously: even BEGIN yields while the driver queues work on this connection.
   activeTransactions.add(client);
+  let begun = false;
   try {
+    await client.query("BEGIN");
+    begun = true;
     await client.query("SET LOCAL statement_timeout = '5s'");
     await client.query("SET LOCAL lock_timeout = '2s'");
     await client.query("SET LOCAL idle_in_transaction_session_timeout = '5s'");
@@ -82,7 +86,7 @@ export async function transaction<T>(client: Client, callback: () => Promise<T>)
     await client.query("COMMIT");
     return result;
   } catch (error) {
-    await client.query("ROLLBACK");
+    if (begun) await client.query("ROLLBACK");
     throw error;
   } finally {
     activeTransactions.delete(client);

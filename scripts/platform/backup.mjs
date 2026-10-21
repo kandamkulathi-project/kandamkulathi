@@ -17,7 +17,14 @@ import { dirname, join, resolve } from "node:path";
 import { finished, pipeline } from "node:stream/promises";
 import { pathToFileURL } from "node:url";
 import { roleProofSql } from "../../packages/database/src/roles.ts";
-import { digest, migrationFiles, operationTarget, withAdmin } from "./database.mjs";
+import {
+  digest,
+  installedMigrations,
+  migrationFiles,
+  migrationSet,
+  operationTarget,
+  withAdmin,
+} from "./database.mjs";
 import { privatePath } from "./files.mjs";
 import { readManifest } from "./manifest.mjs";
 
@@ -201,7 +208,9 @@ export async function exportEncrypted({
         keyId,
         createdAt: new Date().toISOString(),
         sourceIdentity: databaseIdentity(url),
-        migrations: migrationFiles().map(({ id, sha256 }) => ({ id, sha256 })),
+        // This client and pg_dump share the exported repeatable-read snapshot. The operator's
+        // checkout may be older; retain the actual ledger and refuse incompatible restoration.
+        migrations: await installedMigrations(client),
         controlTotals: await controlTotals(client),
         objects,
       };
@@ -309,8 +318,8 @@ export async function restoreEncrypted({
     "Restore must not overwrite its source",
   );
   assert.deepEqual(
-    metadata.migrations,
-    migrationFiles().map(({ id, sha256 }) => ({ id, sha256 })),
+    migrationSet(metadata.migrations),
+    migrationSet(migrationFiles().map(({ id, sha256 }) => ({ id, sha256 }))),
     "Current candidate cannot validate this schema",
   );
   const plaintext = `${input}.restore-${randomBytes(8).toString("hex")}.dump`;
@@ -348,6 +357,13 @@ export async function restoreEncrypted({
       );
       child.stdout.resume();
       await completed;
+      // Authentication proves the declaration's origin, not that the dump contains that ledger.
+      // Older buggy exports could carry matching counts with a different set or checksum.
+      assert.deepEqual(
+        await installedMigrations(client),
+        migrationSet(metadata.migrations),
+        "Restored migration set differs from authenticated metadata; quarantine this target",
+      );
       assert.deepEqual(
         await controlTotals(client),
         metadata.controlTotals,

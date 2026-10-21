@@ -65,6 +65,11 @@ test("real workerd Cron drains a 30-job spike across three Queues with one durab
   await fixture.runtime("core", (context) =>
     transaction(context.client, () => enqueue(context, input)),
   );
+  // The next real broker publication is the final permitted attempt. Subsequent channel
+  // sweeps in the same Cron run must leave it deliverable until its consumer executes.
+  await fixture.source.query("UPDATE platform.outbox SET publish_attempts=4 WHERE id=$1", [
+    input.id,
+  ]);
   await fixture.source.query(`INSERT INTO platform.outbox(id,operation_id,channel,kind,subject_id,revision,due_at,deadline_at,next_attempt_at)
     SELECT gen_random_uuid(),gen_random_uuid(),(ARRAY['financial','clinical','engagement'])[1+(i%3)],'platform.probe',gen_random_uuid(),1,
       clock_timestamp()-interval '1 second',clock_timestamp()+interval '5 minutes',clock_timestamp() FROM generate_series(1,29) i`);
@@ -135,6 +140,15 @@ test("real workerd Cron drains a 30-job spike across three Queues with one durab
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
     assert(completed, "Cron/Queue/driver transaction did not complete");
+    assert.deepEqual(
+      (
+        await fixture.source.query(
+          "SELECT publish_attempts,execution_attempts FROM platform.outbox WHERE id=$1",
+          [input.id],
+        )
+      ).rows[0],
+      { publish_attempts: 5, execution_attempts: 1 },
+    );
     assert.equal(
       (await fixture.source.query("SELECT count(*)::integer AS count FROM platform.probe_effects"))
         .rows[0].count,

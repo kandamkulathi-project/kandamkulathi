@@ -16,6 +16,36 @@ export const migrationFiles = () => {
   });
 };
 
+/** Canonical installed ledger identity; counts alone cannot establish schema compatibility. */
+export function migrationSet(rows) {
+  assert(Array.isArray(rows) && rows.length > 0, "Migration ledger must be nonempty");
+  const ids = new Set();
+  const migrations = rows.map((row) => {
+    assert(
+      row && Object.keys(row).sort().join(",") === "id,sha256",
+      "Invalid migration ledger fields",
+    );
+    assert(
+      typeof row.id === "string" && /^\d{4}_[a-z0-9_]+$/.test(row.id),
+      "Invalid migration identifier",
+    );
+    assert(
+      typeof row.sha256 === "string" && /^[a-f0-9]{64}$/.test(row.sha256),
+      "Invalid migration checksum",
+    );
+    assert(!ids.has(row.id), "Duplicate migration identifier");
+    ids.add(row.id);
+    return { id: row.id, sha256: row.sha256 };
+  });
+  return migrations.sort((left, right) => (left.id < right.id ? -1 : left.id > right.id ? 1 : 0));
+}
+
+export async function installedMigrations(client) {
+  return migrationSet(
+    (await client.query("SELECT id,sha256 FROM public.k_platform_migrations")).rows,
+  );
+}
+
 /** No output includes connection strings. Direct administrative access is separate from Worker secrets. */
 export function operationTarget(value, environment, manifest) {
   const url = new URL(value);
