@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-Install Git, Node **24.22.0**, pnpm **10.34.7** and Python **3.13**. Exact Node/package-manager pins are in `.node-version`, `.nvmrc` and root `package.json`. Engine checks reject unsupported versions. Use an approved Node version manager; the scaffold does not change your global runtime. If pnpm is absent, an approved installation is `npm install --global pnpm@10.34.7`. No Cloudflare/Neon/WorkOS/OpenAI account or credential is needed for the local starter.
+Install Git, Node **24.22.1**, pnpm **10.34.7** and Python **3.13**. Exact Node/package-manager pins are in `.node-version`, `.nvmrc` and root `package.json`. Engine checks reject unsupported versions. Use an approved Node version manager; the scaffold does not change your global runtime. If pnpm is absent, an approved installation is `npm install --global pnpm@10.34.7`. No Cloudflare/Neon/WorkOS/OpenAI account or credential is needed for the local starter.
 
 ## First checkout
 

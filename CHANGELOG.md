@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Node 24 security runtime update — 2026-10-21
+
+- Updated both runtime pins and the installation minimum to Node 24.22.1 after the official release feed identified it as a security release. The Node 24 stack and pnpm pin are unchanged.
+- Added a regression for patch-release blocking, consistent developer/CI pins and rejection of the superseded runtime; runtime security verification remains fail-closed. [Official Node release feed](https://nodejs.org/dist/index.json).
+
 ### P1-DEV-002 local client foundation (review and real-device proof Pending)
 
 - Added shared session/grant, single-use callback, notification-reference and cited-reply contracts; uncached request states and expiry/background invalidation without fake sign-in or payment success.
