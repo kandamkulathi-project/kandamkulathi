@@ -1,6 +1,6 @@
 # Actual command registry
 
-Run from repository root with Node 24.22.0/pnpm 10.34.7. All application commands exist; their evidence covers only the starter behavior described below. Python checks are independent and use Python 3.13 standard library.
+Run from repository root with Node 24.22.1/pnpm 10.34.7. All application commands exist; their evidence covers only the starter behavior described below. Python checks are independent and use Python 3.13 standard library.
 
 | Purpose | Command | Scope and side effects |
 |---|---|---|

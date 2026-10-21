@@ -10,7 +10,7 @@ P1-DEV-001 now adds local platform isolation, safe telemetry, a real PostgreSQL 
 
 **Security status:** the two high Expo-toolchain findings have committed local source patches, installed-file verification and regression tests; independent senior review is Pending. Targeted esbuild/uuid upgrades remove the two moderate findings. The raw registry audit still reports the original locally patched versions. Free SAST/secrets/Node checks and local commit hooks are configured; mandatory remote protection is blocked by GitHub plan eligibility despite admin access. See [security automation](docs/security/SECURITY_AUTOMATION.md) and [dependency remediation](docs/security/DEPENDENCY_RISKS.md); no phase or production approval is implied.
 
-Use Node **24.22.0** and pnpm **10.34.7**. Python 3.13 runs documentation checks. Enable pnpm through Corepack if your Node installation includes it, or install the exact pnpm version using your approved package-manager setup.
+Use Node **24.22.1** and pnpm **10.34.7**. Python 3.13 runs documentation checks. Enable pnpm through Corepack if your Node installation includes it, or install the exact pnpm version using your approved package-manager setup.
 
 ```sh
 git clone https://github.com/kandamkulathi-project/kandamkulathi.git
