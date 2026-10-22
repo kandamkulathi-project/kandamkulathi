@@ -305,7 +305,7 @@ export function mayJoin(appointment: Appointment, now = Date.now()) {
 /** SDK completion/cancel/error are hints. Only a subsequent API response can establish payment state. */
 export function paymentFlow(
   client: SensitiveClient,
-  open: (checkout: Checkout) => Promise<unknown>,
+  open: (checkout: Checkout, isCurrent: () => boolean) => Promise<unknown>,
   now = Date.now,
 ) {
   let busy = false;
@@ -339,7 +339,12 @@ export function paymentFlow(
           return failure("conflict");
         let receipt: ProviderReceipt | undefined;
         try {
-          const parsed = providerReceiptSchema.safeParse(await open(current.data.checkout));
+          const parsed = providerReceiptSchema.safeParse(
+            await open(
+              current.data.checkout,
+              () => !disposed && Date.parse(current.data.expiresAt) > now(),
+            ),
+          );
           if (parsed.success && parsed.data.razorpay_order_id === current.data.checkout.order_id)
             receipt = parsed.data;
         } catch {

@@ -60,15 +60,21 @@ export function browserCheckout(local: boolean) {
       cancel?.();
       instance?.close();
     },
-    async open(input: Checkout): Promise<unknown> {
+    async open(input: Checkout, isCurrent: () => boolean): Promise<unknown> {
       const parsed = checkoutSchema.parse(input);
-      if (closed || opening || active || (local && !parsed.key.startsWith("rzp_test_")))
+      if (
+        closed ||
+        !isCurrent() ||
+        opening ||
+        active ||
+        (local && !parsed.key.startsWith("rzp_test_"))
+      )
         throw new Error("Checkout unavailable");
       opening = true;
       try {
         await load();
         const Constructor = window.Razorpay;
-        if (closed || !Constructor) throw new Error("Checkout unavailable");
+        if (closed || !isCurrent() || !Constructor) throw new Error("Checkout unavailable");
         return await new Promise((resolve, reject) => {
           let settled = false;
           const finish = (value?: unknown) => {
@@ -97,6 +103,12 @@ export function browserCheckout(local: boolean) {
               modal: { ondismiss: () => finish() },
               retry: { enabled: false },
             });
+            if (!isCurrent()) {
+              const instance = active;
+              finish();
+              instance.close();
+              return;
+            }
             active.open();
           } catch {
             const instance = active;

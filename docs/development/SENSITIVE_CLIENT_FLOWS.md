@@ -54,6 +54,8 @@ The private transport must authenticate before SDP/ICE/media, keep bearer ticket
 
 ## Evidence and limits
 
+Checkout adapters receive a live operation-deadline/lifecycle guard and recheck it after browser script download/native initialization and immediately before SDK launch. A browser regression held the script until after expiry and reproduced an unwanted SDK launch on `9d8306c`; the permanent guard prevents it and still reconciles server state. No expired operation is retried as a new payment.
+
 The local grant adapter refuses expired grants or lifetimes above five minutes; Mathew must confirm the final shorter server policy during contract review. Current local join bounds use the appointment start/end; incorporate a separately approved early-join window in the reviewed contract if required. Appointment revocation can take up to the 15-second presentation refresh to disappear, while the real server/transport must revoke access immediately. No live call exists in this candidate.
 
 - `tests/unit/sensitive-client.test.ts`: strict consent/money/intake schemas; subject/session/expiry/CSRF/idempotency; concurrent submission; uncertain/stale response; redirects/logout; SDK success/cancel/malformed/foreign order; changed price; hold/grant/window checks; delayed media/leave; membership deadline and unknown/declined handoff.

@@ -2,6 +2,8 @@
 
 ## 2026-10-22 — P1-DEV-003 local sensitive clients (review/integration Pending)
 
+- Recheck operation expiry at actual SDK launch after asynchronous setup. A permanent Chromium regression first reproduced checkout opening after expiry while its script was delayed; shared/native/browser deadline guards now prevent it and retain server reconciliation.
+
 - Added strict proposed consent/security/payment/booking/intake/membership contracts, session-bound uncached requests, CSRF/idempotency preparation, synchronous duplicate protection and stale-response fencing.
 - Added minimal web/native consent and clinical views, current-price checks before Razorpay checkout, server-only payment reconciliation, booking expiry and consultation access/expiry controls. Optional marketing remains separate; no diagnosis or private-call success is fabricated.
 - Pinned the official native Razorpay adapter and retained the agreed stack. Native compilation/devices, actual APIs/providers/signaling, cloud setup, independent review and all phase acceptance remain Pending.

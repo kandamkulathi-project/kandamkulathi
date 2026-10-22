@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Page, type Route, test } from "@playwright/test";
 import {
   appointment,
   choices,
@@ -526,4 +526,43 @@ test("valid membership stays private and reports transport pending without acqui
   await expect(page.locator("body")).not.toContainText(grant.ticket);
   expect(await page.evaluate(() => Reflect.get(window, "unexpectedMedia"))).toBeUndefined();
   await noPrivateStorage(page);
+});
+test("a checkout expiring during SDK download cannot launch the provider", async ({ page }) => {
+  await page.clock.install();
+  await fixture(page);
+  let expiresAt = "";
+  let pendingScript: Route | undefined;
+  await page.route("https://checkout.razorpay.com/v1/checkout.js", (route) => {
+    pendingScript = route;
+  });
+  await page.route(`${api}/v1/payments/${reference}`, (route) =>
+    route.fulfill({
+      contentType: "application/json",
+      headers,
+      body: JSON.stringify({ ...payment, expiresAt }),
+    }),
+  );
+  await page.route(`${api}/v1/payments/${reference}/reconcile`, (route) =>
+    route.fulfill({
+      contentType: "application/json",
+      headers,
+      body: JSON.stringify({ ...payment, expiresAt, status: "expired", checkout: null }),
+    }),
+  );
+  await page.goto(`${origin}/customer`);
+  expiresAt = await page.evaluate(() => new Date(Date.now() + 5000).toISOString());
+  await choose(page, "Load payment");
+  await page.getByRole("button", { name: "Pay current total", exact: true }).click();
+  await expect.poll(() => Boolean(pendingScript)).toBe(true);
+  await page.clock.fastForward(6000);
+  if (!pendingScript) throw new Error("Checkout script request was not observed");
+  await pendingScript.fulfill({
+    contentType: "application/javascript",
+    body: "window.Razorpay = class { constructor(options) { this.options = options; } open() { window.expiredCheckoutOpened = true; this.options.modal.ondismiss(); } close() {} };",
+  });
+  await expect(page.locator("[data-payment-state]")).toHaveAttribute(
+    "data-payment-state",
+    "expired",
+  );
+  expect(await page.evaluate(() => Reflect.get(window, "expiredCheckoutOpened"))).toBeUndefined();
 });

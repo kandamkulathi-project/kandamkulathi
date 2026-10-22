@@ -15,10 +15,11 @@ export function nativeCheckout(local: boolean) {
       disposed = true;
       cancel?.();
     },
-    async open(input: Checkout): Promise<unknown> {
+    async open(input: Checkout, isCurrent: () => boolean): Promise<unknown> {
       const checkout = checkoutSchema.parse(input);
       if (
         disposed ||
+        !isCurrent() ||
         sdkBusy ||
         (local && !checkout.key.startsWith("rzp_test_")) ||
         Constants.executionEnvironment === ExecutionEnvironment.StoreClient
@@ -46,6 +47,11 @@ export function nativeCheckout(local: boolean) {
         cancel = () => finish();
         // Keep the SDK lock until the actual SDK settles, even if our lifecycle/timeout invalidates the promise.
         try {
+          if (!isCurrent() || disposed) {
+            sdkBusy = false;
+            finish();
+            return;
+          }
           void sdk
             .open({ ...checkout, name: "Kandamkulathi", retry: { enabled: false } })
             .then(finish, () => finish())

@@ -258,7 +258,7 @@ describe("authoritative payment reconciliation", () => {
         status: "ready",
         data: { status: "pending" },
       });
-      expect(sdk).toHaveBeenCalledWith(payment.checkout);
+      expect(sdk).toHaveBeenCalledWith(payment.checkout, expect.any(Function));
       const post = transport.mock.calls.find(([url]) => String(url).endsWith("reconcile"));
       expect(JSON.parse(String(post?.[1]?.body))).toEqual(outcome === "success" ? { receipt } : {});
       client.dispose();
@@ -292,6 +292,26 @@ describe("authoritative payment reconciliation", () => {
     resolve(receipt);
     expect((await pending).status).toBe("anonymous");
     expect(transport.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+    client.dispose();
+  });
+  it("passes a live deadline guard to the adapter and reconciles if setup crosses expiry", async () => {
+    let now = Date.now();
+    const expiring = { ...payment, expiresAt: new Date(now + 1000).toISOString() };
+    const { client } = setup((url) =>
+      json(
+        url.endsWith("reconcile") ? { ...expiring, status: "expired", checkout: null } : expiring,
+      ),
+    );
+    const sdk = vi.fn(async (_checkout, isCurrent: () => boolean) => {
+      expect(isCurrent()).toBe(true);
+      now += 1001;
+      expect(isCurrent()).toBe(false);
+      throw new Error("Synthetic SDK setup crossed expiry");
+    });
+    expect(await paymentFlow(client, sdk, () => now).pay(reference, expiring)).toMatchObject({
+      status: "ready",
+      data: { status: "expired" },
+    });
     client.dispose();
   });
 });
