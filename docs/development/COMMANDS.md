@@ -36,6 +36,8 @@ Run from repository root with Node 24.22.1/pnpm 10.34.7. All application command
 
 ## Continuous integration
 
+P1-DEV-003 adds sensitive session/CSRF, current-price/payment reconciliation, consent/intake, booking/membership and lifecycle regressions to the existing unit and browser commands. [Exact local scope and pending integrations](SENSITIVE_CLIENT_FLOWS.md) distinguishes fixtures from the actual Worker 503 cases. There is no new provider execution command, native binary build or cloud dependency in these tests.
+
 [Application workflow](../../.github/workflows/application.yml) executes locked install, verification, Expo compatibility, dependency audit and Chromium/workerd E2E on PRs/pushes to `dev`/`main`. [Documentation workflow](../../.github/workflows/documentation.yml) executes independent Python checks. Actions use pinned commits, read-only permissions, no persisted checkout credentials and no provider/deployment secrets. There is no public deployment workflow.
 
 The independent `dependency-audit` job executes the security test pack and `pnpm security:check`, then retains the raw report for seven days. Exact source remediations are [documented](../security/DEPENDENCY_RISKS.md) with independent review Pending; all unremediated severities fail. The [security workflow](../../.github/workflows/security.yml) adds `sast`, `secret-scanning` and `runtime-security`; daily two-branch scans begin after default-branch integration. [Automation/enforcement](../security/SECURITY_AUTOMATION.md) explains clone setup, licensing, scheduled activation, included Actions minutes and the current GitHub plan/admin protection blocker. Remote results are not implied by local success.

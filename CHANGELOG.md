@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-22 — P1-DEV-003 local sensitive clients (review/integration Pending)
+
+- Added strict proposed consent/security/payment/booking/intake/membership contracts, session-bound uncached requests, CSRF/idempotency preparation, synchronous duplicate protection and stale-response fencing.
+- Added minimal web/native consent and clinical views, current-price checks before Razorpay checkout, server-only payment reconciliation, booking expiry and consultation access/expiry controls. Optional marketing remains separate; no diagnosis or private-call success is fabricated.
+- Pinned the official native Razorpay adapter and retained the agreed stack. Native compilation/devices, actual APIs/providers/signaling, cloud setup, independent review and all phase acceptance remain Pending.
+- Added permanent unit/HTTP/Chromium boundary regressions, including an unmocked sensitive POST to the unavailable local Worker. Recorded the PR #4 base dependency and owner/Tinu handoffs in `docs/development/SENSITIVE_CLIENT_FLOWS.md`; canonical company requirements, six-member plans and gates are unchanged.
+
 ## Unreleased
 
 ### P1-DEV-002 credentialed CORS correction — 2026-10-22 (independent review Pending)

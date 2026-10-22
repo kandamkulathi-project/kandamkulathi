@@ -5,12 +5,22 @@ import { useCallback, useEffect, useRef, useState } from "react";
 /** Clears private UI on background/navigation and revalidates; no persisted credentials. */
 export function useSession(origin: string, local: boolean) {
   const [attempt, setAttempt] = useState(0);
+  const [blocked, setBlocked] = useState(false);
   const latestAttempt = useRef(attempt);
   latestAttempt.current = attempt;
   const [result, setResult] = useState<Resource<ClientSession>>({ status: "loading" });
-  const reload = useCallback(() => setAttempt((value) => value + 1), []);
+  const reload = useCallback(() => {
+    setBlocked(false);
+    setResult({ status: "loading" });
+    setAttempt((value) => value + 1);
+  }, []);
+  const invalidate = useCallback(() => {
+    setBlocked(true);
+    setResult({ status: "anonymous" });
+  }, []);
   useEffect(() => {
     const controller = new AbortController();
+    if (blocked) return () => controller.abort();
     setResult({ status: "loading" });
     if (document.hidden) return () => controller.abort();
     let expiry: ReturnType<typeof setTimeout> | undefined;
@@ -33,7 +43,7 @@ export function useSession(origin: string, local: boolean) {
       clearTimeout(timeout);
       clearTimeout(expiry);
     };
-  }, [origin, local, attempt, reload]);
+  }, [origin, local, attempt, reload, blocked]);
   useEffect(() => {
     const invalidate = () => {
       setResult({ status: "loading" });
@@ -46,5 +56,5 @@ export function useSession(origin: string, local: boolean) {
       window.removeEventListener("pageshow", invalidate);
     };
   }, [reload]);
-  return { result, reload };
+  return { result, reload, invalidate };
 }

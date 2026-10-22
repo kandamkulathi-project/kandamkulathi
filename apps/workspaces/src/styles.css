@@ -80,12 +80,30 @@ nav a[aria-current] {
   z-index: 2;
 }
 button,
+input,
 textarea {
   font: inherit;
   border: 1px solid #647c70;
   border-radius: 8px;
   padding: 12px;
   max-width: 100%;
+}
+input:not([type="checkbox"]) {
+  width: 100%;
+  background: white;
+  margin: 8px 0 16px;
+}
+form {
+  display: grid;
+  gap: 16px;
+}
+form label {
+  flex-wrap: wrap;
+}
+input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
 }
 button {
   min-height: 44px;

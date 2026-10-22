@@ -1,4 +1,4 @@
-# Native and provider proof register — P1-DEV-002
+# Native and provider proof register — P1-DEV-002 / P1-DEV-003
 
 Owner Devadathan; independent sensitive reviewer Mathew. Company scope and canonical tests are unchanged. **All real-device/provider/store acceptance below is Pending. Cloud setup remains deferred by user instruction.** Prepared source/configuration and JavaScript exports do not establish a signed, installed or approved native application.
 
@@ -11,14 +11,16 @@ Owner Devadathan; independent sensitive reviewer Mathew. Company scope and canon
 | Network / backup | Actual Expo config introspection tests enforce ATS, nonlocal Android cleartext denial, backup exclusions and no background audio | Installed binary manifest/Info.plist/device behavior / Devadathan + Mathew |
 | Secure storage | Native adapter plus synthetic diagnostic; shared ordering/failure tests | Locked-device, restart, logout, reinstall/keychain persistence, backup/restore and account-change cases / Devadathan |
 | Authentication | Native system-browser launch and single-use return contract; no session bypass | WorkOS/server PKCE/state binding, code exchange, verified session/MFA and physical cold/warm return / Mathew + Devadathan |
-| Payments | Return envelope always requires server verification | Compatible Razorpay native checkout adapter selection/compilation and test-mode return/cancel/unknown-result reconciliation / Josin + Devadathan |
-| Consultation video | Local camera/audio permissions and bounded cleanup only | Native WebRTC adapter/SDK compilation, authenticated Durable Object signaling, membership/join window, TURN and private web↔native call / Mathew + Devadathan |
+| Payments | Return envelope and shared reconciliation require server verification; official native Razorpay 3.0.0 adapter pinned and JS exported | Actual native SDK compilation/linking, server auth/commerce integration and real test-mode return/cancel/timeout/unknown-result reconciliation / Josin + Devadathan |
+| Consultation video | Local camera/audio diagnostics plus typed membership/window/revision/expiry control and delayed-setup cleanup; UI starts no private call | Native WebRTC adapter/SDK compilation, reviewed signaling transport, actual identity/consent/assignment enforcement, TURN and private web↔native call / Mathew + Devadathan |
 | Voice | Bounded local native audio capture/cleanup and editable draft contract | Actual microphone/revocation/background tests; approved authenticated upload/transcription, correction and explicit send / Mathew + Devadathan |
 | Push / links | Permission request and strict cold/warm link parser; no registration/send | APNs/FCM credentials, authenticated device registration, ownership changes, foreground/background delivery and per-record API authorization / Mathew + Devadathan |
 | Languages | Draft EN/ML/TA labels, bundled licensed fonts and browser layout checks | Company translations, localized OS prompts, physical font shaping/font scaling and screen-reader review / Devadathan + Denzil + company |
 | Public stores | EAS profile inputs and local isolation guards prepared | Company Apple/Google accounts, signing/recovery, privacy/data/permission disclosures, reviewer access, actual listing assets, submission and approval / Devadathan + company |
 
 ## Required device campaign
+
+P1-DEV-003's [local source and API handoff](../development/SENSITIVE_CLIENT_FLOWS.md) adds consent/intake and web/native payment/booking controls. Browser provider fixtures and a transport-port unit test are local boundary checks; every real-device/provider row remains Pending. In particular the installed native Razorpay entry has no close method: verify lifecycle fencing, pending reconciliation and the SDK-level duplicate lock on an installed binary.
 
 For every row record actual date, source SHA, configuration/SDK/native-build identifiers, phone model/OS, environment/provider mode, exact canonical case IDs, expected/actual result and restricted evidence link. Never record credentials, codes, tokens, consultation recordings or patient data. Tinu coordinates full phase acceptance; Devadathan runs specialist device checks and Mathew independently reviews sensitive evidence.
 

@@ -8,6 +8,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./sensitive": "./src/sensitive.ts",
     "./fonts.css": "./fonts/fonts.css"
   }
 }

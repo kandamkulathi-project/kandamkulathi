@@ -27,6 +27,8 @@ The shared HTTP boundary permits credentialed browser reads only when `APP_ENV=l
 
 ## Language and presentation
 
+P1-DEV-003 subsequently extends this local transport boundary to POST with an exact header allowlist, documented in [sensitive client flows](SENSITIVE_CLIENT_FLOWS.md). The read-only CORS description above records P1-DEV-002's original scope; unconfigured remote origins remain denied and actual authentication/CSRF enforcement remains Pending.
+
 EN/ML/TA development labels have matching keys. INR formatting accepts integer paise only; dates explicitly use `Asia/Kolkata`. Noto Sans Malayalam/Tamil are bundled for browser and native use with retained licenses and hashes in [font provenance](../../packages/i18n/fonts/README.md). No font CDN request is needed. Medical content and final translations still require company/physician approval.
 
 Browser checks cover language changes, loaded fonts, skip-link keyboard focus, field labels/help, 360-pixel layouts and safe text drafts. Native OS permission messages are draft English strings in build configuration; approved localized OS descriptions and device typography/accessibility review remain in the native acceptance register.
