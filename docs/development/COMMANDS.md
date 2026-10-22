@@ -18,6 +18,7 @@ Run from repository root with Node 24.22.1/pnpm 10.34.7. All application command
 | Security regressions and policy controls | `pnpm test:security` | Expo-resolved Forge/braces and patch-decision regressions; mobile input/secret guards and actual Expo iOS/Android plugin introspection for local/dev fixtures. No native compilation or signing. |
 | Verified dependency decision | `pnpm security:check` | Checks installed source/patch/advisory fingerprints, runs exploit regressions, scans the full registry and saves untouched JSON in ignored `test-results`. Any unremediated severity or missing proof fails. |
 | Local commit gate | `pnpm precommit` | Full application/security/browser/docs verification of staged-clean inputs; refuses shared-branch commits. Installed automatically by local `pnpm install`, or `pnpm hooks:install`. |
+| P1 clean-candidate verification/evidence | `pnpm verify:p1-local` | Clean committed feature/test branch only. Reuses the complete gate plus full-history/index secrets; checks source/build/browser run parity; writes new ignored `private-evidence/P1-DEV-090/` bundle. No flags, deployment, RC tag or phase approval. |
 | Security tool setup | `pnpm security:tools` | Downloads fixed official Opengrep/Gitleaks releases; verifies artifact and executable hashes. Cached binaries are rechecked before use. |
 | Source/workflow SAST | `pnpm security:sast` | Offline pinned vendor/project rules over app/package/script/workflow code. Findings, invalid parsing/config and execution failure block. |
 | History and staged secrets | `pnpm security:secrets` | Full fetched history and index snapshot; Gitleaks defaults with values redacted, no local waivers. CI fetches all history. |
@@ -36,6 +37,8 @@ Run from repository root with Node 24.22.1/pnpm 10.34.7. All application command
 | Diff/state | `git diff --check`, `git status --short --branch` | Review local state; no destructive action. |
 
 ## Continuous integration
+
+P1-DEV-090 adds [local cumulative verification and G1 blockers](../quality/P1_DEV_090_LOCAL_VERIFICATION.md). E2E now emits a source/build binding before/after the actual browser run and fails on drift/missing evidence. Application CI is prepared to retain only that metadata for seven days. Negative controls include real isolated browser subprocesses; they run no provider operation. Raw results stay outside Git and never auto-close canonical cases.
 
 P1-DEV-004 adds [knowledge/editor/Companion and artifact security checks](FRONTEND_SECURITY_REVIEW.md). `application-checks` and the local commit gate run `pnpm audit:clients` after builds; no new check name, paid tool, dependency or cloud service is introduced.
 

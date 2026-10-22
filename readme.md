@@ -52,6 +52,8 @@ Feature branch from latest `dev` → reviewed PR into `dev` → broad phase test
 
 ## Required reading
 
+P1-DEV-090 adds [clean-candidate local verification and source/artifact evidence](docs/quality/P1_DEV_090_LOCAL_VERIFICATION.md). G1 remains blocked on reviewed integration, cloud/providers, operational/device proof and company/independent acceptance. Local check success does not approve a phase or production release.
+
 P1-DEV-004 adds the [local knowledge editor, cited Companion and built-client security audit](docs/development/FRONTEND_SECURITY_REVIEW.md), with an explicit dependency on open P1-DEV-003 PR #5. Actual APIs, independent review, device/store proof, cloud setup and phase acceptance remain Pending.
 
 P1-DEV-003 adds [local sensitive-client controls and integration handoffs](docs/development/SENSITIVE_CLIENT_FLOWS.md), depending on the unmerged P1-DEV-002 candidate. Actual APIs/providers, private call transport, native-device proof and cloud setup remain Pending.

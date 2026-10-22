@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-22 — P1-DEV-090 local cumulative verification (G1 Pending)
+
+- Added clean committed-candidate verification using the full existing gate and full-history/index secret scan, with immutable-per-run ignored evidence bundles and source/config/build/log hashes.
+- Bound browser runs to source and all five build roots before/after execution; changed/missing source/artifacts fail the run. Added unit and actual-browser negative controls for false/stale/empty/drifting evidence and prepared metadata retention in application CI.
+- Recorded all 20 canonical G1 groups' supporting local coverage, missing prerequisites, dependency PRs and independent handoffs. Cloud, integrated backend/provider, load/jobs/recovery/alerts, real-device and company/phase approval remain Pending; company scope, stack and six-member allocations are unchanged.
+
 ## 2026-10-22 — P1-DEV-004 local frontend security (integration/review Pending)
 
 - Added structured public knowledge draft/review/withdrawal shells, independent approval controls and strict current-source cited Companion rendering on web/native. Safety blocks remain approved plaintext; unsupported actions execute nothing and human help is only explicitly queued.

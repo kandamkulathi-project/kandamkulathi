@@ -17,3 +17,5 @@ Status: Pending. Gate: G1 / G2 / G3 prelaunch / G3 postdeploy. QA coordinator: T
 | Promotion/closure | Reviewed dev->main/tree/artifact equivalence and smoke; G3 additionally safe live observation/reconciliation and final public/ownership closure. |
 
 Do not rewrite a failed result retrospectively; append fix/retest/new decision. Release Go is not supplied by a blank template or documentation check.
+
+P1 local supporting evidence can be generated with `pnpm verify:p1-local`; see [the local verification protocol and outstanding G1 proofs](P1_DEV_090_LOCAL_VERIFICATION.md). Record its actual run ID/candidate and restricted evidence reference. Its local pass and checksums do not grant whole-case acceptance, independent approval or a gate decision.

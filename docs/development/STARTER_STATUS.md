@@ -2,6 +2,8 @@
 
 **Baseline:** 2026-10-19. Purpose: give all six members the same runnable code and reviewed documents. No G1/G2/G3 approval, completed requirement, live service or production deployment is implied. All R01–R38 and existing assignments remain required.
 
+**P1-DEV-090 local update, 2026-10-22:** [Cumulative verification and readiness](../quality/P1_DEV_090_LOCAL_VERIFICATION.md) adds committed-candidate evidence generation, source/build parity enforcement around browser tests and the full 20-group G1 prerequisite register. No actual cloud/device/provider/load/recovery proof or independent/company gate approval is implied. Store run evidence outside Git and rerun after meaningful candidate changes.
+
 **P1-DEV-004 local update, 2026-10-22:** [Frontend security and channel foundation](FRONTEND_SECURITY_REVIEW.md) adds structured knowledge draft/review/withdrawal controls, strict current-source cited chat and explicit queued handoff shells, native exact-origin credential transport and built-client artifact scans. Real APIs still return 503; Mathew's backend source/independent review, real devices/providers and all cloud/phase acceptance remain Pending.
 
 **P1-DEV-003 local update, 2026-10-22:** [Sensitive client controls](SENSITIVE_CLIENT_FLOWS.md) add proposed CSRF/consent/payment/booking/intake/membership contracts, minimum web/native views and Razorpay reconciliation adapters. Actual Core business APIs remain unavailable. Auth/provider/signaling integration, native compilation/devices, independent review, cloud setup and phase acceptance remain Pending. The backend/provider limitations below still apply.
