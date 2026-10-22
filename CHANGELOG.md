@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-22 — P1-DEV-004 local frontend security (integration/review Pending)
+
+- Added structured public knowledge draft/review/withdrawal shells, independent approval controls and strict current-source cited Companion rendering on web/native. Safety blocks remain approved plaintext; unsupported actions execute nothing and human help is only explicitly queued.
+- Added version/expiry/source/session negative regressions, including expiry while parallel references load, unsaved editor review, refresh concurrency and pagehide suspension. Actual local Worker 503/CORS cases remain unmocked.
+- Added built-client artifact auditing to free local/CI security gates, restrictive workspace frame/cache headers and exact-origin native credential transport. Preserved the stack, canonical requirements, six-member plans and Pending cloud/backend/native/company/independent acceptance.
+
 ## 2026-10-22 — P1-DEV-003 local sensitive clients (review/integration Pending)
 
 - Recheck operation expiry at actual SDK launch after asynchronous setup. A permanent Chromium regression first reproduced checkout opening after expiry while its script was delayed; shared/native/browser deadline guards now prevent it and retain server reconciliation.

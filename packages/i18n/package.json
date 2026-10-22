@@ -9,6 +9,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./sensitive": "./src/sensitive.ts",
+    "./knowledge": "./src/knowledge.ts",
     "./fonts.css": "./fonts/fonts.css"
   }
 }

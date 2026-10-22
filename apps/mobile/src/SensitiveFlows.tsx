@@ -1,4 +1,5 @@
 import { loadSession, type Resource } from "@kandamkulathi/client";
+import { nativeApiTransport } from "@kandamkulathi/client/knowledge";
 import {
   bookingExpired,
   mayJoin,
@@ -32,6 +33,7 @@ import {
   View,
 } from "react-native";
 import { nativeCheckout } from "./checkout";
+import { NativeCompanion } from "./NativeCompanion";
 import { nativeVault } from "./native";
 
 const Font = createContext<string | undefined>(undefined);
@@ -71,6 +73,7 @@ function NativeSessionControls({ locale, refresh }: { locale: Locale; refresh():
   const [runtime, setRuntime] = useState<{
     client: ReturnType<typeof sensitiveClient>;
     flow: ReturnType<typeof paymentFlow>;
+    companion: ReturnType<typeof sensitiveClient>;
   }>();
   useEffect(() => {
     let active = true;
@@ -78,6 +81,7 @@ function NativeSessionControls({ locale, refresh }: { locale: Locale; refresh():
     const controller = new AbortController();
     let expiry: ReturnType<typeof setTimeout> | undefined;
     let client: ReturnType<typeof sensitiveClient> | undefined;
+    let companion: ReturnType<typeof sensitiveClient> | undefined;
     let flow: ReturnType<typeof paymentFlow> | undefined;
     const rawEnvironment: string = Constants.expoConfig?.extra?.environment ?? "local";
     const environment =
@@ -88,19 +92,8 @@ function NativeSessionControls({ locale, refresh }: { locale: Locale; refresh():
     const vault = nativeVault(environment);
     const checkout = nativeCheckout(environment !== "production");
     // Only the approved API gets the secure-store bearer. No token is added to provider requests.
-    const transport: typeof fetch = async (input, init) => {
-      if (!active || controller.signal.aborted || String(input).split("/v1/")[0] !== origin)
-        throw new Error("Stale API request");
-      const token = await vault.read();
-      if (!active || controller.signal.aborted) throw new Error("Stale API request");
-      const headers = new Headers(init?.headers);
-      if (token) {
-        if (!/^[A-Za-z0-9._~-]{16,2048}$/.test(token))
-          throw new Error("Invalid session credential");
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-      return fetch(input, { ...init, headers });
-    };
+    const live = () => active && !controller.signal.aborted;
+    const transport = nativeApiTransport(origin, environment === "local", vault.read, live);
     const clear = () => {
       setConsent(undefined);
       setPayment(undefined);
@@ -115,6 +108,7 @@ function NativeSessionControls({ locale, refresh }: { locale: Locale; refresh():
       generation.current++;
       epoch++;
       client?.dispose();
+      companion?.dispose();
       flow?.dispose();
       checkout.dispose();
       clear();
@@ -153,7 +147,22 @@ function NativeSessionControls({ locale, refresh }: { locale: Locale; refresh():
             onRevoked: invalidate,
           });
           flow = paymentFlow(client, checkout.open);
-          setRuntime({ client, flow });
+          const companionOrigin: string =
+            Constants.expoConfig?.extra?.companionApiOrigin ?? "http://127.0.0.1:8788";
+          companion = sensitiveClient({
+            origin: companionOrigin,
+            local: environment === "local",
+            session: result.data,
+            transport: nativeApiTransport(
+              companionOrigin,
+              environment === "local",
+              vault.read,
+              live,
+            ),
+            uuid: Crypto.randomUUID,
+            onRevoked: invalidate,
+          });
+          setRuntime({ client, flow, companion });
           expiry = setTimeout(
             invalidate,
             Math.min(2147483647, Date.parse(result.data.expiresAt) - Date.now()),
@@ -165,6 +174,7 @@ function NativeSessionControls({ locale, refresh }: { locale: Locale; refresh():
       epoch++;
       controller.abort();
       client?.dispose();
+      companion?.dispose();
       flow?.dispose();
       checkout.dispose();
       clear();
@@ -179,6 +189,7 @@ function NativeSessionControls({ locale, refresh }: { locale: Locale; refresh():
       active = false;
       controller.abort();
       client?.dispose();
+      companion?.dispose();
       flow?.dispose();
       checkout.dispose();
       clearTimeout(expiry);
@@ -462,6 +473,12 @@ function NativeSessionControls({ locale, refresh }: { locale: Locale; refresh():
           )}
         </>
       )}
+      <NativeCompanion
+        key={`${session.status === "ready" ? session.data.userId + session.data.expiresAt : session.status}:${locale}`}
+        client={runtime?.companion}
+        locale={locale}
+        fontFamily={fontFamily}
+      />
     </View>
   );
 }

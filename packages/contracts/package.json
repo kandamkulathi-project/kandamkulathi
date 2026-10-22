@@ -9,7 +9,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
-    "./sensitive": "./src/sensitive.ts"
+    "./sensitive": "./src/sensitive.ts",
+    "./knowledge": "./src/knowledge.ts"
   },
   "dependencies": {
     "zod": "4.6.7"

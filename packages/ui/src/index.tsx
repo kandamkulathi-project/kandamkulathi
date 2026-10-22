@@ -1,6 +1,7 @@
 import { foundation, type Locale, localeNames, locales } from "@kandamkulathi/i18n";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
+export { CompanionShell } from "./CompanionShell";
 export { DeviceCheck } from "./DeviceCheck";
 export { useSession } from "./session";
 export function LanguageSelect({
@@ -46,12 +47,14 @@ export function Field({
   help,
   value,
   onChange,
+  disabled = false,
 }: {
   id: string;
   label: string;
   help: string;
   value: string;
   onChange(value: string): void;
+  disabled?: boolean;
 }) {
   return (
     <div className="field">
@@ -59,6 +62,7 @@ export function Field({
       <textarea
         id={id}
         value={value}
+        disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
         aria-describedby={`${id}-help`}
         maxLength={4000}

@@ -7,18 +7,22 @@ export function useSession(origin: string, local: boolean) {
   const [attempt, setAttempt] = useState(0);
   const [blocked, setBlocked] = useState(false);
   const latestAttempt = useRef(attempt);
+  const generation = useRef(0);
   latestAttempt.current = attempt;
   const [result, setResult] = useState<Resource<ClientSession>>({ status: "loading" });
   const reload = useCallback(() => {
+    generation.current++;
     setBlocked(false);
     setResult({ status: "loading" });
     setAttempt((value) => value + 1);
   }, []);
   const invalidate = useCallback(() => {
+    generation.current++;
     setBlocked(true);
     setResult({ status: "anonymous" });
   }, []);
   useEffect(() => {
+    const lifetime = generation.current;
     const controller = new AbortController();
     if (blocked) return () => controller.abort();
     setResult({ status: "loading" });
@@ -26,10 +30,16 @@ export function useSession(origin: string, local: boolean) {
     let expiry: ReturnType<typeof setTimeout> | undefined;
     const timeout = setTimeout(() => {
       controller.abort();
-      setResult({ status: "error" });
+      if (lifetime === generation.current) setResult({ status: "error" });
     }, 5000);
     void loadSession(origin, local, controller.signal).then((value) => {
-      if (controller.signal.aborted || document.hidden || latestAttempt.current !== attempt) return;
+      if (
+        controller.signal.aborted ||
+        document.hidden ||
+        latestAttempt.current !== attempt ||
+        lifetime !== generation.current
+      )
+        return;
       clearTimeout(timeout);
       setResult(value);
       if (value.status === "ready")
@@ -51,9 +61,17 @@ export function useSession(origin: string, local: boolean) {
     };
     document.addEventListener("visibilitychange", invalidate);
     window.addEventListener("pageshow", invalidate);
+    // pagehide may occur without visibilitychange (navigation/BFCache). Resume must revalidate.
+    window.addEventListener("pagehide", suspend);
+    function suspend() {
+      generation.current++;
+      setBlocked(true);
+      setResult({ status: "anonymous" });
+    }
     return () => {
       document.removeEventListener("visibilitychange", invalidate);
       window.removeEventListener("pageshow", invalidate);
+      window.removeEventListener("pagehide", suspend);
     };
   }, [reload]);
   return { result, reload, invalidate };

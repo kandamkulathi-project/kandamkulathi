@@ -1,5 +1,19 @@
 import type { ClientSession } from "@kandamkulathi/contracts/client";
 import {
+  type ApprovedEntry,
+  approvedEntrySchema,
+  chatInputSchema,
+  draftSchema,
+  type Handoff,
+  handoffSchema,
+  type KnowledgeDraft,
+  type KnowledgeReply,
+  localeSchema,
+  replySchema,
+  reviewReady,
+  saveDraftSchema,
+} from "@kandamkulathi/contracts/knowledge";
+import {
   type Appointment,
   appointmentSchema,
   type Checkout,
@@ -206,6 +220,69 @@ export function sensitiveClient(options: {
       clear();
     },
     security,
+    chat: (input: unknown) => {
+      const parsed = chatInputSchema.safeParse(input);
+      return parsed.success
+        ? mutate("/v1/chat/replies", replySchema, parsed.data, `chat:${parsed.data.operationId}`)
+        : Promise.resolve(failure<KnowledgeReply>("error"));
+    },
+    approvedEntry: (id: string) =>
+      reference(id)
+        ? request(`/v1/knowledge/approved/${id}`, approvedEntrySchema)
+        : Promise.resolve(failure<ApprovedEntry>("error")),
+    knowledgeDraft: (id: string) =>
+      reference(id)
+        ? request(`/v1/knowledge/drafts/${id}`, draftSchema)
+        : Promise.resolve(failure<KnowledgeDraft>("error")),
+    saveKnowledgeDraft: (input: unknown, operationId: string) => {
+      const parsed = saveDraftSchema.safeParse(input);
+      return parsed.success && reference(operationId)
+        ? mutate(
+            "/v1/knowledge/drafts",
+            draftSchema,
+            parsed.data,
+            `draft:${parsed.data.id ?? operationId}:${parsed.data.expectedRevision ?? "new"}`,
+          )
+        : Promise.resolve(failure<KnowledgeDraft>("error"));
+    },
+    reviewKnowledge: async (
+      id: string,
+      revision: number,
+      action: "request_review" | "approve" | "withdraw",
+    ): Promise<SensitiveResult<KnowledgeDraft>> => {
+      if (
+        !reference(id) ||
+        !Number.isSafeInteger(revision) ||
+        revision < 1 ||
+        !["request_review", "approve", "withdraw"].includes(action)
+      )
+        return failure("error");
+      const current = await request(`/v1/knowledge/drafts/${id}`, draftSchema);
+      if (current.status !== "ready") return current;
+      const draft = current.data;
+      if (draft.id !== id || draft.revision !== revision) return failure("conflict");
+      const allowed =
+        action === "request_review"
+          ? draft.state === "draft" && draft.permissions.edit && reviewReady(draft.document)
+          : action === "approve"
+            ? draft.state === "in_review" &&
+              draft.permissions.approve &&
+              draft.authorId !== options.session?.userId &&
+              reviewReady(draft.document)
+            : draft.state === "approved" && draft.permissions.withdraw;
+      return allowed
+        ? mutate(
+            `/v1/knowledge/drafts/${id}/${action}`,
+            draftSchema,
+            { expectedRevision: revision },
+            `review:${id}:${revision}:${action}`,
+          )
+        : failure("denied");
+    },
+    requestHandoff: (operationId: string, locale: string) =>
+      reference(operationId) && localeSchema.safeParse(locale).success
+        ? mutate("/v1/support/handoffs", handoffSchema, { locale }, `handoff:${operationId}`)
+        : Promise.resolve(failure<Handoff>("error")),
     consents: () => request("/v1/consents/current", consentSchema),
     saveConsents: (input: unknown) => {
       const parsed = consentSubmissionSchema.safeParse(input);

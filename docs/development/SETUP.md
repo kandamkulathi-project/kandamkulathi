@@ -36,6 +36,8 @@ Run `pnpm dev:mobile`. Use a compatible Expo Go for baseline preview where suppo
 
 ## Validation before PR
 
+P1-DEV-004 also uses separate public **origin-only** inputs `VITE_CORE_API_ORIGIN` / `VITE_COMPANION_API_ORIGIN` (workspace) and `EXPO_PUBLIC_CORE_API_ORIGIN` / `EXPO_PUBLIC_COMPANION_API_ORIGIN` (native). Defaults are loopback 8787/8788 for local preview; these values are public, never credentials. Configure explicit approved HTTPS origins for nonlocal builds and review CORS/cookie/native audience policy with Mathew. Do not copy the root secret inventory into frontend variables. Native public-variable guards require both origins for company builds. See [the API handoff](FRONTEND_SECURITY_REVIEW.md); supplying URLs cannot enable the unavailable services.
+
 Local install also enables the pre-commit hook. It runs full app/security/browser/docs checks and requires a clean staged working tree on a feature branch. Existing custom hooks are preserved and require deliberate integration. See [security automation](../security/SECURITY_AUTOMATION.md) for tool/browser setup, supported platforms, live-feed Internet requirements and blocked remote enforcement. Run `pnpm hooks:install` after moving or changing the local pnpm installation; run `pnpm precommit` to diagnose a failure. Local hooks are bypassable and do not replace server policies.
 
 ```sh

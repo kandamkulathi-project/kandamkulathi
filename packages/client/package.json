@@ -11,7 +11,8 @@
     "./media": "./src/media.ts",
     "./capture": "./src/capture.ts",
     "./sensitive": "./src/sensitive.ts",
-    "./consultation": "./src/consultation.ts"
+    "./consultation": "./src/consultation.ts",
+    "./knowledge": "./src/knowledge.ts"
   },
   "dependencies": {
     "@kandamkulathi/contracts": "workspace:*"

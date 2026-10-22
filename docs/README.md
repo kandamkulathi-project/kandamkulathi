@@ -15,6 +15,8 @@ Start with [AGENTS](../AGENTS.md), [repository README](../readme.md) and [setup]
 
 ## Engineering
 
+- [P1-DEV-004 frontend security, editor/Companion contracts and Pending peer review](development/FRONTEND_SECURITY_REVIEW.md).
+
 - [P1-DEV-003 sensitive client implementation and remaining handoffs](development/SENSITIVE_CLIENT_FLOWS.md); [native/provider proof still Pending](operations/NATIVE_READINESS.md).
 
 - [Setup](development/SETUP.md), [commands/status](development/COMMANDS.md), [coding standards](development/CODING_STANDARDS.md), [API/event contracts](development/API_CONVENTIONS.md), [Git workflow](development/GIT_WORKFLOW.md), [contributing](../CONTRIBUTING.md).
