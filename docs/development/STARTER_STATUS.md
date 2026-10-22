@@ -4,7 +4,7 @@
 
 **P1-DEV-002 local update, 2026-10-20:** [Client foundation](CLIENT_FOUNDATION.md) implements shared state/session/return/link contracts, bounded capture/cleanup, native storage/configuration adapters, reusable UI and offline language fonts. Company/provider/cloud/real-device/native-build proof remains [Pending](../operations/NATIVE_READINESS.md). JavaScript/config-plugin tests do not establish native SDK or phase acceptance.
 
-**Audit status:** the original two high Expo-toolchain findings have local source backports and executed regressions, with independent review Pending. The registry still reports the original base versions; the two moderate findings have been removed with targeted esbuild/uuid fixed-release overrides and real parent-resolved tests. [Dependency remediation](../security/DEPENDENCY_RISKS.md) and [ADR 0005](../architecture/adr/0005-toolchain-security-backports.md) explain the verified-source decision and unchanged raw findings. A passed verification check is not upstream remediation, independent review or phase approval.
+**Audit status:** the original two high Expo-toolchain findings have local source backports and executed regressions, with independent review Pending. The registry still reports the original base versions; the two moderate findings are addressed by a targeted esbuild override and upstream Xcode uuid-dependency removal, with real parent-resolved tests. [Dependency remediation](../security/DEPENDENCY_RISKS.md) and [ADR 0005](../architecture/adr/0005-toolchain-security-backports.md) explain the verified-source decision and unchanged raw findings. A passed verification check is not upstream remediation, independent review or phase approval.
 
 ## Implemented foundation
 

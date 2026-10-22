@@ -1,6 +1,51 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Page, type Response, test } from "@playwright/test";
 
 const origin = "http://127.0.0.1:5173";
+
+test("real Core session 503 reaches the unavailable workspace state with credentialed CORS", async ({
+  page,
+}) => {
+  const responses: Response[] = [];
+  const corsErrors: string[] = [];
+  page.on("response", (response) => {
+    if (response.url() === "http://127.0.0.1:8787/v1/session") responses.push(response);
+  });
+  page.on("console", (message) => {
+    if (/CORS policy|Access-Control-Allow-Credentials/i.test(message.text()))
+      corsErrors.push(message.text());
+  });
+  // No route interception: Chromium fetches the actual Core Worker using loadSession.
+  await page.goto(`${origin}/customer`);
+  await expect(page.locator("[data-session-state]")).toHaveAttribute(
+    "data-session-state",
+    "unavailable",
+  );
+  expect(responses.length).toBeGreaterThan(0);
+  for (const response of responses) {
+    expect(response.status()).toBe(503);
+    expect(response.headers()["access-control-allow-origin"]).toBe(origin);
+    expect(response.headers()["access-control-allow-credentials"]).toBe("true");
+    expect(response.headers()["cache-control"]).toBe("no-store");
+  }
+  // loadSession maps 503 without consuming its body. Explicitly read another real response
+  // in Chromium to verify browser access to the error payload, rather than a protocol body wait.
+  const probe = await page.evaluate(async () => {
+    const response = await fetch("http://127.0.0.1:8787/v1/session", {
+      credentials: "include",
+      cache: "no-store",
+      redirect: "error",
+    });
+    return { status: response.status, body: await response.json() };
+  });
+  expect(probe.status).toBe(503);
+  expect(probe.body).toMatchObject({ error: { code: "FEATURE_UNAVAILABLE" } });
+  expect(corsErrors).toEqual([]);
+  await expect(page.getByRole("heading", { name: "No items to display." })).toHaveCount(0);
+  expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
+});
+
+// Isolated response fixtures exercise individual UI/grant scenarios. The test above owns
+// verification of the actual server CORS policy; these fixture headers do not prove it.
 const headers = {
   "Access-Control-Allow-Origin": origin,
   "Access-Control-Allow-Credentials": "true",
