@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Local development supervision — 2026-10-23 (review Pending)
+
+- Keep Astro dev and preview in the foreground under agent detection so `pnpm dev` does not stop sibling services after a successful background launcher exit and Playwright can supervise preview cleanup.
+- Add a script contract regression and actual four-service browser/Worker lifecycle campaign to `pnpm test:e2e`; readiness and business/provider acceptance remain Pending.
+- Isolate external scanners from inherited Git hook repository selectors, while preserving Git's actual candidate index. This prevents generated ignored bundles being parsed as authored source during linked-worktree commits; rules and fail-closed gates are unchanged, with real scanner and environment regressions.
+
 ### P1-DEV-002 credentialed CORS correction — 2026-10-22 (independent review Pending)
 
 - Align the shared HTTP boundary with the session client's credentialed requests, granting CORS only to the four existing exact local web origins in explicit local mode. Other origins and unconfigured nonlocal environments remain denied; allowed methods and session authorization are unchanged.

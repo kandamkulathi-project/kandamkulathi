@@ -38,6 +38,8 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser and actual local workerd smoke tests
         run: pnpm exec playwright test
+      - name: Agent-detected development supervision regression
+        run: pnpm exec playwright test --config playwright.dev.config.ts
   dependency-audit:
     runs-on: ubuntu-latest
     timeout-minutes: 15

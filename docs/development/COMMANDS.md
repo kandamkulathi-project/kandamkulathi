@@ -6,6 +6,7 @@ Run from repository root with Node 24.22.1/pnpm 10.34.7. All application command
 |---|---|---|
 | Reproducible install | `pnpm install --frozen-lockfile` | Downloads exact locked packages; allowed build scripts limited by workspace configuration. No provider setup. |
 | Four local web/API servers | `pnpm dev` | Loopback ports 4321/5173/8787/8788; no public deployment. |
+| Development lifecycle | `pnpm exec playwright test --config playwright.dev.config.ts` | Starts actual `pnpm dev` under agent detection; verifies foreground supervision and stops owned servers. See [lifecycle](DEV_SERVER_LIFECYCLE.md). |
 | Individual local service | `pnpm dev:public`, `pnpm dev:workspaces`, `pnpm dev:core`, `pnpm dev:companion` | Same local services, separately operated. |
 | Mobile Metro server | `pnpm dev:mobile` | Expo development server; LAN/emulator permissions may be needed. |
 | Lint and formatting check | `pnpm lint` | Biome supported code/config files; docs/Python checked separately. |

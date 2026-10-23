@@ -27,6 +27,8 @@ pnpm hooks:install
 
 The `.githooks/pre-commit` gate refuses commits on `dev`/`main`, detached commits, unstaged tracked changes and unrelated untracked files. Stage intended files and move unrelated work first; it never stashes or deletes developers' changes. It runs lint/type/unit/security/build verification, actual scanner detection tests, SAST, indexed-file secrets, current Node/dependency checks, Expo compatibility, browser/Worker E2E and documentation tests. It checks again that tools did not modify tracked inputs. Stop development servers occupying E2E ports. Network access is required for live advisories and first scanner/browser installation. Run `pnpm precommit` to diagnose failures.
 
+External scanners clear inherited Git hook repository selectors and discover their repository from their explicit working directory. This preserves normal ignored generated-build/dependency exclusions in linked worktrees; authored-source targets, rules and fail-closed parse handling are unchanged. Git operations in the candidate repository retain the actual staged/alternate index for export and tree checks. Synthetic repositories cannot inherit that index. Regression checks exercise both boundaries and the real scanner under a synthetic hook environment.
+
 Local Git hooks are bypassable and cannot supply server enforcement. Never use a bypass to integrate failing changes. CI repeats security checks independently.
 
 ## PR and scheduled checks

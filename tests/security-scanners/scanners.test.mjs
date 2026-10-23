@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import { describe, it } from "node:test";
 import { execute, sast, scanSecrets } from "../../scripts/security/scan.mjs";
+import { root } from "../../scripts/security/tools.mjs";
 
 function fixture() {
   const folder = mkdtempSync(join(tmpdir(), "kandamkulathi-security-"));
@@ -52,9 +53,34 @@ describe("real security scanner end-to-end negative controls", () => {
     const { folder, cleanup } = fixture();
     try {
       writeFileSync(join(folder, "broken.ts"), "export function broken( { !!!");
-      await assert.rejects(sast(["broken.ts"], folder));
+      await assert.rejects(sast(["broken.ts"], folder), (error) => {
+        assert.match(error.message, /SAST (failed|parsing\/configuration errors require review)/);
+        assert(!error.message.includes("export function broken"), "Scanner error disclosed source");
+        return true;
+      });
     } finally {
       cleanup();
+    }
+  });
+  it("scans authored source with inherited Git hook repository selectors", async () => {
+    const keys = ["GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR"];
+    const previous = keys.map((key) => [key, process.env[key]]);
+    try {
+      for (const key of keys) process.env[key] = join(root, ".local-data", `synthetic-${key}`);
+      const report = await sast();
+      assert.equal(report.results.length, 0);
+      assert(report.paths.scanned.includes("packages/server/src/index.ts"));
+      assert(
+        report.paths.scanned.every(
+          (path) => !/(^|\/)(node_modules|dist|\.wrangler|\.astro)\//.test(path),
+        ),
+        "Generated artifacts must not replace the documented authored-source target set",
+      );
+    } finally {
+      for (const [key, value] of previous) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
     }
   });
   it("detects React/Astro raw HTML and GitHub Actions expression injection", async () => {
