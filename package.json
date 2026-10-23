@@ -32,7 +32,7 @@
     "prepare": "node scripts/security/install-hooks.mjs",
     "precommit": "node scripts/security/pre-commit.mjs",
     "build": "pnpm -r --if-present build",
-    "test:e2e": "pnpm build && playwright test",
+    "test:e2e": "pnpm build && playwright test && playwright test --config playwright.dev.config.ts",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm test:security && pnpm build",
     "mobile:check": "pnpm --filter @kandamkulathi/mobile check",
     "db:generate": "pnpm --filter @kandamkulathi/database generate",

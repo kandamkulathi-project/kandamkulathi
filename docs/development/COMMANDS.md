@@ -6,12 +6,13 @@ Run from repository root with Node 24.22.1/pnpm 10.34.7. All application command
 |---|---|---|
 | Reproducible install | `pnpm install --frozen-lockfile` | Downloads exact locked packages; allowed build scripts limited by workspace configuration. No provider setup. |
 | Four local web/API servers | `pnpm dev` | Loopback ports 4321/5173/8787/8788; no public deployment. |
+| Development lifecycle | `pnpm exec playwright test --config playwright.dev.config.ts` | Starts actual `pnpm dev` under agent detection; verifies foreground supervision and stops owned servers. See [lifecycle](DEV_SERVER_LIFECYCLE.md). |
 | Individual local service | `pnpm dev:public`, `pnpm dev:workspaces`, `pnpm dev:core`, `pnpm dev:companion` | Same local services, separately operated. |
 | Mobile Metro server | `pnpm dev:mobile` | Expo development server; LAN/emulator permissions may be needed. |
 | Lint and formatting check | `pnpm lint` | Biome supported code/config files; docs/Python checked separately. |
 | Format supported files | `pnpm format` | Writes formatting changes. Review resulting diff. |
 | Typecheck all workspaces | `pnpm typecheck` | Strict TS, Astro diagnostics and Expo TS; no credentials. |
-| Unit + HTTP/client boundary tests | `pnpm test` | Integer arithmetic, Hono HTTP safety, strict session/grant/return/link contracts, storage ordering, locale formatting and capture cancellation/cleanup. Node runtime and synthetic ports; not native-device/database proof. |
+| Unit + HTTP/client boundary tests | `pnpm test` | Integer arithmetic, Hono HTTP/client safety, current identity/consent, booking intents, primary-knowledge safety, webhook crypto/receipt and channel-state contracts. Node runtime and synthetic authority/repositories; not real authentication, durability, native-device or database proof. |
 | Interactive focused tests | `pnpm test:watch` | Vitest watch; stop manually. |
 | Build starter artifacts | `pnpm build` | Static Astro/Vite assets, Expo Android/iOS JS exports and both Worker dry bundles. Writes ignored `dist` output; no deploy/native signing. |
 | Security regressions and policy controls | `pnpm test:security` | Expo-resolved Forge/braces and patch-decision regressions; mobile input/secret guards and actual Expo iOS/Android plugin introspection for local/dev fixtures. No native compilation or signing. |
@@ -27,8 +28,8 @@ Run from repository root with Node 24.22.1/pnpm 10.34.7. All application command
 | Expo compatibility/config | `pnpm mobile:check` | Dependency check and public config resolution; no device/store claim. |
 | Raw registry advisories | `pnpm audit --audit-level high` | Unsuppressed base-version scan; still returns nonzero for the two locally patched packages. Use with installed-source verification, never describe it as a clean scan. |
 | Browser installation | `pnpm exec playwright install chromium` | Downloads the pinned test browser. Linux CI additionally installs OS dependencies. |
-| Browser + actual Worker runtime | `pnpm test:e2e` | Builds, then Chromium UI/locale/mobile-width tests and actual local workerd requests; owns four ports, no reused servers. |
-| CI E2E after build | `pnpm exec playwright test` | Same tests; assumes current build artifacts exist. |
+| Browser + actual Worker runtime | `pnpm test:e2e` | Builds, then Chromium UI/locale/mobile-width and actual local workerd fail-closed requests, followed by actual supervised dev startup; owns four ports sequentially, no reused servers. No functioning business journey is implied. |
+| CI E2E after build | `pnpm exec playwright test`, then `pnpm exec playwright test --config playwright.dev.config.ts` | Preview/Worker and separate development lifecycle campaigns; assumes current build artifacts exist. |
 | Offline SQL generation | `pnpm db:generate` | Generates SQL/snapshots from Drizzle definitions. Custom access migrations remain separately reviewed. No database connection or schema push. |
 | Validate planned resource inventory | `pnpm platform:manifest config/environments/dev.json` | Identifiers only; use `--provisioned` to require actual account/endpoint/review evidence. No network/mutation. |
 | Render isolated Worker configuration | `pnpm platform:render config/environments/dev.json core-api .local-data/platform/dev-core.json` | Writes ignored configuration with exact inventory bindings, no secrets/provisioning/deployment. Companion is rendered separately. |

@@ -1,7 +1,8 @@
-import { createService } from "@kandamkulathi/server";
+import type { MessageBatch, ScheduledController } from "@cloudflare/workers-types";
+import { createCoreApi } from "./identity";
 import { consumeJobs, dispatchJobs, type PlatformBindings } from "./jobs";
 
-const app = createService("core-api");
+const app = createCoreApi();
 export default {
   fetch: app.fetch,
   scheduled: async (_event: ScheduledController, env: PlatformBindings): Promise<void> => {

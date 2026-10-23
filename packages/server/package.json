@@ -8,6 +8,9 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./identity": "./src/identity.ts",
+    "./authorization": "./src/authorization.ts",
+    "./authorization-consent": "./src/authorization-consent.ts",
     "./config": "./src/config.ts",
     "./observability": "./src/observability.ts"
   },

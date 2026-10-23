@@ -6,6 +6,17 @@ import { pathToFileURL } from "node:url";
 import { sha256 } from "./policy.mjs";
 import { cachedTool, root, tool } from "./tools.mjs";
 
+export function executionEnvironment(command, cwd, source = process.env) {
+  const env = { ...source, SEMGREP_SEND_METRICS: "off" };
+  // Scanners must discover their repository from cwd, not Git's inherited hook context.
+  // Git itself retains the candidate's alternate index only for operations in this repository.
+  if (command !== "git" || resolve(cwd) !== resolve(root)) {
+    for (const key of ["GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR"])
+      delete env[key];
+  }
+  return env;
+}
+
 export function execute(command, args, cwd, input) {
   // Only fixed Git or checksum-verified scanner executables may run; never a caller-supplied path.
   let binary;
@@ -22,11 +33,7 @@ export function execute(command, args, cwd, input) {
     default:
       throw new Error("Unapproved executable");
   }
-  const env = { ...process.env, SEMGREP_SEND_METRICS: "off" };
-  if (resolve(cwd) !== resolve(root)) {
-    for (const key of ["GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR"])
-      delete env[key];
-  }
+  const env = executionEnvironment(command, cwd);
   const result = spawnSync(binary, args, {
     cwd,
     input,
@@ -72,7 +79,14 @@ export async function sast(targets = ["apps", "packages", "scripts", ".github"],
   assert([0, 1].includes(result.status), `SAST failed: ${result.stderr}`);
   const report = JSON.parse(result.stdout);
   assert(Array.isArray(report.results) && Array.isArray(report.errors), "Invalid SAST report");
-  assert.equal(report.errors.length, 0, "SAST parsing/configuration errors require review");
+  // Report only classifications/paths: scanner messages may contain source snippets.
+  assert.equal(
+    report.errors.length,
+    0,
+    `SAST parsing/configuration errors require review: ${JSON.stringify(
+      report.errors.map(({ type, path }) => ({ type, path })),
+    )}`,
+  );
   assert(report.paths?.scanned?.length > 0, "SAST scanned no files");
   return report;
 }

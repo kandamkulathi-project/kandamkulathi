@@ -1,3 +1,4 @@
+import type { MessageBatch, Queue } from "@cloudflare/workers-types";
 import { withDatabase } from "@kandamkulathi/database/client";
 import {
   acquireExecution,

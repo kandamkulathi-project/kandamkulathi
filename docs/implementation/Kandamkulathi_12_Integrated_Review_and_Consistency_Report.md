@@ -15,6 +15,7 @@
 | F05 — Several “final” architecture alternatives still appeared current | High | Unnumbered files described Medusa/AWS, RDS/Cognito, D1 and an older Neon schedule/cost baseline. Selecting by “Final” could lead to the wrong stack. | Marked all four as superseded historical alternatives and published current document precedence. Active architecture remains Workers Paid + Neon PostgreSQL from development; no D1 migration/rewrite. | Corrected. |
 | F06 — Shared test windows could invalidate measured results | Medium | Load/soak/fault/restore campaigns appeared on the same day without an explicit resource/window contention rule. Parallel work could corrupt fixtures or confound benchmarks. | Added protected measurement windows, separately verified fault/recovery targets or serialized runs, exact resource/provider manifest and explicit operator/cost accounting in master, Phase 3, Devadathan/Tinu plans and canonical tests. | Control documented; actual staffing/targets/windows Pending. |
 | F07 — Date/capacity estimate was not validated by real assets | High | Two experienced developers own clinical/backend/AI plus frontend/native/platform/review. No proven reusable modules, provider eligibility or timed test rehearsal was supplied. | Retained Day 1 reuse/effort proof and No-go/reforecast rules; no scope/test reduction or new engineer/overtime was inserted. Approved core designs/brand assets remain an explicit company readiness input. | Open delivery condition; cannot be closed by document editing. |
+| KAN-189 — Five named readiness packages lacked requirement/output links | Medium | P1-JOS-080, P1-PAU-080, P2-PAU-080, P1-DEN-080 and P2-DEN-080 contained empty Requirements/Outputs fields despite the package completion rule. Their phase registers have no corresponding legacy technical reference. | Added direct links to existing master §2 requirements and Phase 1/2 §3 outputs, with package-local source rationale. Clarified early-phase preparation versus Phase 3 live acceptance, public installs, recorded training and final handover. No technical IDs invented; hours, budget, gate criteria and duties unchanged. The repository checker now rejects empty, unknown and wrong-phase package traceability. | Documentary links corrected; independent review, execution and company/provider approvals remain Pending. |
 
 ## 2. Explicit proposal sub-acceptance restored
 
@@ -146,6 +147,7 @@ The four unnumbered architecture plans are retained with explicit superseded not
 |---|---|
 | Master / all three phase acceptance and accountable-owner rows | 38/38 match |
 | Named phase registers against member task tables and bodies | 109/109 match |
+| Named member package requirement/output traceability (KAN-189) | 109 packages checked for nonempty valid master requirements and same-phase outputs; five readiness mappings have source rationale. This is not acceptance evidence. |
 | Retained technical references | 103/103 assigned; zero separate obsolete allocation |
 | Planned branch uniqueness and syntax | 109 unique; git check-ref-format passed |
 | Named dependency IDs and clarification task references | All resolve |

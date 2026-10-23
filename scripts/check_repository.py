@@ -186,6 +186,23 @@ def member_plan_paths() -> dict[str, Path]:
     return {code: PLAN/name for code, name in MEMBER_DOCUMENTS.items()}
 
 
+def check_package_traceability(tid: str, section: str, outputs: set[str]) -> tuple[set[str], set[str]]:
+    """Check explicit links, not whether the package or its approvals are complete."""
+    lines = re.findall(r'^\*\*Traceability:\*\* (.+)$', section, re.M)
+    require(len(lines) == 1, f'{tid}: expected one traceability record')
+    require(lines[0].count('Requirements:') == lines[0].count('Outputs:') == 1,
+            f'{tid}: missing/malformed duplicate traceability fields')
+    match = re.fullmatch(
+        r'.+ Requirements: (R\d{2}(?:, R\d{2})*)\. '
+        r'Outputs: (P[123]-O\d{2}(?:, P[123]-O\d{2})*)\.', lines[0])
+    require(match is not None, f'{tid}: missing/malformed requirement/output links')
+    requirements = set(match[1].split(', '))
+    linked_outputs = set(match[2].split(', '))
+    require(requirements <= REQ_IDS, f'{tid}: unknown requirement link')
+    require(linked_outputs <= outputs, f'{tid}: unknown or wrong-phase output link')
+    return requirements, linked_outputs
+
+
 def check_plans() -> tuple[int, int]:
     current = sorted(PLAN.glob('Kandamkulathi_[0-9][0-9]_*.md'))
     require(len(current) == 12, 'Expected the 12 reviewed current documents')
@@ -210,6 +227,9 @@ def check_plans() -> tuple[int, int]:
     for phase in (1, 2, 3):
         phase_path = next(PLAN.glob(f'Kandamkulathi_0{phase+1}_Phase*'))
         text = phase_path.read_text(encoding='utf-8')
+        outputs = set(re.findall(r'^\| (P[123]-O\d{2}) \|', text, re.M))
+        master_outputs = set(re.findall(rf'^\| (P{phase}-O\d{{2}}) \|', master, re.M))
+        require(outputs == master_outputs and bool(outputs), f'Phase {phase}: output ID drift')
         scope = text.split('## 4. Capacity and exact work-package register', 1)[1].split('## 5.', 1)[0]
         actual = {}
         totals = {c: [0, 0, 0, 0] for c in MEMBERS}
@@ -248,6 +268,7 @@ def check_plans() -> tuple[int, int]:
             section = member.split(f'### {tid} — ', 1)[1].split('\n### ', 1)[0]
             require(f'**Allocated time:** {hours} hours' in section and f'`{branch}`' in section,
                     f'{tid}: member hour/branch drift')
+            check_package_traceability(tid, section, outputs)
         # Compare daily category slices as written in phase and member documents.
         day_text = text.split('## 5. Daily sequencing and handoff timing', 1)[1].split('## 6.', 1)[0]
         phase_days = {}

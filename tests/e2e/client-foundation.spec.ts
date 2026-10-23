@@ -38,7 +38,7 @@ test("real Core session 503 reaches the unavailable workspace state with credent
     return { status: response.status, body: await response.json() };
   });
   expect(probe.status).toBe(503);
-  expect(probe.body).toMatchObject({ error: { code: "FEATURE_UNAVAILABLE" } });
+  expect(probe.body).toMatchObject({ error: { code: "IDENTITY_UNAVAILABLE" } });
   expect(corsErrors).toEqual([]);
   await expect(page.getByRole("heading", { name: "No items to display." })).toHaveCount(0);
   expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);

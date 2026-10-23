@@ -6,10 +6,11 @@ import { secureHeaders } from "hono/secure-headers";
 import { environmentSchema, platformConfig } from "./config";
 import { emitEvent, type LogSink, routeCategory } from "./observability";
 
-type Runtime = { Bindings: { APP_ENV?: string }; Variables: { requestId: string } };
+export type ServiceRuntime = { Bindings: { APP_ENV?: string }; Variables: { requestId: string } };
+export type ServiceOptions = { registerRoutes?: (app: Hono<ServiceRuntime>) => void };
 /** Shared HTTP boundary only; no session bypass, provider calls or business success stubs. */
-export function createService(service: Service, sink?: LogSink) {
-  const app = new Hono<Runtime>();
+export function createService(service: Service, sink?: LogSink, options?: ServiceOptions) {
+  const app = new Hono<ServiceRuntime>();
   app.use("*", secureHeaders());
   app.use("*", async (context, next) => {
     const started = performance.now();
@@ -135,6 +136,7 @@ export function createService(service: Service, sink?: LogSink) {
       },
     }),
   );
+  options?.registerRoutes?.(app);
   app.all("/v1/*", (context) =>
     context.json(
       {
@@ -173,3 +175,5 @@ export function createService(service: Service, sink?: LogSink) {
   );
   return app;
 }
+
+export type ServiceApp = ReturnType<typeof createService>;

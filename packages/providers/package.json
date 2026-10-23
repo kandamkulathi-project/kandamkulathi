@@ -7,6 +7,11 @@
     "typecheck": "tsc --noEmit"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./whatsapp": "./src/whatsapp/index.ts"
+  },
+  "dependencies": {
+    "@kandamkulathi/contracts": "workspace:*",
+    "zod": "4.6.7"
   }
 }

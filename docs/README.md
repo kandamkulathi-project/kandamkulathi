@@ -2,6 +2,8 @@
 
 Start with [AGENTS](../AGENTS.md), [repository README](../readme.md) and [setup](development/SETUP.md). The runnable application starter and reviewed plans are versioned here. Business features, actual provider configuration and all phase acceptance remain Pending. See [starter status](development/STARTER_STATUS.md).
 
+For the bounded Mathew backend candidates, implemented scope and remaining integration/approval work, see the [backlog handoff](development/MATHEW_BACKLOG_HANDOFF.md).
+
 ## Authority
 
 1. Current human decisions and applicable instruction hierarchy; approved company requirements/policies.

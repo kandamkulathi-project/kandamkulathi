@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Mathew/platform integration — 2026-10-24 (independent review Pending)
+
+- Merge reviewed platform PR #3 from `dev`, preserving safe configuration/logging, PostgreSQL transport infrastructure, real database CI/hooks and Core Cron/Queue handlers alongside the identity fetch boundary.
+- Keep third-argument feature registration behind platform guards, preserve both Companion registrations, and extend composition regressions for explicit local test configuration and invalid-environment denial before adapter access. Business adapters and all domain/provider/clinical acceptance remain Pending.
+
+### Local development supervision — 2026-10-23 (review Pending)
+
+- Keep Astro dev and preview in the foreground under agent detection so `pnpm dev` does not stop sibling services after a successful background launcher exit and Playwright can supervise preview cleanup.
+- Add a script contract regression and actual four-service browser/Worker lifecycle campaign to `pnpm test:e2e`; readiness and business/provider acceptance remain Pending.
+- Isolate external scanners from inherited Git hook repository selectors, while preserving Git's actual candidate index. This prevents generated ignored bundles being parsed as authored source during linked-worktree commits; rules and fail-closed gates are unchanged, with real scanner and environment regressions.
+
 ### P1-DEV-001 PR #3 second review — 2026-10-23 (independent retest Pending)
 
 - Keep successful final-publication jobs eligible for execution retries; enforce execution backoff without spending attempts on immediate duplicate delivery, while retaining deadlines and bounded budgets.
