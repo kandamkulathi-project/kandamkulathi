@@ -139,6 +139,8 @@ B/V/E/C are daily capacity slices, not new tasks. Review/meetings count within t
 
 **Deliver and verify:** Reproducible deployment, CI checks, resource manifest, alert proof and restore/rollback smoke.
 
+Implementation/evidence: [P1 platform foundation](../operations/P1_PLATFORM_FOUNDATION.md) and [developer handoff](../development/PLATFORM_FOUNDATION.md). Local implementation does not close company-resource verification, independent review or G1.
+
 **Required review:** Mathew for sensitive changes; domain owner for behavior. No self-approval of critical changes.
 
 **Handoff:** Publish stable components, sensitive adapters and environment/build manifests to Paul/Denzil/Tinu; send privileged changes to Mathew for independent review and integrate reviewed client PRs.

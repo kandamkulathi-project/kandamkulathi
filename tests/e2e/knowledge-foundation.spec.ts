@@ -1,4 +1,5 @@
 import { expect, type Page, type Route, test } from "@playwright/test";
+import { saveDraftSchema } from "../../packages/contracts/src/knowledge";
 import { foundation } from "../../packages/i18n/src/foundation";
 import { knowledgeText } from "../../packages/i18n/src/knowledge";
 import { entry, knowledgeDraft, reply } from "../fixtures/knowledge";
@@ -348,14 +349,7 @@ test("editor saves a draft with provenance and scopes, then requests review sepa
     saved = route.request().postDataJSON();
     current = {
       ...knowledgeDraft,
-      document: {
-        ...knowledgeDraft.document,
-        kind: "nonclinical",
-        title: "Synthetic public draft",
-        body: "Synthetic source content",
-        productIds: [reference],
-        concernIds: [otherReference],
-      },
+      document: saveDraftSchema.parse(saved).document,
     };
     return json(route, current);
   });

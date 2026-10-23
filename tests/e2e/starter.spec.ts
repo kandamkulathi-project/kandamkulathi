@@ -44,5 +44,16 @@ for (const [port, service] of [
     expect(denied.status()).toBe(503);
     expect(await denied.json()).toMatchObject({ error: { code: "FEATURE_UNAVAILABLE" } });
     expect(denied.headers()["cache-control"]).toBe("no-store");
+    expect(denied.headers()["x-request-id"]).toMatch(/^[0-9a-f-]{36}$/);
+    const privatePath = await request.get(
+      `${base}/v1/patients/synthetic-private-marker?token=synthetic-token`,
+      {
+        headers: { "X-Request-ID": "untrusted-marker" },
+      },
+    );
+    expect(privatePath.status()).toBe(503);
+    expect(await privatePath.text()).not.toMatch(
+      /synthetic-private-marker|synthetic-token|untrusted-marker/,
+    );
   });
 }

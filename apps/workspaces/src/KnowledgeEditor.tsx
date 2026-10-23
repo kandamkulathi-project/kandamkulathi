@@ -13,6 +13,22 @@ import { knowledgeText } from "@kandamkulathi/i18n/knowledge";
 import { sensitiveText } from "@kandamkulathi/i18n/sensitive";
 import { Button, Notice } from "@kandamkulathi/ui";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createKnowledgeRecovery, type SaveAttempt } from "./knowledgeRecovery";
+
+const recoveryText = {
+  en: {
+    retry: "Retry the same draft save",
+    help: "The save is unconfirmed. Fields are locked; retry sends the same draft and operation, not a new draft.",
+  },
+  ml: {
+    retry: "അതേ ഡ്രാഫ്റ്റ് സേവ് വീണ്ടും ശ്രമിക്കുക",
+    help: "സേവ് സ്ഥിരീകരിച്ചിട്ടില്ല. വിവരങ്ങൾ മാറ്റാനാകില്ല; വീണ്ടും ശ്രമിക്കുമ്പോൾ അതേ ഡ്രാഫ്റ്റും നടപടിയും അയക്കും, പുതിയ ഡ്രാഫ്റ്റല്ല.",
+  },
+  ta: {
+    retry: "அதே வரைவு சேமிப்பை மீண்டும் முயற்சிக்கவும்",
+    help: "சேமிப்பு உறுதியாகவில்லை. புலங்களை மாற்ற முடியாது; மீண்டும் முயற்சிப்பது அதே வரைவையும் செயலையும் அனுப்பும், புதிய வரைவை அல்ல.",
+  },
+};
 
 const empty = (locale: Locale): KnowledgeDocument => ({
   locale,
@@ -57,7 +73,9 @@ export function KnowledgeEditor({
   const epoch = useRef(0);
   const busy = useRef(false);
   const operation = useRef(crypto.randomUUID());
+  const [recovery] = useState(createKnowledgeRecovery);
   const reset = () => {
+    recovery.clear();
     setDraft(undefined);
     setDocument(undefined);
     setProducts("");
@@ -66,13 +84,15 @@ export function KnowledgeEditor({
   useEffect(
     () => () => {
       epoch.current++;
+      recovery.clear();
       client.dispose();
     },
-    [client],
+    [client, recovery],
   );
   useEffect(() => {
     const suspend = () => {
       epoch.current++;
+      recovery.clear();
       client.dispose();
       setDraft(undefined);
       setDocument(undefined);
@@ -86,8 +106,8 @@ export function KnowledgeEditor({
       window.removeEventListener("pagehide", suspend);
       globalThis.document.removeEventListener("visibilitychange", suspend);
     };
-  }, [client]);
-  async function run(action: () => Promise<SensitiveResult<KnowledgeDraft>>) {
+  }, [client, recovery]);
+  async function run(action: () => Promise<SensitiveResult<KnowledgeDraft>>, save?: SaveAttempt) {
     if (busy.current) return;
     busy.current = true;
     const attempt = ++epoch.current;
@@ -95,12 +115,15 @@ export function KnowledgeEditor({
     try {
       const result = await action();
       if (attempt !== epoch.current) return;
+      // Save responses are correlated by the adapter before it retires their wire retry identity.
+      if (!save && result.status === "ready" && reference && reference !== result.data.id) {
+        reset();
+        setState("error");
+        return;
+      }
+      if (save && !recovery.finish(save, result.status)) return;
       if (result.status === "ready") {
-        if (reference && reference !== result.data.id) {
-          reset();
-          setState("error");
-          return;
-        }
+        if (save) operation.current = crypto.randomUUID();
         setDraft(result.data);
         setDocument(result.data.document);
         setReference(result.data.id);
@@ -108,13 +131,15 @@ export function KnowledgeEditor({
         setConcerns(result.data.document.concernIds.join(","));
         setState("current");
       } else {
-        reset();
+        if (!save || !recovery.pending) reset();
+        if (result.status === "anonymous" || result.status === "denied") setReference("");
         setState(result.status);
       }
     } finally {
       busy.current = false;
     }
   }
+  const recovering = recovery.pending !== undefined;
   const editable =
     content &&
     ((!draft && session.workspaces.includes("staff")) ||
@@ -153,11 +178,12 @@ export function KnowledgeEditor({
           ]
         }
       </Notice>
+      {recovering && state !== "loading" && <Notice>{recoveryText[locale].help}</Notice>}
       <label>
         {text.reference}
         <input
           value={reference}
-          disabled={state === "loading"}
+          disabled={state === "loading" || recovering}
           maxLength={36}
           autoComplete="off"
           onChange={(event) => {
@@ -168,14 +194,16 @@ export function KnowledgeEditor({
         />
       </label>
       <Button
-        disabled={state === "loading" || !referenceSchema.safeParse(reference).success}
+        disabled={
+          state === "loading" || recovering || !referenceSchema.safeParse(reference).success
+        }
         onClick={() => void run(() => client.knowledgeDraft(reference))}
       >
         {text.load}
       </Button>
       {session.workspaces.includes("staff") && (
         <Button
-          disabled={state === "loading"}
+          disabled={state === "loading" || recovering}
           onClick={() => {
             reset();
             setReference("");
@@ -196,10 +224,16 @@ export function KnowledgeEditor({
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            if (payload) void run(() => client.saveKnowledgeDraft(payload, operation.current));
+            if (busy.current) return;
+            const save = recovery.reserve(payload, operation.current);
+            if (save)
+              void run(
+                () => client.saveKnowledgeDraft(save.operation.input, save.operation.operationId),
+                save,
+              );
           }}
         >
-          <fieldset disabled={!editable || state === "loading"}>
+          <fieldset disabled={!editable || state === "loading" || recovering}>
             <label>
               {text.title}
               <input
@@ -211,6 +245,7 @@ export function KnowledgeEditor({
             <label>
               {text.body}
               <textarea
+                aria-label={text.body}
                 value={content.body}
                 maxLength={6000}
                 onChange={(event) => setDocument({ ...content, body: event.target.value })}
@@ -305,10 +340,11 @@ export function KnowledgeEditor({
           <Button
             type="submit"
             disabled={
-              !editable || state === "loading" || !saveDraftSchema.safeParse(payload).success
+              state === "loading" ||
+              (!recovering && (!editable || !saveDraftSchema.safeParse(payload).success))
             }
           >
-            {text.save}
+            {recovering ? recoveryText[locale].retry : text.save}
           </Button>
         </form>
       )}
@@ -319,6 +355,7 @@ export function KnowledgeEditor({
               key={action}
               disabled={
                 state === "loading" ||
+                recovering ||
                 JSON.stringify(payload?.document) !== JSON.stringify(draft.document) ||
                 (action === "request_review"
                   ? draft.state !== "draft" ||

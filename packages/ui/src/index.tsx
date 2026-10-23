@@ -7,14 +7,17 @@ export { useSession } from "./session";
 export function LanguageSelect({
   locale,
   onChange,
+  disabled = false,
 }: {
   locale: Locale;
   onChange: (value: Locale) => void;
+  disabled?: boolean;
 }) {
   return (
     <label>
       {foundation[locale].language}{" "}
       <select
+        disabled={disabled}
         value={locale}
         onChange={(event) => {
           const selected = locales.find((value) => value === event.target.value);

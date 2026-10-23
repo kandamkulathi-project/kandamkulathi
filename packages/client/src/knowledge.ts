@@ -1,12 +1,26 @@
 import {
   type ApprovedEntry,
+  draftSchema,
   type KnowledgeReply,
   publicSourceUrl,
   reviewReady,
+  type saveDraftSchema,
   transcriptSchema,
 } from "@kandamkulathi/contracts/knowledge";
 import { apiOrigin } from "./index";
 import type { SensitiveClient, SensitiveResult } from "./sensitive";
+
+/** Reject unrelated positives before the request adapter retires the original wire retry key. */
+export function knowledgeSaveResultSchema(input: ReturnType<typeof saveDraftSchema.parse>) {
+  return draftSchema.refine(
+    (draft) =>
+      (input.id === null || draft.id === input.id) &&
+      draft.revision > (input.expectedRevision ?? 0) &&
+      draft.state === "draft" &&
+      JSON.stringify(draft.document) === JSON.stringify(input.document),
+    "Save response must match the submitted document and advance its known revision",
+  );
+}
 
 /** Ignore generated free text: medical content/safety/citations come from a fresh approved source snapshot. */
 export async function currentAnswer(
