@@ -99,7 +99,7 @@ export function sensitiveClient(options: {
         if (!operationId) {
           operationId = uuid();
           if (!referenceSchema.safeParse(operationId).success) return failure("error");
-          // Bounded per-session memory; no private payloads or provider receipts retained here.
+          // Retain only ambiguous operations for retry; never evict an unresolved identity.
           if (operationIds.size >= 64) return failure("error");
           operationIds.set(operation, operationId);
         }
@@ -128,9 +128,13 @@ export function sensitiveClient(options: {
         revoke();
         return failure("anonymous");
       }
-      if (response.status === 403) return failure("denied");
-      if (response.status === 409) return failure("conflict");
-      if (response.status === 410) return failure("expired");
+      // These contract responses definitively reject the action. A new attempt is a new action.
+      if ([403, 409, 410].includes(response.status)) {
+        if (operation) operationIds.delete(operation);
+        return failure(
+          response.status === 403 ? "denied" : response.status === 409 ? "conflict" : "expired",
+        );
+      }
       if (response.status === 503) return failure("unavailable");
       if (!response.ok || !response.headers.get("content-type")?.includes("application/json"))
         return failure(mutation ? "unknown" : "error");
@@ -157,9 +161,11 @@ export function sensitiveClient(options: {
         offset += chunk.length;
       }
       const parsed = schema.safeParse(JSON.parse(new TextDecoder().decode(bytes)));
-      return parsed.success
-        ? { status: "ready", data: parsed.data }
-        : failure(mutation ? "unknown" : "error");
+      if (!parsed.success) return failure(mutation ? "unknown" : "error");
+      // A validated result closes this action, even when its business status is still pending.
+      // Later reconciliation must verify current state rather than replay this completed poll.
+      if (operation) operationIds.delete(operation);
+      return { status: "ready", data: parsed.data };
     } catch {
       return failure(
         epoch !== generation || !allowed() ? "anonymous" : mutation ? "unknown" : "error",

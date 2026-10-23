@@ -52,7 +52,7 @@ Feature branch from latest `dev` → reviewed PR into `dev` → broad phase test
 
 ## Required reading
 
-P1-DEV-003 adds [local sensitive-client controls and integration handoffs](docs/development/SENSITIVE_CLIENT_FLOWS.md), depending on the unmerged P1-DEV-002 candidate. Actual APIs/providers, private call transport, native-device proof and cloud setup remain Pending.
+P1-DEV-003 adds [local sensitive-client controls and integration handoffs](docs/development/SENSITIVE_CLIENT_FLOWS.md), incorporating P1-DEV-002's reviewed, merged `dev` foundation. Its [review regression register](docs/quality/P1_DEV_003_REVIEW_REGRESSIONS.md) covers replay identities, logout lifecycle and retryable recording cleanup. Actual APIs/providers, private call transport, native-device proof and cloud setup remain Pending.
 
 Start with [AGENTS.md](AGENTS.md), [setup](docs/development/SETUP.md), [starter status and next work](docs/development/STARTER_STATUS.md), [Git workflow](docs/development/GIT_WORKFLOW.md), and [the twelve reviewed plans](docs/implementation/INDEX.md). All [38 company requirements](docs/requirements/COMPANY_REQUIREMENTS.md), six members and [Tinu's full tests](docs/implementation/Kandamkulathi_11_Tinu_Detailed_Phase_Wise_Test_Cases.md) remain unchanged.
 
