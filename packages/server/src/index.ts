@@ -4,10 +4,15 @@ import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 
-type Runtime = { Bindings: { APP_ENV?: string }; Variables: { requestId: string } };
+export type ServiceRuntime = { Bindings: { APP_ENV?: string }; Variables: { requestId: string } };
+export type ServiceOptions = { registerRoutes?: (app: Hono<ServiceRuntime>) => void };
 /** Shared HTTP boundary only; no session bypass, provider calls or business success stubs. */
-export function createService(service: Service) {
-  const app = new Hono<Runtime>();
+export function createService(
+  service: Service,
+  _reservedLogSink?: undefined,
+  options?: ServiceOptions,
+) {
+  const app = new Hono<ServiceRuntime>();
   app.use("*", async (context, next) => {
     context.set("requestId", crypto.randomUUID());
     context.header("X-Request-ID", context.get("requestId"));
@@ -78,6 +83,7 @@ export function createService(service: Service) {
       },
     }),
   );
+  options?.registerRoutes?.(app);
   app.all("/v1/*", (context) =>
     context.json(
       {

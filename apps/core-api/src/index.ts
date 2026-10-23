@@ -1,2 +1,3 @@
-import { createService } from "@kandamkulathi/server";
-export default createService("core-api");
+import { createCoreApi } from "./identity";
+
+export default createCoreApi();

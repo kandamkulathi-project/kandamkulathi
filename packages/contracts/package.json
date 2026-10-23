@@ -8,7 +8,9 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./client": "./src/client.ts"
+    "./client": "./src/client.ts",
+    "./identity": "./src/identity.ts",
+    "./consent": "./src/consent.ts"
   },
   "dependencies": {
     "zod": "4.6.7"
