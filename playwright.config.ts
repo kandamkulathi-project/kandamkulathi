@@ -9,7 +9,7 @@ export default defineConfig({
     baseURL: "http://127.0.0.1:4321",
     trace: "retain-on-failure",
   },
-  reporter: process.env.CI ? "github" : "list",
+  reporter: [[process.env.CI ? "github" : "list"], ["./scripts/verification/playwright.mjs"]],
   webServer: [
     {
       command: "pnpm --filter @kandamkulathi/web-public preview",

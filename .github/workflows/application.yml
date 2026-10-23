@@ -48,6 +48,8 @@ jobs:
         run: pnpm verify
       - name: Verify Expo dependency and public configuration compatibility
         run: pnpm mobile:check
+      - name: Audit built public, workspace and native client artifacts
+        run: pnpm audit:clients
       - name: Install test browser
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser and actual local workerd smoke tests
@@ -73,6 +75,14 @@ jobs:
           "$PG_BIN_DIR/pg_restore" --version
       - name: Real PostgreSQL roles, transactions, leases, encrypted recovery and Cron/Queue E2E
         run: pnpm test:platform
+      - name: Retain candidate metadata and source/artifact parity evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: p1-candidate-binding-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-results/p1-candidate-binding.json
+          retention-days: 7
+          if-no-files-found: warn
   dependency-audit:
     runs-on: ubuntu-latest
     timeout-minutes: 15
