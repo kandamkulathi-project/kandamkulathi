@@ -1,4 +1,8 @@
-import { type Locale, localeNames, locales } from "@kandamkulathi/i18n";
+import { foundation, type Locale, localeNames, locales } from "@kandamkulathi/i18n";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
+
+export { DeviceCheck } from "./DeviceCheck";
+export { useSession } from "./session";
 export function LanguageSelect({
   locale,
   onChange,
@@ -8,7 +12,7 @@ export function LanguageSelect({
 }) {
   return (
     <label>
-      Language / ഭാഷ / மொழி{" "}
+      {foundation[locale].language}{" "}
       <select
         value={locale}
         onChange={(event) => {
@@ -23,5 +27,43 @@ export function LanguageSelect({
         ))}
       </select>
     </label>
+  );
+}
+
+export function Button(props: ButtonHTMLAttributes<HTMLButtonElement>) {
+  return <button {...props} type={props.type ?? "button"} />;
+}
+export function Notice({ children, error = false }: { children: ReactNode; error?: boolean }) {
+  return (
+    <p role={error ? "alert" : "status"} aria-live={error ? "assertive" : "polite"}>
+      {children}
+    </p>
+  );
+}
+export function Field({
+  id,
+  label,
+  help,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  help: string;
+  value: string;
+  onChange(value: string): void;
+}) {
+  return (
+    <div className="field">
+      <label htmlFor={id}>{label}</label>
+      <textarea
+        id={id}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        aria-describedby={`${id}-help`}
+        maxLength={4000}
+      />
+      <p id={`${id}-help`}>{help}</p>
+    </div>
   );
 }
