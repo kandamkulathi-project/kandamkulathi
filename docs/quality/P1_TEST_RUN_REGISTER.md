@@ -1,4 +1,4 @@
-﻿# Phase 1 Test-Run Register â€” Foundations & Core Journeys (G1)
+# Phase 1 Test-Run Register — Foundations & Core Journeys (G1)
 
 **Document ID:** KND-QA-REG-001
 **Version:** 1.0
@@ -6,14 +6,14 @@
 **QA Lead / Test Coordinator:** Tinu (Role: QA Coordination, Fixtures, Basic Regression, Evidence Collection & Gate Reports; no feature development ownership)
 **Governing Canon:** [Kandamkulathi_11_Tinu_Detailed_Phase_Wise_Test_Cases.md](../implementation/Kandamkulathi_11_Tinu_Detailed_Phase_Wise_Test_Cases.md)
 **Supporting Plans:** [Kandamkulathi_10_Tinu_QA_and_Test_Cases_All_Phases.md](../implementation/Kandamkulathi_10_Tinu_QA_and_Test_Cases_All_Phases.md), [Kandamkulathi_02_Phase_1_Foundations_and_Core_Journeys.md](../implementation/Kandamkulathi_02_Phase_1_Foundations_and_Core_Journeys.md), [TEST_STRATEGY.md](TEST_STRATEGY.md)
-**Current Monorepo Baseline SHA:** `a6fb539930e56c1a58eca424834322800deee977` (Branch: `dev`)
+**Current Monorepo Baseline SHA:** `cfa4c4821a7db9c39fa27dd2ee0541d71111a741` (Branch: `dev`)
 **Assigned Task:** KAN-98 / P1-TIN-001
 
 ---
 
 ## 1. Governance and Authority Rules
 
-1. **Source of Truth:** This register operationalizes canonical test groups `P1-T01`â€“`P1-T20` defined in [Kandamkulathi_11_Tinu_Detailed_Phase_Wise_Test_Cases.md](../implementation/Kandamkulathi_11_Tinu_Detailed_Phase_Wise_Test_Cases.md#L231). Canonical titles, procedure steps, and variation IDs are preserved without alteration.
+1. **Source of Truth:** This register operationalizes canonical test groups `P1-T01`–`P1-T20` defined in [Kandamkulathi_11_Tinu_Detailed_Phase_Wise_Test_Cases.md](../implementation/Kandamkulathi_11_Tinu_Detailed_Phase_Wise_Test_Cases.md#L231). Canonical titles, procedure steps, and variation IDs are preserved without alteration.
 2. **Status Definitions and Consistency:**
    - **Pending:** Prerequisites are available and the test has not yet been executed.
    - **Blocked:** The test cannot be executed because an implementation, environment, dependency, approved oracle, or other required prerequisite is missing. A known missing prerequisite strictly prevents a test from being marked `Pending`.
@@ -24,11 +24,11 @@
 
 ---
 
-## 2. Master Summary: Phase 1 Canonical Test Groups (P1-T01â€“P1-T20)
+## 2. Master Summary: Phase 1 Canonical Test Groups (P1-T01–P1-T20)
 
 | Group ID | Canonical Title | Traceability (Req / Output / Package) | Domain Owner | Current Status | Primary Blocker / Reason |
 |---|---|---|---|---|---|
-| **P1-T01** | Reproducible candidate and secret isolation | R36, R38 / P1-O01 / P1-DEV-001 | Devadathan | **Blocked** | Missing candidate freeze manifest, deployed isolated environment, and secret scanning pipeline for bundles. |
+| **P1-T01** | Reproducible candidate and secret isolation | R36, R38 / P1-O01 / P1-DEV-001 | Devadathan | **Blocked** | GitHub CI workflows exist (application, security, documentation); missing immutable candidate freeze manifest (`rc-p1-g1-xx`), isolated staging environment, and deployed bundle secret scanning. |
 | **P1-T02** | Identity, MFA and session failure paths | R03, R36 / P1-O02 / P1-MAT-001 | Mathew | **Blocked** | WorkOS integration, staff MFA enforcement, and session revocation routes are not implemented in source. |
 | **P1-T03** | Patient/clinic authorization and pooled RLS cleanup | R14, R32, R36 / P1-O02 / P1-MAT-001 | Mathew | **Blocked** | PostgreSQL database tables, connection pooling, and Row-Level Security (RLS) policies are completely missing. |
 | **P1-T04** | Authoritative prices and all-or-nothing reservations | R02, R05, R07, R15 / P1-O04 / P1-JOS-002 | Josin | **Blocked** | Server-authoritative cart pricing, multi-batch reservation transaction, and rollback logic are not implemented. |
@@ -47,13 +47,13 @@
 | **P1-T17** | Outbox, lease and duplicate job crash safety | R08, R10, R36, R38 / P1-O08 / P1-DEV-001 | Devadathan | **Blocked** | PostgreSQL outbox table, queue consumer, lease heartbeat, crash recovery, and DLQ redrive are missing. |
 | **P1-T18** | Encrypted restore and compatible rollback smoke | R36, R38 / P1-O08 / P1-DEV-001 | Devadathan | **Blocked** | Automated encrypted backup scripts, isolated restore test harness, and Worker rollback verification are missing. |
 | **P1-T19** | Initial current-slice load baseline | R02, R12, R38 / P1-O09 / P1-DEV-001 | Devadathan | **Blocked** | Business API endpoints to load-test do not exist; load testing harness scripts are not present in repository. |
-| **P1-T20** | Alerts, dependencies and G1 evidence completeness | R36, R38 / P1-O09 / P1-TIN-090 | Tinu / Devadathan | **Blocked** | Missing alerting transport integration; prerequisite test evidence across P1-T01â€“P1-T19 is incomplete. |
+| **P1-T20** | Alerts, dependencies and G1 evidence completeness | R36, R38 / P1-O09 / P1-TIN-090 | Tinu / Devadathan | **Blocked** | Missing alerting transport integration; prerequisite test evidence across P1-T01–P1-T19 is incomplete. |
 
 ---
 
 ## 3. Detailed Canonical Test-Run Records (P1-T01 to P1-T20)
 
-### P1-T01 â€” Reproducible candidate and secret isolation
+### P1-T01 — Reproducible candidate and secret isolation
 - **Traceability:** R36, R38 | Output: P1-O01 | Packages: P1-DEV-001, P1-TIN-001
 - **Domain Operator:** Devadathan (Platform Lead) | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** Readiness manifest complete; frozen Git candidate tag; synthetic seed scripts; isolated staging environment; clean reset harness; candidate metadata and baseline control totals recorded.
@@ -63,7 +63,7 @@
 
 | Subcase / Run ID | Variation Description | Candidate SHA / Tag | Environment | Exec Date | Actual Result | Status | Blocker & Domain Owner | Defect Ref | Retest & Sign-off |
 |---|---|---|---|---|---|---|---|---|---|
-| ``P1-T01.S02-V01`` | Clean build & deploy from checkout; compare schema/artifact hashes | Missing | Not provisioned | Unexecuted | Not executed; No deployment pipeline | **Blocked** | Reproducible deployment harness missing (Devadathan) | N/A | Pending execution |
+| ``P1-T01.S02-V01`` | Clean build & deploy from checkout; compare schema/artifact hashes | Missing | Not provisioned | Unexecuted | Not executed; CI workflows exist (.github/workflows/), but isolated staging deployment harness and candidate tag missing | **Blocked** | Staging deployment target and candidate freeze tag missing (Devadathan) | N/A | Pending execution |
 | ``P1-T01.S03-V01`` | Missing DB credentials and wrong provider keys fail-fast test | Missing | Not provisioned | Unexecuted | Not executed; Runtime config unverified | **Blocked** | Runtime config schema missing (Devadathan) | N/A | Pending execution |
 | ``P1-T01.S04-V01`` | Public web bundle inspection for hardcoded credentials | Missing | Not provisioned | Unexecuted | Not executed; Build output not evaluated | **Blocked** | Web build needs candidate bundle inspection (Devadathan) | N/A | Pending execution |
 | ``P1-T01.S04-V02`` | Native mobile JS bundle inspection for secrets/signing keys | Missing | Not provisioned | Unexecuted | Not executed; Native bundle not evaluated | **Blocked** | Mobile export bundle inspection needed (Devadathan) | N/A | Pending execution |
@@ -71,7 +71,7 @@
 
 ---
 
-### P1-T02 â€” Identity, MFA and session failure paths
+### P1-T02 — Identity, MFA and session failure paths
 - **Traceability:** R03, R36 | Output: P1-O02 | Packages: P1-MAT-001, P1-DEV-003, P1-TIN-001
 - **Domain Operator:** Mathew (Backend Lead) with Devadathan | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** WorkOS test tenant; customer-A/B accounts; staff account with required org & enforced MFA; no-MFA staff fixture; expired/revoked session tokens.
@@ -91,7 +91,7 @@
 
 ---
 
-### P1-T03 â€” Patient/clinic authorization and pooled RLS cleanup
+### P1-T03 — Patient/clinic authorization and pooled RLS cleanup
 - **Traceability:** R14, R32, R36 | Output: P1-O02 | Packages: P1-MAT-001, P1-TIN-001
 - **Domain Operator:** Mathew (Backend Lead) | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** Neon PostgreSQL 17 test database; synthetic fixtures: `customer-A`, `customer-B`, `clinic-A`, `clinic-B`, `doctor-assigned`, `doctor-unassigned`.
@@ -110,7 +110,7 @@
 
 ---
 
-### P1-T04 â€” Authoritative prices and all-or-nothing reservations
+### P1-T04 — Authoritative prices and all-or-nothing reservations
 - **Traceability:** R02, R05, R07, R15 | Output: P1-O04 | Packages: P1-JOS-002, P1-MAT-005, P1-TIN-001
 - **Domain Operator:** Josin (Commerce Lead) with Mathew | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** `PRICE-GOLDEN` rules; products `P-RETAIL-V1`, `P-CONSULT`; tampered quantity/pricing/role payloads; multi-batch reservation fixtures; simulated final-guard failure.
@@ -123,12 +123,13 @@
 | ``P1-T04.S02-V01`` | Client alters unit price or currency; server reprices authoritatively | Missing | Not provisioned | Unexecuted | Not executed; Checkout API returns 503 | **Blocked** | Authoritative checkout API missing (Josin) | N/A | Pending execution |
 | ``P1-T04.S02-V02`` | Client submits stale cart with changed price/tax rules | Missing | Not provisioned | Unexecuted | Not executed; Cart API returns 503 | **Blocked** | Cart validation API missing (Josin) | N/A | Pending execution |
 | ``P1-T04.S02-V03`` | Client alters quantity or role/pricing tier; server rejects manipulation | Missing | Not provisioned | Unexecuted | Not executed; Checkout API returns 503 | **Blocked** | Authoritative checkout & quantity validation missing (Josin) | N/A | Pending execution |
+| ``P1-T04.S02-V04`` | Consult-only SKU (`P-CONSULT`) checkout attempted without valid matching recommendation | Missing | Not provisioned | Unexecuted | Not executed; Cart API returns 503 | **Blocked** | Consult-to-cart prescription validation missing (Josin/Mathew) | N/A | Pending execution |
 | ``P1-T04.S03-V01`` | Multi-item cart triggers final-batch guard failure inside transaction | Missing | Not provisioned | Unexecuted | Not executed; Reservation DB logic missing | **Blocked** | Atomic reservation transaction missing (Josin) | N/A | Pending execution |
 | ``P1-T04.S04-V01`` | Database audit confirms zero partial order/reservation/outbox records | Missing | Not provisioned | Unexecuted | Not executed; DB tables missing | **Blocked** | Commerce schema missing (Josin/Mathew) | N/A | Pending execution |
 
 ---
 
-### P1-T05 â€” Last-unit FEFO and unsafe batch exclusion
+### P1-T05 — Last-unit FEFO and unsafe batch exclusion
 - **Traceability:** R05 | Output: P1-O04 | Packages: P1-JOS-002, P1-MAT-005, P1-TIN-001
 - **Domain Operator:** Josin (Commerce Lead) and Mathew | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** Exactly 1 available unit of `B-LAST`; batches `B-EARLY`, `B-LATE`; unsafe batches `B-EXPIRED`, `B-RECALLED`, `B-SHORTLIFE`; concurrency barrier harness.
@@ -147,7 +148,7 @@
 
 ---
 
-### P1-T06 â€” Payment authenticity, deduplication and uncertainty
+### P1-T06 — Payment authenticity, deduplication and uncertainty
 - **Traceability:** R02, R07, R12 | Output: P1-O04 | Packages: P1-JOS-003, P1-MAT-005, P1-TIN-001
 - **Domain Operator:** Josin (Commerce Lead) with Mathew & Devadathan | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** Razorpay sandbox keys; payment success/failure/cancellation payloads; valid webhook signature; forged HMAC signature payload; duplicate/reordered event payloads; network drop injection tool.
@@ -165,11 +166,13 @@
 | ``P1-T06.S03-V02`` | Webhook with forged HMAC signature rejected with 401 | Missing | Not provisioned | Unexecuted | Not executed; No webhook endpoint | **Blocked** | Webhook signature validator missing (Josin) | N/A | Pending execution |
 | ``P1-T06.S03-V03`` | Duplicate webhook delivery produces exactly one payment ledger entry | Missing | Not provisioned | Unexecuted | Not executed; No ledger schema | **Blocked** | Payment deduplication missing (Josin) | N/A | Pending execution |
 | ``P1-T06.S03-V04`` | Webhook with mismatched amount or currency rejected | Missing | Not provisioned | Unexecuted | Not executed; No webhook endpoint | **Blocked** | Payment invariant validation missing (Josin) | N/A | Pending execution |
+| ``P1-T06.S03-V05`` | Payment webhook delivered out of order (refund before capture / settlement before authorization) | Missing | Not provisioned | Unexecuted | Not executed; No webhook endpoint | **Blocked** | Webhook sequence and transition validator missing (Josin) | N/A | Pending execution |
+| ``P1-T06.S03-V06`` | Webhook with account or order/entity reference mismatch rejected | Missing | Not provisioned | Unexecuted | Not executed; No webhook endpoint | **Blocked** | Payment account/reference verification missing (Josin) | N/A | Pending execution |
 | ``P1-T06.S04-V01`` | Dropped provider response leaves order in explicit reconcilable state | Missing | Not provisioned | Unexecuted | Not executed; No reconciliation job | **Blocked** | Payment reconciliation job missing (Josin) | N/A | Pending execution |
 
 ---
 
-### P1-T07 â€” Cross-clinic booking interval exclusion
+### P1-T07 — Cross-clinic booking interval exclusion
 - **Traceability:** R11, R12, R32 | Output: P1-O05 | Packages: P1-MAT-002, P1-JOS-003, P1-TIN-001
 - **Domain Operator:** Mathew (Backend Lead) with Josin | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** Clinics `clinic-A`, `clinic-B`; shared doctor `D-SHARED`; overlapping buffer intervals; adjacent slot fixtures; booking race barrier.
@@ -180,6 +183,7 @@
 | Subcase / Run ID | Variation Description | Candidate SHA / Tag | Environment | Exec Date | Actual Result | Status | Blocker & Domain Owner | Defect Ref | Retest & Sign-off |
 |---|---|---|---|---|---|---|---|---|---|
 | ``P1-T07.S02-V01`` | Concurrent booking race for same doctor across clinic-A & clinic-B | Missing | Not provisioned | Unexecuted | Not executed; No booking API or DB | **Blocked** | Cross-clinic booking exclusion missing (Mathew) | N/A | Pending execution |
+| ``P1-T07.S02-V02`` | Concurrent slot race/conflict: two customers attempt confirming the identical occupied interval | Missing | Not provisioned | Unexecuted | Not executed; No booking API or DB | **Blocked** | Slot race concurrency lock missing (Mathew) | N/A | Pending execution |
 | ``P1-T07.S03-V01`` | Overlapping buffer interval prevents conflicting second booking | Missing | Not provisioned | Unexecuted | Not executed; No booking engine | **Blocked** | Buffer interval logic missing (Mathew) | N/A | Pending execution |
 | ``P1-T07.S03-V02`` | Valid half-open adjacent interval succeeds without conflict | Missing | Not provisioned | Unexecuted | Not executed; No booking engine | **Blocked** | Slot boundary logic missing (Mathew) | N/A | Pending execution |
 | ``P1-T07.S03-V03`` | Doctor leave calendar blocks slot generation and booking | Missing | Not provisioned | Unexecuted | Not executed; No leave schema | **Blocked** | Doctor leave schema & logic missing (Mathew) | N/A | Pending execution |
@@ -187,7 +191,7 @@
 
 ---
 
-### P1-T08 â€” Booking expiry and late payment obligations
+### P1-T08 — Booking expiry and late payment obligations
 - **Traceability:** R11, R12 | Output: P1-O05 | Packages: P1-MAT-002, P1-JOS-003, P1-TIN-001
 - **Domain Operator:** Mathew (Backend Lead) and Josin | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** Configured slot hold TTL (e.g., 10 minutes); controllable server clock; delayed sandbox payment event; changed consultation fee fixture; duplicate refund attempt payload.
@@ -203,11 +207,12 @@
 | ``P1-T08.S03-V01`` | Doctor fee changed during hold; checkout uses snapshot fee | Missing | Not provisioned | Unexecuted | Not executed; No fee snapshot logic | **Blocked** | Fee snapshot invariant missing (Mathew/Josin) | N/A | Pending execution |
 | ``P1-T08.S03-V02`` | Customer cancellation obeys policy-defined refund rules | Missing | Not provisioned | Unexecuted | Not executed; No cancellation API | **Blocked** | Appointment refund policy missing (Josin) | N/A | Pending execution |
 | ``P1-T08.S03-V03`` | Duplicate refund request rejected; ledger records at most one refund | Missing | Not provisioned | Unexecuted | Not executed; No refund API | **Blocked** | Refund deduplication and ledger invariants missing (Josin/Mathew) | N/A | Pending execution |
+| ``P1-T08.S03-V04`` | Doctor leave approved while slot held; stale confirmation attempt is rejected without false confirmation | Missing | Not provisioned | Unexecuted | Not executed; No appointment routes | **Blocked** | Stale hold cancellation on leave missing (Mathew) | N/A | Pending execution |
 | ``P1-T08.S04-V01`` | Late payment generates exactly 1 durable rebook-or-refund obligation | Missing | Not provisioned | Unexecuted | Not executed; No obligation table | **Blocked** | Rebook/refund obligation engine missing (Mathew) | N/A | Pending execution |
 
 ---
 
-### P1-T09 â€” Web roles, current state and denied identifiers
+### P1-T09 — Web roles, current state and denied identifiers
 - **Traceability:** R01, R02, R03, R04, R11, R12, R14 | Output: P1-O06 | Packages: P1-DEV-003, P1-PAU-001, P1-PAU-003, P1-DEN-003, P1-TIN-001
 - **Domain Operator:** Tinu with Paul / Denzil; Devadathan supports | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** Deployed public web and workspaces applications; customer-A, staff, and physician test accounts; unowned order/booking URLs.
@@ -226,7 +231,7 @@
 
 ---
 
-### P1-T10 â€” Real-device payment return and network resilience
+### P1-T10 — Real-device payment return and network resilience
 - **Traceability:** R02, R03, R25 | Output: P1-O06 | Packages: P1-DEV-002, P1-PAU-004, P1-TIN-001
 - **Domain Operator:** Tinu / Paul; Devadathan owns adapters | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** Physical Android & iOS test devices; signed Expo development builds; Razorpay sandbox checkout; network proxy/throttle.
@@ -245,7 +250,7 @@
 
 ---
 
-### P1-T11 â€” Private video SDK proof and denial paths
+### P1-T11 — Private video SDK proof and denial paths
 - **Traceability:** R13, R14, R25 | Output: P1-O06 | Packages: P1-DEV-002, P1-MAT-001, P1-TIN-001
 - **Domain Operator:** Devadathan (Platform Lead); Mathew validates access | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** Web browser; physical Android & iOS devices; booked consultation fixture; valid/expired room tokens; WebRTC/TURN credentials.
@@ -265,7 +270,7 @@
 
 ---
 
-### P1-T12 â€” Knowledge approval, freshness and mandatory safety
+### P1-T12 — Knowledge approval, freshness and mandatory safety
 - **Traceability:** R16, R17, R19 | Output: P1-O07 | Packages: P1-MAT-003, P1-TIN-001
 - **Domain Operator:** Mathew (AI Technical Lead); Physician approves oracle | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** Approved medical oracle; KB fixtures `KB-A` (approved public), `KB-D` (draft), `KB-W` (withdrawn), `KB-P` (private); vector retrieval index.
@@ -280,11 +285,12 @@
 | ``P1-T12.S03-V01`` | Vector similarity hit on draft monograph (`KB-D`) is rejected | Missing | Not provisioned | Unexecuted | Not executed; Companion API returns 503 | **Blocked** | KB approval state gate missing (Mathew) | N/A | Pending execution |
 | ``P1-T12.S03-V02`` | Vector similarity hit on withdrawn monograph (`KB-W`) is rejected | Missing | Not provisioned | Unexecuted | Not executed; Companion API returns 503 | **Blocked** | KB withdrawal exclusion missing (Mathew) | N/A | Pending execution |
 | ``P1-T12.S03-V03`` | Query matching private internal clinic notes (`KB-P`) yields no leak | Missing | Not provisioned | Unexecuted | Not executed; Companion API returns 503 | **Blocked** | Corpus privacy isolation missing (Mathew) | N/A | Pending execution |
+| ``P1-T12.S03-V04`` | Stale vector embedding hit pointing to outdated/superseded KB source version is rejected | Missing | Not provisioned | Unexecuted | Not executed; Companion API returns 503 | **Blocked** | Vector freshness and source-version validation missing (Mathew) | N/A | Pending execution |
 | ``P1-T12.S04-V01`` | Missing mandatory primary safety block produces approved safe handoff | Missing | Not provisioned | Unexecuted | Not executed; Companion API returns 503 | **Blocked** | Mandatory safety injector missing (Mathew) | N/A | Pending execution |
 
 ---
 
-### P1-T13 â€” Urgency, injection and confirmed-tool boundaries
+### P1-T13 — Urgency, injection and confirmed-tool boundaries
 - **Traceability:** R18, R19, R20 | Output: P1-O07 | Packages: P1-MAT-003, P1-TIN-001
 - **Domain Operator:** Mathew (AI Technical Lead) with Physician; Tinu records | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** Physician-approved red-flag test pack; consult-only SKU prompts; prompt injection test cases; 2-step tool confirmation fixtures.
@@ -296,6 +302,7 @@
 |---|---|---|---|---|---|---|---|---|---|
 | ``P1-T13.S02-V01`` | Red-flag medical symptom input triggers approved emergency escalation | Missing | Not provisioned | Unexecuted | Not executed; Companion API returns 503 | **Blocked** | Red-flag detector missing (Mathew) | N/A | Pending execution |
 | ``P1-T13.S02-V02`` | Red-flag conversation blocks automated cart addition or checkout link | Missing | Not provisioned | Unexecuted | Not executed; Companion API returns 503 | **Blocked** | No-sale conversation lock missing (Mathew) | N/A | Pending execution |
+| ``P1-T13.S02-V03`` | Consult-only product prompt in core languages (`en`, `ml`, `ta`) triggers approved physician consultation recommendation | Missing | Not provisioned | Unexecuted | Not executed; Companion API returns 503 | **Blocked** | Multilingual consult-only disclaimer rules missing (Mathew) | N/A | Pending execution |
 | ``P1-T13.S03-V01`` | Prompt injection attempting to bypass disclaimers is safely refused | Missing | Not provisioned | Unexecuted | Not executed; Companion API returns 503 | **Blocked** | Prompt injection filters missing (Mathew) | N/A | Pending execution |
 | ``P1-T13.S03-V02`` | Prompt injection attempting unauthorized tool execution is rejected | Missing | Not provisioned | Unexecuted | Not executed; Companion API returns 503 | **Blocked** | Tool authorization boundary missing (Mathew) | N/A | Pending execution |
 | ``P1-T13.S04-V01`` | Tool proposal requires explicit customer confirmation before write | Missing | Not provisioned | Unexecuted | Not executed; Companion API returns 503 | **Blocked** | 2-step tool confirmation missing (Mathew) | N/A | Pending execution |
@@ -303,7 +310,7 @@
 
 ---
 
-### P1-T14 â€” Provider identity and voice confirmation proof
+### P1-T14 — Provider identity and voice confirmation proof
 - **Traceability:** R21, R24, R36 | Output: P1-O07 | Packages: P1-MAT-004, P1-DEV-002, P1-TIN-001
 - **Domain Operator:** Mathew (Backend Lead); Devadathan native support | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** WhatsApp Cloud API sandbox; account-link proof mechanism; clear and ambiguous synthetic audio voice notes.
@@ -317,12 +324,14 @@
 | ``P1-T14.S02-V02`` | WhatsApp customer completes authenticated account-linking flow | Missing | Not provisioned | Unexecuted | Not executed; Link service missing | **Blocked** | Account linking service missing (Mathew) | N/A | Pending execution |
 | ``P1-T14.S03-V01`` | Forged WhatsApp webhook signature rejected | Missing | Not provisioned | Unexecuted | Not executed; Webhook returns 503 | **Blocked** | WhatsApp signature check missing (Mathew) | N/A | Pending execution |
 | ``P1-T14.S03-V02`` | Replayed account-linking token rejected | Missing | Not provisioned | Unexecuted | Not executed; Link service missing | **Blocked** | Link token replay protection missing (Mathew) | N/A | Pending execution |
+| ``P1-T14.S03-V03`` | Duplicate provider event payload delivery deduplicated safely without double processing | Missing | Not provisioned | Unexecuted | Not executed; Webhook returns 503 | **Blocked** | Channel event deduplication missing (Mathew) | N/A | Pending execution |
 | ``P1-T14.S04-V01`` | Clear audio voice note transcribed accurately into reviewable text | Missing | Not provisioned | Unexecuted | Not executed; Audio service missing | **Blocked** | Audio transcription service missing (Mathew) | N/A | Pending execution |
 | ``P1-T14.S04-V02`` | Ambiguous audio transcript requires customer clarification | Missing | Not provisioned | Unexecuted | Not executed; Audio service missing | **Blocked** | Transcript ambiguity check missing (Mathew) | N/A | Pending execution |
+| ``P1-T14.S04-V03`` | Customer edits, cancels, or confirms transcribed voice draft prior to execution; cancelled draft produces zero action | Missing | Not provisioned | Unexecuted | Not executed; Audio service missing | **Blocked** | Voice draft edit/cancel/confirm lifecycle missing (Mathew/Devadathan) | N/A | Pending execution |
 
 ---
 
-### P1-T15 â€” Content separation, takeover and core locales
+### P1-T15 — Content separation, takeover and core locales
 - **Traceability:** R16, R20, R22 | Output: P1-O06 | Packages: P1-DEN-002, P1-PAU-001, P1-TIN-001
 - **Domain Operator:** Tinu / Denzil / Paul; Mathew / Devadathan review | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** Content editor account; physician approver account; active chat session; translated UI strings in English, Malayalam, Tamil.
@@ -335,13 +344,13 @@
 | ``P1-T15.S02-V01`` | Content editor drafts monograph; cannot approve or publish directly | Missing | Not provisioned | Unexecuted | Not executed; No KB admin UI | **Blocked** | KB approval workflow missing (Mathew/Denzil) | N/A | Pending execution |
 | ``P1-T15.S02-V02`` | Separate physician approver account reviews and approves monograph | Missing | Not provisioned | Unexecuted | Not executed; No KB admin UI | **Blocked** | Physician approval UI missing (Mathew/Denzil) | N/A | Pending execution |
 | ``P1-T15.S03-V01`` | Staff takes over active chat; AI bot replies immediately pause | Missing | Not provisioned | Unexecuted | Not executed; No chat service | **Blocked** | Human takeover state missing (Mathew/Devadathan) | N/A | Pending execution |
-| `P1-T15.S04-V01` | English (`en`) UI strings, fonts, keyboard navigation, error states | `a6fb539` | Local browser | 2026-10-23 | Starter preview displays `en` (2026-10-23); full screens unbuilt | **Blocked** | Core application screens and UI strings missing (Paul/Denzil) | N/A | Pending full app |
-| `P1-T15.S04-V02` | Malayalam (`ml`) UI strings, complex fonts, keyboard navigation | `a6fb539` | Local browser | 2026-10-23 | Starter preview switches `ml` (2026-10-23); full screens unbuilt | **Blocked** | Core application screens and UI strings missing (Paul/Denzil) | N/A | Pending full app |
-| `P1-T15.S04-V03` | Tamil (`ta`) UI strings, fonts, keyboard navigation, error states | `a6fb539` | Local browser | 2026-10-23 | Starter preview switches `ta` (2026-10-23); full screens unbuilt | **Blocked** | Core application screens and UI strings missing (Paul/Denzil) | N/A | Pending full app |
+| `P1-T15.S04-V01` | English (`en`) UI strings, fonts, keyboard navigation, error states | `a6fb539` | Local browser | 2026-10-23 | Unverified historical local observation; starter preview displayed `en` (2026-10-23); full screens unbuilt; see [STARTER_STATUS.md](../development/STARTER_STATUS.md) | **Blocked** | Core application screens and UI strings missing (Paul/Denzil) | N/A | Pending full app |
+| `P1-T15.S04-V02` | Malayalam (`ml`) UI strings, complex fonts, keyboard navigation | `a6fb539` | Local browser | 2026-10-23 | Unverified historical local observation; starter preview switched `ml` (2026-10-23); full screens unbuilt; see [STARTER_STATUS.md](../development/STARTER_STATUS.md) | **Blocked** | Core application screens and UI strings missing (Paul/Denzil) | N/A | Pending full app |
+| `P1-T15.S04-V03` | Tamil (`ta`) UI strings, fonts, keyboard navigation, error states | `a6fb539` | Local browser | 2026-10-23 | Unverified historical local observation; starter preview switched `ta` (2026-10-23); full screens unbuilt; see [STARTER_STATUS.md](../development/STARTER_STATUS.md) | **Blocked** | Core application screens and UI strings missing (Paul/Denzil) | N/A | Pending full app |
 
 ---
 
-### P1-T16 â€” Whole-current-app security review
+### P1-T16 — Whole-current-app security review
 - **Traceability:** R36, R38 | Output: P1-O09 | Packages: P1-DEV-004, P1-MAT-005, P1-TIN-001
 - **Domain Operator:** Devadathan and Mathew operate; Tinu tracks | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** Authenticated test accounts across all roles; clean candidate checkout; Gitleaks, Opengrep, pnpm audit; security triage matrix.
@@ -351,16 +360,16 @@
 
 | Subcase / Run ID | Variation Description | Candidate SHA / Tag | Environment | Exec Date | Actual Result | Status | Blocker & Domain Owner | Defect Ref | Retest & Sign-off |
 |---|---|---|---|---|---|---|---|---|---|
-| `P1-T16.S02-V01` | Dependency audit and candidate security patch verification | `a6fb539` | Local / CI | 2026-10-20 | Historical bootstrap patches passed (2026-10-20); candidate scan blocked | **Blocked** | Candidate freeze tag and CI pipeline missing (Devadathan) | N/A | Pending candidate tag |
-| `P1-T16.S02-V02` | Complete Git history, workspace, and native bundle secret scan via Gitleaks | `a6fb539` | Local / CI | 2026-10-20 | Historical dev secret scan passed (2026-10-20); candidate scan blocked | **Blocked** | Candidate freeze tag and native bundle scan missing (Devadathan) | N/A | Pending candidate tag |
-| `P1-T16.S02-V03` | Pinned offline SAST scan via Opengrep against candidate codebase | `a6fb539` | Local / CI | 2026-10-20 | Historical dev SAST passed (2026-10-20); candidate scan blocked | **Blocked** | Candidate freeze tag and full app SAST missing (Devadathan) | N/A | Pending candidate tag |
+| `P1-T16.S02-V01` | Dependency audit and candidate security patch verification | `a6fb539` | Local / CI | 2026-10-20 | Unverified historical local observation; bootstrap patches passed (2026-10-20); see [ADR 0005](../architecture/adr/0005-toolchain-security-backports.md) and [STARTER_STATUS.md](../development/STARTER_STATUS.md); candidate scan blocked | **Blocked** | Candidate freeze tag and candidate staged artifact audit missing (Devadathan) | N/A | Pending candidate tag |
+| `P1-T16.S02-V02` | Complete Git history, workspace, and native bundle secret scan via Gitleaks | `a6fb539` | Local / CI | 2026-10-20 | Unverified historical local observation; dev secret scan passed (2026-10-20); see [STARTER_STATUS.md](../development/STARTER_STATUS.md); candidate scan blocked | **Blocked** | Candidate freeze tag and native bundle scan missing (Devadathan) | N/A | Pending candidate tag |
+| `P1-T16.S02-V03` | Pinned offline SAST scan via Opengrep against candidate codebase | `a6fb539` | Local / CI | 2026-10-20 | Unverified historical local observation; dev SAST passed (2026-10-20); see [STARTER_STATUS.md](../development/STARTER_STATUS.md); candidate scan blocked | **Blocked** | Candidate freeze tag and full app SAST missing (Devadathan) | N/A | Pending candidate tag |
 | ``P1-T16.S03-V01`` | Authenticated injection and IDOR record-access testing | Missing | Not provisioned | Unexecuted | Not executed; Endpoints not implemented | **Blocked** | Business endpoints missing (Mathew/Devadathan) | N/A | Pending execution |
 | ``P1-T16.S03-V02`` | Session fixation, cookie security (`no-store`), and CORS rules | Missing | Not provisioned | Unexecuted | Not executed; Only scaffold tested | **Blocked** | Production auth & CORS missing (Devadathan) | N/A | Pending execution |
 | ``P1-T16.S04-V01`` | Formal security triage sign-off with zero unresolved blockers | Missing | Not provisioned | Unexecuted | Not executed; No triage session | **Blocked** | Full candidate security review needed (Devadathan/Mathew) | N/A | Pending execution |
 
 ---
 
-### P1-T17 â€” Outbox, lease and duplicate job crash safety
+### P1-T17 — Outbox, lease and duplicate job crash safety
 - **Traceability:** R08, R10, R36, R38 | Output: P1-O08 | Packages: P1-DEV-001, P1-MAT-004, P1-TIN-001
 - **Domain Operator:** Devadathan / Mathew; Josin validates financial effect | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** PostgreSQL transactional outbox; queue consumer; simulated worker crash failpoints; lease expiry harness; Dead Letter Queue (DLQ).
@@ -379,7 +388,7 @@
 
 ---
 
-### P1-T18 â€” Encrypted restore and compatible rollback smoke
+### P1-T18 — Encrypted restore and compatible rollback smoke
 - **Traceability:** R36, R38 | Output: P1-O08 | Packages: P1-DEV-001, P1-TIN-001
 - **Domain Operator:** Devadathan (Platform Lead); Josin / Mathew validate totals | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** Synthetic encrypted database dump; decryption key; isolated restore target database; prior compatible Worker release bundle.
@@ -396,7 +405,7 @@
 
 ---
 
-### P1-T19 â€” Initial current-slice load baseline
+### P1-T19 — Initial current-slice load baseline
 - **Traceability:** R02, R12, R38 | Output: P1-O09 | Packages: P1-DEV-001, P1-TIN-001
 - **Domain Operator:** Devadathan (Platform Lead); Mathew / Josin assess invariants | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** Deployed current-slice candidate; 10 dynamic rps load generation tool (e.g., k6); controlled sandbox provider adapters; baseline control totals.
@@ -413,7 +422,7 @@
 
 ---
 
-### P1-T20 â€” Alerts, dependencies and G1 evidence completeness
+### P1-T20 — Alerts, dependencies and G1 evidence completeness
 - **Traceability:** R36, R38 | Output: P1-O09 | Packages: P1-TIN-090, P1-DEV-080, P1-TIN-001
 - **Domain Operator:** Tinu coordinates; Devadathan & Company Owners participate | **QA Coordinator:** Tinu
 - **Preconditions & Fixtures:** Operational alert sink; external readiness register; all test results and defect records across P1-T01 through P1-T19.
@@ -424,7 +433,7 @@
 | Subcase / Run ID | Variation Description | Candidate SHA / Tag | Environment | Exec Date | Actual Result | Status | Blocker & Domain Owner | Defect Ref | Retest & Sign-off |
 |---|---|---|---|---|---|---|---|---|---|
 | ``P1-T20.S02-V01`` | Trigger synthetic server fault; confirm redacted alert receipt | Missing | Not provisioned | Unexecuted | Not executed; Alert sink not wired | **Blocked** | Alert routing & PHI redaction missing (Devadathan) | N/A | Pending execution |
-| `P1-T20.S03-V01` | Verify every due requirement/output/package against actual evidence | `a6fb539` | Documentation | 2026-10-23 | Register reviewed (2026-10-23); actual requirement evidence blocked | **Blocked** | Prerequisite requirement evidence and external accounts missing (All Owners / Devadathan) | N/A | Pending requirement evidence |
+| `P1-T20.S03-V01` | Verify every due requirement/output/package against actual evidence | `a6fb539` | Documentation | 2026-10-23 | Unverified historical local observation; register reviewed against documentation guards (2026-10-23); actual requirement evidence blocked; see [scripts/check_repository.py](../../scripts/check_repository.py) | **Blocked** | Prerequisite requirement evidence and external accounts missing (All Owners / Devadathan) | N/A | Pending requirement evidence |
 | ``P1-T20.S04-V01`` | Compile G1 gate evidence package and record formal gate decision | Missing | Not provisioned | Unexecuted | Not executed; Prerequisite tests blocked | **Blocked** | Blocked by missing P1 implementations (All Owners) | N/A | Pending execution |
 
 ---
@@ -435,9 +444,9 @@ All blockers are grounded in repository evidence and mapped to documented primar
 
 | Blocker ID | Affected Canonical Test Cases | Required Implementation / Deliverable | Responsible Domain Owner | Target Package / Branch |
 |---|---|---|---|---|
-| **BLK-01** | `P1-T01`, `P1-T16`, `P1-T18`, `P1-T19`, `P1-T20` | Staging environment deployment, candidate tag, release manifest, and bundle secret scanning | **Devadathan** (Platform Lead) | `P1-DEV-001` / `feature/p1-devadathan-platform-foundation` |
+| **BLK-01** | `P1-T01`, `P1-T16`, `P1-T18`, `P1-T19`, `P1-T20` | Staging environment deployment, candidate freeze tag (`rc-p1-g1-xx`), release manifest verification, and deployed bundle secret scanning (CI workflows in `.github/workflows/` exist; cloud deployment target and freeze tag missing) | **Devadathan** (Platform Lead) | `P1-DEV-001` / `feature/p1-devadathan-platform-foundation` |
 | **BLK-02** | `P1-T02`, `P1-T03`, `P1-T09` | WorkOS AuthKit, staff MFA, session revocation, and RBAC middleware | **Mathew** (Backend Lead) | `P1-MAT-001` / `feature/p1-mathew-identity-clinical-contracts` |
-| **BLK-03** | `P1-T03`, `P1-T04`, `P1-T05`, `P1-T07`, `P1-T17` | Neon PostgreSQL 17 client, relational tables, migrations, RLS policies, and non-owner roles | **Mathew** (Backend Lead) with Josin | `P1-MAT-001`, `P1-JOS-001` |
+| **BLK-03** | `P1-T03`, `P1-T04`, `P1-T05`, `P1-T07`, `P1-T17` | Neon PostgreSQL 17 clinical and commerce relational tables, migrations, RLS policies, and non-owner roles (Platform outbox and lease tables merged in `packages/database`; clinical and commerce domain schemas pending) | **Mathew** (Backend Lead) with Josin | `P1-MAT-001`, `P1-JOS-001` |
 | **BLK-04** | `P1-T04`, `P1-T05`, `P1-T06` | Server-authoritative pricing, FEFO inventory allocation, and Razorpay sandbox payments | **Josin** (Commerce Lead) with Mathew | `P1-JOS-002`, `P1-JOS-003` |
 | **BLK-05** | `P1-T07`, `P1-T08` | Cross-clinic doctor booking engine, hold TTL expiry, and late payment reconciliation | **Mathew** (Backend Lead) with Josin | `P1-MAT-002` / `feature/p1-mathew-booking-clinical-core` |
 | **BLK-06** | `P1-T12`, `P1-T13` | Knowledge base schema, grounded RAG, emergency red-flag filters, and tool confirmation | **Mathew** (AI Technical Lead) | `P1-MAT-003` / `feature/p1-mathew-safe-rag-foundation` |
