@@ -35,7 +35,15 @@
     "test:e2e": "pnpm build && playwright test",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm test:security && pnpm build",
     "mobile:check": "pnpm --filter @kandamkulathi/mobile check",
-    "db:generate": "pnpm --filter @kandamkulathi/database generate"
+    "db:generate": "pnpm --filter @kandamkulathi/database generate",
+    "platform:manifest": "node scripts/platform/manifest.mjs",
+    "platform:render": "node scripts/platform/render-config.mjs",
+    "db:migrate": "node scripts/platform/database.mjs migrate",
+    "platform:backup": "node scripts/platform/backup.mjs",
+    "test:platform": "node --test --test-concurrency=1 tests/platform/*.test.mjs",
+    "platform:release": "node scripts/platform/release.mjs",
+    "platform:metrics": "node scripts/platform/metrics.mjs",
+    "platform:fixtures": "node scripts/platform/synthetic.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
@@ -44,6 +52,8 @@
     "concurrently": "10.0.6",
     "semver": "7.8.5",
     "typescript": "6.0.3",
-    "vitest": "5.0.5"
+    "vitest": "5.0.5",
+    "pg": "8.23.1",
+    "ws": "8.22.0"
   }
 }

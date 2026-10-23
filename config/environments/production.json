@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "status": "planned",
+  "environment": "production",
+  "namespace": "kandamkulathi-production",
+  "providerMode": "live",
+  "accountId": "",
+  "database": {
+    "majorVersion": 17,
+    "projectId": "",
+    "branchId": "",
+    "runtimeHost": "",
+    "adminHost": "",
+    "name": "",
+    "region": "",
+    "runtimeRole": "k_core_login",
+    "workerRole": "k_jobs_login"
+  },
+  "resources": {
+    "coreWorker": "kandamkulathi-production-core-api",
+    "companionWorker": "kandamkulathi-production-companion",
+    "publicBucket": "kandamkulathi-production-public",
+    "privateBucket": "kandamkulathi-production-private",
+    "financialQueue": "kandamkulathi-production-financial",
+    "clinicalQueue": "kandamkulathi-production-clinical",
+    "engagementQueue": "kandamkulathi-production-engagement",
+    "financialDlq": "kandamkulathi-production-financial-dlq",
+    "clinicalDlq": "kandamkulathi-production-clinical-dlq",
+    "engagementDlq": "kandamkulathi-production-engagement-dlq"
+  },
+  "evidenceReference": ""
+}

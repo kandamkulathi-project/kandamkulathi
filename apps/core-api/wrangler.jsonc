@@ -3,6 +3,7 @@
   "name": "kandamkulathi-core-api",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-19",
+  "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
   "preview_urls": false,
   "routes": [],
@@ -10,9 +11,16 @@
     "cpu_ms": 50
   },
   "vars": {
-    "APP_ENV": "local"
+    "APP_ENV": "local",
+    "RESOURCE_NAMESPACE": "kandamkulathi-local",
+    "PROVIDER_MODE": "stub",
+    "ALLOW_LIVE_SENDS": "false",
+    "ALLOW_LIVE_PAYMENTS": "false"
   },
   "observability": {
-    "enabled": false
+    "enabled": true,
+    "redact_query_string": true,
+    "logs": { "enabled": true, "invocation_logs": false, "head_sampling_rate": 1 },
+    "traces": { "enabled": false }
   }
 }

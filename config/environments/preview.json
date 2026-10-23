@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "status": "planned",
+  "environment": "preview",
+  "namespace": "kandamkulathi-preview-integration",
+  "providerMode": "sandbox",
+  "accountId": "",
+  "database": {
+    "majorVersion": 17,
+    "projectId": "",
+    "branchId": "",
+    "runtimeHost": "",
+    "adminHost": "",
+    "name": "",
+    "region": "",
+    "runtimeRole": "k_core_login",
+    "workerRole": "k_jobs_login"
+  },
+  "resources": {
+    "coreWorker": "kandamkulathi-preview-integration-core-api",
+    "companionWorker": "kandamkulathi-preview-integration-companion",
+    "publicBucket": "kandamkulathi-preview-integration-public",
+    "privateBucket": "kandamkulathi-preview-integration-private",
+    "financialQueue": "kandamkulathi-preview-integration-financial",
+    "clinicalQueue": "kandamkulathi-preview-integration-clinical",
+    "engagementQueue": "kandamkulathi-preview-integration-engagement",
+    "financialDlq": "kandamkulathi-preview-integration-financial-dlq",
+    "clinicalDlq": "kandamkulathi-preview-integration-clinical-dlq",
+    "engagementDlq": "kandamkulathi-preview-integration-engagement-dlq"
+  },
+  "evidenceReference": ""
+}
