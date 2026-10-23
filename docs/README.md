@@ -19,7 +19,7 @@ Start with [AGENTS](../AGENTS.md), [repository README](../readme.md) and [setup]
 
 - [P1-DEV-004 frontend security, editor/Companion contracts and Pending peer review](development/FRONTEND_SECURITY_REVIEW.md).
 
-- [P1-DEV-003 sensitive client implementation and remaining handoffs](development/SENSITIVE_CLIENT_FLOWS.md); [native/provider proof still Pending](operations/NATIVE_READINESS.md).
+- [P1-DEV-003 sensitive client implementation and remaining handoffs](development/SENSITIVE_CLIENT_FLOWS.md); [independent review retest steps](quality/P1_DEV_003_REVIEW_REGRESSIONS.md); [native/provider proof still Pending](operations/NATIVE_READINESS.md).
 
 - [Setup](development/SETUP.md), [commands/status](development/COMMANDS.md), [coding standards](development/CODING_STANDARDS.md), [API/event contracts](development/API_CONVENTIONS.md), [Git workflow](development/GIT_WORKFLOW.md), [contributing](../CONTRIBUTING.md).
 - [Architecture](architecture/ARCHITECTURE.md), [data model/invariants](architecture/DATA_MODEL.md), [threat model](architecture/THREAT_MODEL.md), [decision record](architecture/adr/0001-workers-neon.md).

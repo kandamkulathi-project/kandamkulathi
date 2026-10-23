@@ -52,6 +52,7 @@ export type SensitiveResult<T> =
 interface Schema<T> {
   safeParse(value: unknown): { success: true; data: T } | { success: false };
 }
+type OperationIdentity = string | { id: string };
 const failure = <T>(
   status: Exclude<SensitiveResult<T>["status"], "ready">,
 ): SensitiveResult<T> => ({ status });
@@ -95,7 +96,7 @@ export function sensitiveClient(options: {
     path: string,
     schema: Schema<T>,
     body?: unknown,
-    operation?: string,
+    operation?: OperationIdentity,
   ): Promise<SensitiveResult<T>> {
     const allowed = () => (path === "/v1/auth/start" ? !disposed : valid());
     if (!allowed()) return failure("anonymous");
@@ -104,18 +105,23 @@ export function sensitiveClient(options: {
     controllers.add(controller);
     const timeout = setTimeout(() => controller.abort(), 5000);
     const mutation = body !== undefined;
+    const retryKey = typeof operation === "string" ? operation : undefined;
     try {
       if (mutation && (!context || Date.parse(context.expiresAt) <= now()))
         return failure("anonymous");
       let operationId: string | undefined;
-      if (operation) {
-        operationId = operationIds.get(operation);
+      if (typeof operation === "object") {
+        // Caller-owned identities (chat/handoff) already identify the same explicit action.
+        if (!referenceSchema.safeParse(operation.id).success) return failure("error");
+        operationId = operation.id;
+      } else if (retryKey) {
+        operationId = operationIds.get(retryKey);
         if (!operationId) {
           operationId = uuid();
           if (!referenceSchema.safeParse(operationId).success) return failure("error");
-          // Bounded per-session memory; no private payloads or provider receipts retained here.
+          // Retain only ambiguous operations for retry; never evict an unresolved identity.
           if (operationIds.size >= 64) return failure("error");
-          operationIds.set(operation, operationId);
+          operationIds.set(retryKey, operationId);
         }
       }
       const response = await transport(`${origin}${path}`, {
@@ -142,9 +148,13 @@ export function sensitiveClient(options: {
         revoke();
         return failure("anonymous");
       }
-      if (response.status === 403) return failure("denied");
-      if (response.status === 409) return failure("conflict");
-      if (response.status === 410) return failure("expired");
+      // These contract responses definitively reject the action. A new attempt is a new action.
+      if ([403, 409, 410].includes(response.status)) {
+        if (retryKey) operationIds.delete(retryKey);
+        return failure(
+          response.status === 403 ? "denied" : response.status === 409 ? "conflict" : "expired",
+        );
+      }
       if (response.status === 503) return failure("unavailable");
       if (!response.ok || !response.headers.get("content-type")?.includes("application/json"))
         return failure(mutation ? "unknown" : "error");
@@ -171,9 +181,11 @@ export function sensitiveClient(options: {
         offset += chunk.length;
       }
       const parsed = schema.safeParse(JSON.parse(new TextDecoder().decode(bytes)));
-      return parsed.success
-        ? { status: "ready", data: parsed.data }
-        : failure(mutation ? "unknown" : "error");
+      if (!parsed.success) return failure(mutation ? "unknown" : "error");
+      // A validated result closes this action, even when its business status is still pending.
+      // Later reconciliation must verify current state rather than replay this completed poll.
+      if (retryKey) operationIds.delete(retryKey);
+      return { status: "ready", data: parsed.data };
     } catch {
       return failure(
         epoch !== generation || !allowed() ? "anonymous" : mutation ? "unknown" : "error",
@@ -202,7 +214,12 @@ export function sensitiveClient(options: {
     context = result.data;
     return result;
   }
-  async function mutate<T>(path: string, schema: Schema<T>, body: unknown, operation: string) {
+  async function mutate<T>(
+    path: string,
+    schema: Schema<T>,
+    body: unknown,
+    operation: OperationIdentity,
+  ) {
     if (mutating) return failure<T>("busy");
     mutating = true; // Reserve before the first await; one caller owns the mutation slot.
     try {
@@ -223,7 +240,7 @@ export function sensitiveClient(options: {
     chat: (input: unknown) => {
       const parsed = chatInputSchema.safeParse(input);
       return parsed.success
-        ? mutate("/v1/chat/replies", replySchema, parsed.data, `chat:${parsed.data.operationId}`)
+        ? mutate("/v1/chat/replies", replySchema, parsed.data, { id: parsed.data.operationId })
         : Promise.resolve(failure<KnowledgeReply>("error"));
     },
     approvedEntry: (id: string) =>
@@ -281,7 +298,7 @@ export function sensitiveClient(options: {
     },
     requestHandoff: (operationId: string, locale: string) =>
       reference(operationId) && localeSchema.safeParse(locale).success
-        ? mutate("/v1/support/handoffs", handoffSchema, { locale }, `handoff:${operationId}`)
+        ? mutate("/v1/support/handoffs", handoffSchema, { locale }, { id: operationId })
         : Promise.resolve(failure<Handoff>("error")),
     consents: () => request("/v1/consents/current", consentSchema),
     saveConsents: (input: unknown) => {

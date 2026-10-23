@@ -124,6 +124,93 @@ test("versioned required consent is independent of optional marketing and privat
   await expect.poll(() => saved).toEqual(choices);
   await noPrivateStorage(page);
 });
+test("completed consent actions get new keys under durable server replay", async ({ page }) => {
+  await fixture(page);
+  let current = { ...consents, ...choices };
+  const replay = new Map<string, typeof current>();
+  await page.route(`${api}/v1/consents/current`, (route) =>
+    route.fulfill({
+      contentType: "application/json",
+      headers,
+      body: JSON.stringify(current),
+    }),
+  );
+  await page.route(`${api}/v1/consents`, (route) => {
+    const key = route.request().headers()["idempotency-key"] ?? "";
+    expect(key).not.toBe("");
+    if (!replay.has(key)) {
+      current = { ...current, ...route.request().postDataJSON() };
+      replay.set(key, current);
+    }
+    return route.fulfill({
+      contentType: "application/json",
+      headers,
+      body: JSON.stringify(replay.get(key)),
+    });
+  });
+  await page.goto(`${origin}/customer`);
+  await page.getByRole("button", { name: "Load current consent versions" }).click();
+  const consultation = page.getByLabel(
+    "I consent to the consultation (required for clinical access)",
+  );
+  await expect(consultation).not.toBeChecked();
+  for (const accepted of [false, true, false]) {
+    await consultation.setChecked(accepted);
+    await page.getByRole("button", { name: "Save consent choices" }).click();
+    await expect(page.locator("[data-sensitive-state]")).toHaveAttribute(
+      "data-sensitive-state",
+      "current",
+    );
+    await expect.poll(() => current.consultationAccepted).toBe(accepted);
+    await expect(consultation).toBeChecked({ checked: accepted });
+  }
+  expect(replay.size).toBe(3);
+  await noPrivateStorage(page);
+});
+
+test("receipt-free reconciliation sees a later paid state with a replaying backend", async ({
+  page,
+}) => {
+  await fixture(page);
+  const replay = new Map<string, unknown>();
+  let verifications = 0;
+  await page.route(`${api}/v1/payments/${reference}`, (route) =>
+    route.fulfill({
+      contentType: "application/json",
+      headers,
+      body: JSON.stringify({ ...payment, checkout: null, status: "pending" }),
+    }),
+  );
+  await page.route(`${api}/v1/payments/${reference}/reconcile`, (route) => {
+    expect(route.request().postDataJSON()).toEqual({});
+    const key = route.request().headers()["idempotency-key"] ?? "";
+    expect(key).not.toBe("");
+    if (!replay.has(key))
+      replay.set(key, {
+        ...payment,
+        checkout: null,
+        status: ++verifications === 1 ? "pending" : "paid",
+      });
+    return route.fulfill({
+      contentType: "application/json",
+      headers,
+      body: JSON.stringify(replay.get(key)),
+    });
+  });
+  await page.goto(`${origin}/customer`);
+  await choose(page, "Load payment");
+  await page.getByRole("button", { name: "Reconcile payment", exact: true }).click();
+  await expect.poll(() => verifications).toBe(1);
+  await expect(page.locator("[data-payment-state]")).toHaveAttribute(
+    "data-payment-state",
+    "pending",
+  );
+  await page.getByRole("button", { name: "Reconcile payment", exact: true }).click();
+  await expect(page.locator("[data-payment-state]")).toHaveAttribute("data-payment-state", "paid");
+  expect(verifications).toBe(2);
+  await noPrivateStorage(page);
+});
+
 test("real browser checkout adapter sends current options and reconciles SDK success to pending, then server paid", async ({
   page,
 }) => {
@@ -342,6 +429,15 @@ test("failed remote logout clears loaded private views without claiming revocati
   page,
 }) => {
   await fixture(page);
+  let sessionReads = 0;
+  await page.route(`${api}/v1/session`, (route) => {
+    sessionReads++;
+    return route.fulfill({
+      contentType: "application/json",
+      headers,
+      body: JSON.stringify(session),
+    });
+  });
   await page.route(`${api}/v1/payments/${reference}`, (route) =>
     route.fulfill({ contentType: "application/json", headers, body: JSON.stringify(payment) }),
   );
@@ -364,6 +460,29 @@ test("failed remote logout clears loaded private views without claiming revocati
       { exact: true },
     ),
   ).toBeVisible();
+  const readsAfterLogout = sessionReads;
+  await page.evaluate(() =>
+    window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: true })),
+  );
+  for (const hidden of [true, false]) {
+    await page.evaluate((hidden) => {
+      Object.defineProperty(document, "hidden", { configurable: true, value: hidden });
+      document.dispatchEvent(new Event("visibilitychange"));
+      window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true }));
+    }, hidden);
+    await expect(page.locator("[data-session-state]")).toHaveAttribute(
+      "data-session-state",
+      "anonymous",
+    );
+    await expect(page.getByRole("button", { name: "Sign out", exact: true })).toHaveCount(0);
+    await expect(page.locator("[data-payment-state]")).toHaveCount(0);
+  }
+  expect(sessionReads).toBe(readsAfterLogout);
+  // An explicit user action may check the still-valid server cookie; passive resume may not.
+  await page.getByRole("button", { name: "Check access again", exact: true }).click();
+  await expect(page.locator("[data-session-state]")).toHaveAttribute("data-session-state", "ready");
+  expect(sessionReads).toBe(readsAfterLogout + 1);
+  await expect(page.locator("[data-payment-state]")).toHaveCount(0);
   await noPrivateStorage(page);
 });
 test("expiry closes checkout and ignores its late provider success without reconciliation", async ({

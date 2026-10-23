@@ -191,6 +191,56 @@ test("AI action/intake proposals execute no action; human handoff requires a sep
   expect(forbidden).toEqual([]);
 });
 
+test("explicit Companion action identities preserve replay for repeated chat and handoff", async ({
+  page,
+}) => {
+  await fixture(page);
+  const ledger = new Map<string, unknown>();
+  let chats = 0;
+  let handoffs = 0;
+  await page.route(`${companion}/v1/knowledge/approved/${reference}`, (route) =>
+    json(route, entry),
+  );
+  await page.route(`${companion}/v1/chat/replies`, (route) => {
+    const key = route.request().headers()["idempotency-key"] ?? "";
+    expect(key).toBe(route.request().postDataJSON().operationId);
+    if (!ledger.has(`chat:${key}`)) {
+      chats++;
+      ledger.set(`chat:${key}`, reply);
+    }
+    return json(route, ledger.get(`chat:${key}`));
+  });
+  await page.route(`${companion}/v1/support/handoffs`, (route) => {
+    const key = route.request().headers()["idempotency-key"] ?? "";
+    expect(key).toMatch(/^[a-f0-9-]{36}$/);
+    if (!ledger.has(`handoff:${key}`)) {
+      handoffs++;
+      ledger.set(`handoff:${key}`, { id: key, status: "queued" });
+    }
+    return json(route, ledger.get(`handoff:${key}`));
+  });
+  await page.goto(web);
+  await ask(page);
+  await expect(page.locator("[data-approved-revision]")).toHaveCount(1);
+  await page.getByRole("button", { name: "Send reviewed message" }).click();
+  await expect(page.locator("[data-approved-revision]")).toHaveCount(1);
+  expect(chats).toBe(1);
+  for (let i = 0; i < 2; i++) {
+    await page.getByRole("button", { name: "Request care-team help" }).click();
+    await expect(page.locator("[data-chat-state]")).toContainText(
+      "Request queued. A live agent has not joined.",
+    );
+  }
+  expect(handoffs).toBe(1);
+  await page
+    .getByLabel("Editable message draft", { exact: true })
+    .fill("A different synthetic question");
+  await page.getByRole("button", { name: "Send reviewed message" }).click();
+  await expect(page.locator("[data-approved-revision]")).toHaveCount(1);
+  expect(chats).toBe(2);
+  await noPrivateStorage(page);
+});
+
 test("late chat responses cannot restore content or drafts after backgrounding", async ({
   page,
 }) => {
@@ -219,11 +269,21 @@ test("late chat responses cannot restore content or drafts after backgrounding",
   await noPrivateStorage(page);
 });
 
-test("a session resolving in the same turn as pagehide cannot restore access", async ({ page }) => {
+test("same-turn pagehide fences a session response and normal pageshow revalidates", async ({
+  page,
+}) => {
   await page.addInitScript((value) => {
     const original = window.fetch.bind(window);
+    let reads = 0;
     window.fetch = (input, init) => {
       if (!String(input).endsWith("/v1/session")) return original(input, init);
+      document.documentElement.dataset.testSessionReads = String(++reads);
+      if (reads > 1)
+        return Promise.resolve(
+          new Response(JSON.stringify(value), {
+            headers: { "Content-Type": "application/json" },
+          }),
+        );
       document.documentElement.dataset.testSessionHeld = "true";
       // Deliberately ignore AbortSignal to exercise the generation fence, not fetch cancellation.
       return new Promise((resolve) =>
@@ -251,6 +311,13 @@ test("a session resolving in the same turn as pagehide cannot restore access", a
     "anonymous",
   );
   await expect(page.getByRole("button", { name: "Send reviewed message" })).toHaveCount(0);
+  await expect(page.locator("html")).toHaveAttribute("data-test-session-reads", "1");
+  await page.evaluate(() =>
+    window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true })),
+  );
+  await expect(page.locator("[data-session-state]")).toHaveAttribute("data-session-state", "ready");
+  await expect(page.locator("html")).toHaveAttribute("data-test-session-reads", "2");
+  await noPrivateStorage(page);
 });
 
 test("source approval expiry removes visible content without another user action", async ({

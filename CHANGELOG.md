@@ -1,10 +1,30 @@
 # Changelog
 
+## 2026-10-23 — PR #7 cumulative candidate alignment (G1 Pending)
+
+- Incorporate updated PR #6 at `47be5ba`, including the reviewed `dev` foundation, PR #5's review regressions and the combined navigation/explicit-operation-ID fixes. Preserve P1-DEV-090's source/build binding and negative controls unchanged.
+- Correct dependency status: PR #4 is merged; PR #5/#6 remain open for independent review. Require fresh exact-head local evidence and hosted CI after the merge; prior candidate evidence is historical only.
+- Cloud setup, actual backend/provider/native/operational evidence and all canonical phase acceptance remain Pending/Blocked. No shared branch, deployment, resource or approval is changed.
+
 ## 2026-10-22 — P1-DEV-090 local cumulative verification (G1 Pending)
 
 - Added clean committed-candidate verification using the full existing gate and full-history/index secret scan, with immutable-per-run ignored evidence bundles and source/config/build/log hashes.
 - Bound browser runs to source and all five build roots before/after execution; changed/missing source/artifacts fail the run. Added unit and actual-browser negative controls for false/stale/empty/drifting evidence and prepared metadata retention in application CI.
 - Recorded all 20 canonical G1 groups' supporting local coverage, missing prerequisites, dependency PRs and independent handoffs. Cloud, integrated backend/provider, load/jobs/recovery/alerts, real-device and company/phase approval remain Pending; company scope, stack and six-member allocations are unchanged.
+
+## 2026-10-23 — PR #6 dependency/conflict alignment (independent review Pending)
+
+- Incorporate P1-DEV-003's `d779e0b` fixes and the reviewed `dev` foundation at `b71429c`, preserving the knowledge/editor/artifact-security additions.
+- Combine synchronous page-navigation fencing with sticky logout blocking. Normal page restoration revalidates; navigation, visibility, expiry and persisted pageshow cannot undo logout. Extend browser coverage for both normal resume and failed-logout navigation.
+- Retain replay-aware consent/payment tests and retryable native audio cleanup. Cloud, provider/device integration, independent review and phase acceptance remain Pending.
+- Preserve explicit chat/handoff operation IDs as their request keys across replay, retaining the original stable-message assertion and adding committed-response-loss/duplicate-click coverage; later distinct actions still use new IDs.
+
+## P1-DEV-003 review corrections — 2026-10-23 (independent review Pending)
+
+- Retire mutation keys after validated results or definitive rejections; preserve ambiguous retries. Add replay-aware consent withdrawal and receipt-free payment polling regressions, including a server-committed lost response.
+- Preserve the local logout block across visibility, page restoration and automatic expiry; explicit user retry remains available. Extend browser coverage to assert no passive session reads or private-content restoration.
+- Retain independent stop/deletion obligations after recording cleanup failure, retry unfinished work and block new capture until cleanup succeeds. Cover failed stop, deletion, partial preparation and disposal; installed-device evidence remains Pending.
+- Incorporate the reviewed PR #4 squash merge from `dev`, resolving foundation conflicts without merging this feature or changing company requirements, stack, assignments or phase gates. Add Tinu's independent retest register.
 
 ## 2026-10-22 — P1-DEV-004 local frontend security (integration/review Pending)
 
