@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### PR #8 QA register correction — 2026-10-24 (independent review Pending)
+
+- Reconcile canonical Phase 1 variant coverage, distinguish historical unverified observations from current implementation and pending acceptance, and repair UTF-8 punctuation without inventing execution or approval evidence.
+- Integrate current reviewed platform/client `dev`, preserving newline-terminated runtime pins and required Expo compatibility checks. Isolate external scanner Git-hook context with unit and real-scanner controls, retaining all authored-source targets, rules and mandatory gates.
+- Preserve foreground Astro supervision under agent detection so repeated browser campaigns do not leave a preview server occupying a later candidate's port.
+
 ### P1-DEV-001 PR #3 second review — 2026-10-23 (independent retest Pending)
 
 - Keep successful final-publication jobs eligible for execution retries; enforce execution backoff without spending attempts on immediate duplicate delivery, while retaining deadlines and bounded budgets.
