@@ -63,7 +63,7 @@ class QaRunRegisterTests(unittest.TestCase):
         rows = run_rows(self.text)
         required = {
             'P1-T06.S03-V05': ('reordered',),
-            'P1-T06.S03-V06': ('account',),
+            'P1-T06.S03-V10': ('account',),
             'P1-T06.S03-V07': ('reference',),
             'P1-T06.S03-V08': ('currency',),
             'P1-T06.S02-V05': ('pending',),
@@ -78,7 +78,7 @@ class QaRunRegisterTests(unittest.TestCase):
             'P1-T13.S04-V03': ('cancelled',),
             'P1-T13.S04-V04': ('dosage',),
             'P1-T14.S03-V03': ('duplicate',),
-            'P1-T14.S04-V03': ('edit',),
+            'P1-T14.S04-V11': ('edit',),
             'P1-T14.S04-V04': ('cancel',),
             'P1-T14.S04-V05': ('confirm', 'fresh'),
         }
@@ -87,7 +87,7 @@ class QaRunRegisterTests(unittest.TestCase):
                 description = rows[run_id][1].lower()
                 for word in words:
                     self.assertIn(word, description)
-        for variant, language in enumerate(('English', 'Malayalam', 'Tamil'), 3):
+        for variant, language in ((8, 'English'), (4, 'Malayalam'), (5, 'Tamil')):
             self.assertIn(language, rows[f'P1-T13.S02-V{variant:02}'][1])
             self.assertIn('consult-only', rows[f'P1-T13.S02-V{variant:02}'][1])
         for variant, language in enumerate(('Malayalam', 'Tamil'), 6):
@@ -109,6 +109,43 @@ class QaRunRegisterTests(unittest.TestCase):
         for run_id in ('P1-T15.S04-V01', 'P1-T15.S04-V02', 'P1-T15.S04-V03',
                        'P1-T16.S02-V01', 'P1-T16.S02-V02', 'P1-T16.S02-V03', 'P1-T20.S03-V01'):
             self.assertIn('UNVERIFIED', rows[run_id][5])
+
+    def test_tinu_published_ids_retain_meanings_and_compound_children(self):
+        # Versioned reference: de85351ebb4838c83f9f2f1a8e5d0abe9afb8636,
+        # compared with 7b40f9771f59b77f94162b45ddae9273d8bc7658.
+        # Inline semantic fixture makes this independent of Git/network availability.
+        rows = run_rows(self.text)
+        published = {
+            'P1-T04.S02-V04': ('consult-only', 'p-consult', 'without valid matching recommendation'),
+            'P1-T06.S03-V05': ('out of order', 'refund before capture', 'settlement before authorization'),
+            'P1-T06.S03-V06': ('account', 'order/entity reference mismatch'),
+            'P1-T07.S02-V02': ('two customers', 'identical occupied interval'),
+            'P1-T08.S03-V04': ('leave approved', 'slot held', 'stale confirmation', 'without false confirmation'),
+            'P1-T12.S03-V04': ('stale vector embedding', 'outdated/superseded kb source version'),
+            'P1-T13.S02-V03': ('consult-only', '`en`', '`ml`', '`ta`', 'physician consultation recommendation'),
+            'P1-T14.S03-V03': ('duplicate provider event', 'without double processing'),
+            'P1-T14.S04-V03': ('edits, cancels, or confirms', 'cancelled draft produces zero action'),
+        }
+        for run_id, phrases in published.items():
+            for phrase in phrases:
+                self.assertIn(phrase, rows[run_id][1].lower(), run_id)
+        checkpoints = {
+            'P1-T06.S03-V05': ('P1-T06.S03-V11', 'P1-T06.S03-V12', 'P1-T06.S03-V13'),
+            'P1-T06.S03-V06': ('P1-T06.S03-V10', 'P1-T06.S03-V07'),
+            'P1-T13.S02-V03': ('P1-T13.S02-V08', 'P1-T13.S02-V04', 'P1-T13.S02-V05'),
+            'P1-T14.S04-V03': ('P1-T14.S04-V11', 'P1-T14.S04-V04', 'P1-T14.S04-V05'),
+        }
+        for parent, children in checkpoints.items():
+            self.assertIn('parent checkpoint', rows[parent][1])
+            self.assertIn('no aggregate Pass', rows[parent][1])
+            for child in children:
+                self.assertIn(child, rows)
+                self.assertNotIn('parent checkpoint', rows[child][1])
+        self.assertIn('currency', rows['P1-T04.S02-V12'][1].lower())
+        for variant, sequence in ((11, 'refund before capture'),
+                                  (12, 'settlement before authorization'),
+                                  (13, 'capture before authorization')):
+            self.assertIn(sequence, rows[f'P1-T06.S03-V{variant}'][1].lower())
 
     def test_links_resolve_locally_or_bind_external_inventory_to_source_revision(self):
         for target in re.findall(r'\[[^\]\n]*\]\(([^)\n]+)\)', self.text):
@@ -154,6 +191,7 @@ class QaRunRegisterTests(unittest.TestCase):
         for corruption in ('â€', '\ufffd'):
             self.assertNotIn(corruption, self.text)
         self.assertIn('—', self.text)
+        self.assertIsNone(re.search(r'^(<<<<<<<|=======|>>>>>>>)', self.text, re.M))
 
     def test_negative_controls_reject_duplicate_ids_and_unsupported_pass_claims(self):
         row = '| `P1-T01.S02-V01` | Build | Missing | Missing | Unexecuted | Not executed | **Blocked** | Manifest missing (Devadathan) | N/A | Pending |'
