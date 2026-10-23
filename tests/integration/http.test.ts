@@ -3,7 +3,7 @@ import { errorSchema, healthSchema, systemStatusSchema } from "../../packages/co
 import { createService } from "../../packages/server/src/index";
 
 describe.each(["core-api", "companion"] as const)("%s HTTP boundary", (service) => {
-  const app = createService(service);
+  const app = createService(service, () => {});
   const request = (path: string, init?: RequestInit, env = { APP_ENV: "local" }) =>
     app.request(`http://localhost${path}`, init, env);
   it("separates liveness from application readiness", async () => {
@@ -119,5 +119,28 @@ describe.each(["core-api", "companion"] as const)("%s HTTP boundary", (service) 
     const response = await request("/v1/orders", { method: "POST", body: "a".repeat(65537) });
     expect(response.status).toBe(413);
     expect(errorSchema.parse(await response.json()).error.code).toBe("PAYLOAD_TOO_LARGE");
+  });
+  it("fails closed on a remote mode mixup without exposing configuration", async () => {
+    const response = await request("/v1/orders", undefined, { APP_ENV: "staging" });
+    expect(response.status).toBe(503);
+    expect(errorSchema.parse(await response.json()).error.code).toBe("CONFIGURATION_INVALID");
+    expect(
+      JSON.stringify(
+        await (await request("/health/live", undefined, { APP_ENV: "staging" })).json(),
+      ),
+    ).not.toMatch(/DATABASE|password|token/);
+  });
+  it("counts misconfiguration responses as failed core requests", async () => {
+    const records: Readonly<Record<string, unknown>>[] = [];
+    const observed = createService(service, (record) => records.push(record));
+    await observed.request("http://localhost/v1/orders", undefined, { APP_ENV: "staging" });
+    expect(records).toContainEqual(
+      expect.objectContaining({
+        event: "http_request",
+        environment: "staging",
+        status: 503,
+        sliFailure: true,
+      }),
+    );
   });
 });
