@@ -11,7 +11,8 @@
     "./client": "./src/client.ts",
     "./identity": "./src/identity.ts",
     "./consent": "./src/consent.ts",
-    "./booking": "./src/booking.ts"
+    "./booking": "./src/booking.ts",
+    "./knowledge": "./src/knowledge.ts"
   },
   "dependencies": {
     "zod": "4.6.7"

@@ -122,3 +122,5 @@ export function createService(
   );
   return app;
 }
+
+export type ServiceApp = ReturnType<typeof createService>;

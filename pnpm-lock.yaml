@@ -43,6 +43,12 @@ importers:
 
   apps/companion:
     dependencies:
+      '@kandamkulathi/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@kandamkulathi/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@kandamkulathi/server':
         specifier: workspace:*
         version: link:../../packages/server

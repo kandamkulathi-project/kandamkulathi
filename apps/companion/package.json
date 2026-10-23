@@ -9,6 +9,8 @@
     "build": "wrangler deploy --dry-run --outdir dist"
   },
   "dependencies": {
+    "@kandamkulathi/contracts": "workspace:*",
+    "@kandamkulathi/domain": "workspace:*",
     "@kandamkulathi/server": "workspace:*"
   },
   "devDependencies": {
