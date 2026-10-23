@@ -7,7 +7,8 @@
     "typecheck": "tsc --noEmit"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./booking": "./src/booking/index.ts"
   },
   "dependencies": {
     "@kandamkulathi/contracts": "workspace:*"
