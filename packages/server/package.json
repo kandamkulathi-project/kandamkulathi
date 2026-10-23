@@ -10,10 +10,13 @@
     ".": "./src/index.ts",
     "./identity": "./src/identity.ts",
     "./authorization": "./src/authorization.ts",
-    "./authorization-consent": "./src/authorization-consent.ts"
+    "./authorization-consent": "./src/authorization-consent.ts",
+    "./config": "./src/config.ts",
+    "./observability": "./src/observability.ts"
   },
   "dependencies": {
     "hono": "4.13.13",
+    "zod": "4.6.7",
     "@kandamkulathi/contracts": "workspace:*"
   }
 }

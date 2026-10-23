@@ -60,6 +60,17 @@ def require(condition: bool, message: str) -> None:
         raise ValueError(message)
 
 
+def check_env_example(example: str) -> None:
+    public_defaults = {'APP_ENV': 'local', 'RESOURCE_NAMESPACE': 'kandamkulathi-local',
+                       'PROVIDER_MODE': 'stub', 'ALLOW_LIVE_SENDS': 'false',
+                       'ALLOW_LIVE_PAYMENTS': 'false'}
+    for line in example.splitlines():
+        if '=' in line and not line.lstrip().startswith('#'):
+            key, value = (part.strip() for part in line.split('=', 1))
+            require(value == public_defaults.get(key, ''),
+                    '.env.example must use exact safe public defaults and empty secrets')
+
+
 def files_under(root: Path) -> list[Path]:
     paths = []
     for current, folders, names in os.walk(root):
@@ -317,15 +328,23 @@ def check_application_contract() -> None:
     require(package.get('private') is True and package.get('packageManager', '').startswith('pnpm@'),
             'Application must be private with a pinned package manager')
     scripts = package.get('scripts', {})
-    for command in ('lint', 'typecheck', 'test', 'test:security', 'security:check', 'build', 'verify', 'test:e2e', 'mobile:check'):
+    for command in ('lint', 'typecheck', 'test', 'test:security', 'security:check', 'build', 'verify', 'test:e2e', 'mobile:check', 'test:platform'):
         require(scripts.get(command) and not re.search(r'\becho\b|\|\|\s*true', scripts[command]),
                 f'Missing/placeholder application command: {command}')
     for name in ('web-public', 'workspaces', 'mobile', 'core-api', 'companion'):
         require(exact_path_exists(ROOT/f'apps/{name}/package.json'), f'Missing application: {name}')
     workflow = (ROOT/'.github/workflows/application.yml').read_text(encoding='utf-8')
     for command in ('pnpm install --frozen-lockfile', 'pnpm verify', 'pnpm mobile:check',
-                    'pnpm security:check', 'pnpm exec playwright test'):
+                    'pnpm security:check', 'pnpm exec playwright test', 'pnpm test:platform'):
         require(command in workflow, f'Application CI must execute {command}')
+    repository = 'https://apt.postgresql.org/pub/repos/apt'
+    signed_key = 'signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc'
+    require(repository in workflow and signed_key in workflow and
+            'https://www.postgresql.org/media/keys/ACCC4CF8.asc' in workflow and
+            'apt-get install --yes postgresql-client-17' in workflow and
+            workflow.index(repository) < workflow.index('apt-get install --yes postgresql-client-17') and
+            not re.search(r'trusted\s*=\s*yes|--allow-unauthenticated', workflow),
+            'PostgreSQL 17 client fallback requires its official signed repository before installation')
     security_path = ROOT/'.github/workflows/security.yml'
     require(exact_path_exists(security_path), 'Security workflow is required')
     security = security_path.read_text(encoding='utf-8')
@@ -344,6 +363,8 @@ def check_application_contract() -> None:
     require(scripts.get('prepare') == 'node scripts/security/install-hooks.mjs',
             'Local installation must configure commit checks')
     require(exact_path_exists(ROOT/'.githooks/pre-commit'), 'Commit hook is required')
+    require('"test:platform"' in (ROOT/'scripts/security/pre-commit.mjs').read_text(encoding='utf-8'),
+            'Local commit gate must execute platform tests')
     policy = json.loads((ROOT/'.github/branch-protection.json').read_text(encoding='utf-8'))
     required = {item['context'] for item in policy['required_status_checks']['checks']}
     require(required == {'application-checks', 'dependency-audit', 'repository-docs',
@@ -372,12 +393,7 @@ def main() -> int:
             findings = secret_findings(path.read_text(encoding='utf-8'))
             require(not findings, f'{path.relative_to(ROOT)}: possible restricted secret pattern; inspect privately')
         example = (ROOT/'.env.example').read_text(encoding='utf-8')
-        public_defaults = {'APP_ENV', 'PROVIDER_MODE', 'ALLOW_LIVE_SENDS', 'ALLOW_LIVE_PAYMENTS'}
-        for line in example.splitlines():
-            if '=' in line and not line.lstrip().startswith('#'):
-                key, value = line.split('=', 1)
-                require(key.strip() in public_defaults or not value.strip(),
-                        '.env.example must have empty secret/provider/config values')
+        check_env_example(example)
         for workflow_path in (ROOT/'.github/workflows').glob('*.yml'):
             workflow = workflow_path.read_text(encoding='utf-8')
             require('contents: read' in workflow and 'persist-credentials: false' in workflow,

@@ -7,7 +7,7 @@
 - `packages/contracts/src/knowledge.ts`: strict version-1 public knowledge/provenance, references, EN/ML/TA product manifest and typed decisions.
 - `packages/domain/src/knowledge/`: pure lifecycle candidates, canonical hashes, trusted current-primary authorization, inventory reconciliation and derived public indexing projection.
 - `apps/companion/src/knowledge/service.ts`: provider-independent injected service/HTTP adapter. `apps/companion/src/index.ts` deliberately supplies no dependencies.
-- `packages/server/src/index.ts`: optional **third** argument registers routes before the generic unavailable fallback. The second argument remains reserved for the platform logging work; no platform driver, migration or logging code is copied.
+- `packages/server/src/index.ts`: optional **third** argument registers routes before the generic unavailable fallback. The second argument retains the merged platform's real log sink; environment guards precede feature dependencies. No platform driver, migration or logging implementation is duplicated.
 
 `apps/companion/src/service.ts` composes knowledge and channel registrations into the default Worker with separate trusted dependencies and the same shared HTTP guards. Missing channel configuration cannot grant knowledge authority or prevent an independently authorized public read. Missing knowledge dependencies cannot turn a webhook challenge into a stored receipt. Combined synthetic-port tests are protocol evidence, not a real provider/database or clinical proof.
 

@@ -18,6 +18,7 @@ export const errorSchema = z.object({
       "UNAUTHENTICATED",
       "FORBIDDEN",
       "IDENTITY_UNAVAILABLE",
+      "CONFIGURATION_INVALID",
     ]),
     message: z.string(),
     requestId: z.string().uuid(),

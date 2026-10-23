@@ -3,17 +3,23 @@ import companion from "../../apps/companion/src/index";
 import { createCompanion } from "../../apps/companion/src/knowledge/service";
 import { knowledgeFixture, knowledgeId, syntheticTime } from "../unit/knowledge.fixtures";
 
+const request = (
+  app: ReturnType<typeof createCompanion>,
+  input: Parameters<typeof app.request>[0],
+  init?: RequestInit,
+) => app.request(input, init, { APP_ENV: "local" });
+
 describe("Companion knowledge HTTP adapter (synthetic injected authority/repository only)", () => {
   it("stays unavailable in the actual unconfigured composition root despite fabricated authority headers", async () => {
-    const { request } = await knowledgeFixture();
-    const response = await companion.request("http://localhost/v1/knowledge/public-product", {
+    const fixture = await knowledgeFixture();
+    const response = await request(companion, "http://localhost/v1/knowledge/public-product", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-Role": "physician-approver",
         Authorization: "Bearer fabricated",
       },
-      body: JSON.stringify(request),
+      body: JSON.stringify(fixture.request),
     });
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ status: "not-ready", reason: "NOT_CONFIGURED" });
@@ -25,7 +31,7 @@ describe("Companion knowledge HTTP adapter (synthetic injected authority/reposit
   it("serves exact cited public blocks with no intake/session when trusted test dependencies authorize", async () => {
     const fixture = await knowledgeFixture();
     const app = createCompanion(fixture);
-    const response = await app.request("http://localhost/v1/knowledge/public-product", {
+    const response = await request(app, "http://localhost/v1/knowledge/public-product", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(fixture.request),
@@ -95,7 +101,7 @@ describe("Companion knowledge HTTP adapter (synthetic injected authority/reposit
     if (condition === "safety") fixture.read.loadMandatoryBlocks.mockResolvedValue([]);
     if (condition === "concurrent") fixture.read.confirmCurrent.mockResolvedValue(false);
     const app = createCompanion(fixture);
-    const response = await app.request("http://localhost/v1/knowledge/public-product", {
+    const response = await request(app, "http://localhost/v1/knowledge/public-product", {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-Role": "admin" },
       body: JSON.stringify(input),
@@ -109,7 +115,8 @@ describe("Companion knowledge HTTP adapter (synthetic injected authority/reposit
   it("returns safe not-ready errors when primary or authority fails", async () => {
     const fixture = await knowledgeFixture();
     fixture.read.loadProduct.mockRejectedValue(new Error("restricted database details"));
-    const response = await createCompanion(fixture).request(
+    const response = await request(
+      createCompanion(fixture),
       "http://localhost/v1/knowledge/public-product",
       {
         method: "POST",
@@ -126,7 +133,7 @@ describe("Companion knowledge HTTP adapter (synthetic injected authority/reposit
       { "Content-Type": "application/json" },
       { "Content-Type": "text/plain" },
     ]) {
-      const response = await companion.request("http://localhost/v1/knowledge/public-product", {
+      const response = await request(companion, "http://localhost/v1/knowledge/public-product", {
         method: "POST",
         headers,
         body: "not-json",
@@ -134,13 +141,13 @@ describe("Companion knowledge HTTP adapter (synthetic injected authority/reposit
       expect(response.status).toBe(400);
       expect(await response.json()).toEqual({ status: "blocked", reason: "INVALID_REQUEST" });
     }
-    const oversized = await companion.request("http://localhost/v1/knowledge/public-product", {
+    const oversized = await request(companion, "http://localhost/v1/knowledge/public-product", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: "a".repeat(65537),
     });
     expect(oversized.status).toBe(413);
-    const get = await companion.request("http://localhost/v1/knowledge/public-product");
+    const get = await request(companion, "http://localhost/v1/knowledge/public-product");
     expect(get.status).toBe(503);
     expect(await get.json()).toMatchObject({ error: { code: "FEATURE_UNAVAILABLE" } });
   });
@@ -148,7 +155,7 @@ describe("Companion knowledge HTTP adapter (synthetic injected authority/reposit
   it("never enables personalization, content approval or fixture routes through HTTP", async () => {
     const fixture = await knowledgeFixture();
     const app = createCompanion(fixture);
-    const response = await app.request("http://localhost/v1/knowledge/personalized", {
+    const response = await request(app, "http://localhost/v1/knowledge/personalized", {
       method: "POST",
       body: "No intake is parsed",
     });
@@ -158,7 +165,7 @@ describe("Companion knowledge HTTP adapter (synthetic injected authority/reposit
       reason: "PERSONALIZED_POLICY_UNAVAILABLE",
     });
     for (const path of ["approve", "withdraw", "fixtures", "index"]) {
-      const unavailable = await app.request(`http://localhost/v1/knowledge/${path}`, {
+      const unavailable = await request(app, `http://localhost/v1/knowledge/${path}`, {
         method: "POST",
         headers: { "X-Role": "physician" },
       });

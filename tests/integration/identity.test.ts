@@ -25,8 +25,8 @@ function dependencies(overrides: Partial<IdentityDependencies> = {}): IdentityDe
     ...overrides,
   };
 }
-const request = (app: ReturnType<typeof createCoreApi>, init?: RequestInit) =>
-  app.request("http://localhost/v1/session", init, { APP_ENV: "local" });
+const request = (app: Pick<ReturnType<typeof createCoreApi>, "fetch">, init?: RequestInit) =>
+  app.fetch(new Request("http://localhost/v1/session", init), { APP_ENV: "local" });
 
 async function expectDenial(response: Response, status: number, code: string) {
   expect(response.status).toBe(status);
@@ -228,10 +228,10 @@ describe("Core session HTTP boundary — injected authority is not real provider
   });
   it("does not expose login, consent-write or session mutation successes", async () => {
     for (const path of ["/v1/session", "/v1/consents", "/v1/auth/callback"]) {
-      const response = await coreApi.request(`http://localhost${path}`, {
-        method: "POST",
-        body: "{}",
-      });
+      const response = await coreApi.fetch(
+        new Request(`http://localhost${path}`, { method: "POST", body: "{}" }),
+        { APP_ENV: "local" },
+      );
       await expectDenial(response, 503, "FEATURE_UNAVAILABLE");
     }
   });

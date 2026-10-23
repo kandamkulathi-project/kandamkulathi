@@ -119,7 +119,9 @@ describe("durable inbox acknowledgement boundary (contract doubles only)", () =>
   it("has no production in-memory fallback, even with a valid signature", async () => {
     expect((await handleWhatsAppWebhook(request(), { config })).status).toBe(503);
     expect((await handleWhatsAppWebhook(request(), { inbox: repository() })).status).toBe(503);
-    expect((await createCompanionService().fetch(request())).status).toBe(503);
+    const response = await createCompanionService().fetch(request(), { APP_ENV: "local" });
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({ error: { code: "CHANNEL_UNAVAILABLE" } });
   });
   it.each(["sha256=bad", `sha256=${"0".repeat(64)}`])(
     "rejects signature %s before storage",
@@ -189,13 +191,16 @@ describe("durable inbox acknowledgement boundary (contract doubles only)", () =>
   });
   it("registers before the shared fallback, preserves shared headers and keeps unrelated features unavailable", async () => {
     const app = createCompanionService({ config, inbox: repository() });
-    const response = await app.fetch(request());
+    const response = await app.fetch(request(), { APP_ENV: "local" });
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(response.headers.get("x-request-id")).toMatch(/^[a-f0-9-]{36}$/);
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
-    expect((await app.request("/v1/channels/whatsapp/link", { method: "POST" })).status).toBe(503);
-    expect((await app.request("/health/ready")).status).toBe(503);
+    expect(
+      (await app.request("/v1/channels/whatsapp/link", { method: "POST" }, { APP_ENV: "local" }))
+        .status,
+    ).toBe(503);
+    expect((await app.request("/health/ready", undefined, { APP_ENV: "local" })).status).toBe(503);
   });
 });
 

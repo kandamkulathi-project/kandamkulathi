@@ -12,7 +12,7 @@
 - `packages/server/src/identity.ts`: dependency-injected, read-only `GET /v1/session` registration.
 - `apps/core-api/src/identity.ts`: `createCoreApi` composition. The default Worker injects only unavailable dependencies. No environment flag, bearer, cookie, header, local mode or fixture enables identity.
 
-No database driver, migration, RLS implementation, alternate authentication stack or in-memory business store is introduced. P1-DEV-001 / platform PR3 owns that infrastructure. The shared `createService(service, undefined, { registerRoutes })` third argument registers routes before its unchanged unavailable fallback. The second argument is reserved for the platform's future log sink; reconcile that signature when integrating PR3 without duplicating its implementation.
+Identity adds no competing database driver, migration, RLS implementation, authentication stack or in-memory business store. The merged P1-DEV-001 / platform PR #3 supplies the transport infrastructure. The shared `createService(service, sink, { registerRoutes })` retains the platform's real second log sink and adds the third route-registration argument before the unavailable fallback. Platform environment validation runs before identity dependencies; local synthetic-port tests explicitly select local mode. The default Core Worker preserves platform `scheduled`/`queue` handlers alongside the identity-enabled `fetch` boundary. This integration does not supply actual identity/domain database adapters.
 
 ## Conservative access rules, not an approved company role matrix
 

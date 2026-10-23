@@ -1,5 +1,7 @@
 # Security checks and merge enforcement
 
+**2026-10-23 status:** active rulesets now enforce PR approval/last-push approval/resolved threads and force-push/deletion restrictions on shared branches. Required CI contexts were absent from the observed active rules. See the [current remote verification record](../governance/REPOSITORY_SETTINGS.md); earlier plan-entitlement failures below are historical. This PR does not alter remote rules or treat green CI as independent approval.
+
 The application stack, company requirements, phase gates and member assignments are unchanged. These controls check the current candidate; they do not grant production acceptance or establish an absence of vulnerabilities. See also the prepared [GitHub protection payload](../../.github/branch-protection.json).
 
 ## Free scanners and their scope
@@ -30,6 +32,8 @@ The `.githooks/pre-commit` gate refuses commits on `dev`/`main`, detached commit
 External scanners clear inherited Git hook repository selectors and discover their repository from their explicit working directory. This preserves normal ignored generated-build/dependency exclusions in linked worktrees; authored-source targets, rules and fail-closed parse handling are unchanged. Git operations in the candidate repository retain the actual staged/alternate index for export and tree checks. Synthetic repositories cannot inherit that index. Regression checks exercise both boundaries and the real scanner under a synthetic hook environment.
 
 Local Git hooks are bypassable and cannot supply server enforcement. Never use a bypass to integrate failing changes. CI repeats security checks independently.
+
+P1-DEV-001 additionally runs `pnpm test:platform` in the local commit gate and `application-checks`: configure the explicit isolated PostgreSQL 17 test URL and matching client tools through [platform setup](../development/PLATFORM_FOUNDATION.md). This pack proves actual role/transaction/lease/recovery behavior and local Cron/Queue execution; an unavailable database fails instead of skipping. No new required check context is introduced: these tests are part of the existing `application-checks` context.
 
 ## PR and scheduled checks
 

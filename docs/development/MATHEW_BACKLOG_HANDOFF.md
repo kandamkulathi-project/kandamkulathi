@@ -23,11 +23,13 @@ review does not replace the named independent human reviews.
    until publication is authorized. Devadathan reviews identity/platform/security;
    Josin reviews payment/booking contracts; physicians/privacy owners approve
    relevant clinical/content/consent policy. Do not self-approve or bypass checks.
-2. **Reconcile the platform predecessor.** Integrate reviewed P1-DEV-001 / PR #3
-   through `dev`. Preserve its database driver/migration/transaction infrastructure
-   and logging. Reconcile the shared HTTP factory's reserved second log-sink and
-   third route-registration options; do not create a competing database or queue
-   framework. Re-run the combined candidate after integration changes its tree.
+2. **Verify the integrated platform predecessor.** Reviewed P1-DEV-001 / PR #3 is
+   merged into `dev` at `cfa4c4821a7db9c39fa27dd2ee0541d71111a741` and included
+   in this candidate. Preserve its database driver/migration/transaction framework,
+   safe logging and Core Cron/Queue handlers. The HTTP factory retains the actual
+   second log-sink and third route-registration options. Explicit environment guards
+   run before feature adapters. Do not create a competing database or queue framework.
+   Re-run the combined candidate and real PostgreSQL platform suite after integration.
 3. **Supply approved inputs securely.** Company role/action matrix, consent versions,
    clinical/intake/escalation and booking/payment rules, physician-approved public
    source/language inventory and provider test access remain required. Use the

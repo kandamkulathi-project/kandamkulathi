@@ -3,23 +3,76 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
+import { environmentSchema, platformConfig } from "./config";
+import { emitEvent, type LogSink, routeCategory } from "./observability";
 
 export type ServiceRuntime = { Bindings: { APP_ENV?: string }; Variables: { requestId: string } };
 export type ServiceOptions = { registerRoutes?: (app: Hono<ServiceRuntime>) => void };
 /** Shared HTTP boundary only; no session bypass, provider calls or business success stubs. */
-export function createService(
-  service: Service,
-  _reservedLogSink?: undefined,
-  options?: ServiceOptions,
-) {
+export function createService(service: Service, sink?: LogSink, options?: ServiceOptions) {
   const app = new Hono<ServiceRuntime>();
+  app.use("*", secureHeaders());
   app.use("*", async (context, next) => {
+    const started = performance.now();
     context.set("requestId", crypto.randomUUID());
     context.header("X-Request-ID", context.get("requestId"));
     context.header("Cache-Control", "no-store");
+    let environment: ReturnType<typeof platformConfig>["APP_ENV"] | "invalid" = "invalid";
+    try {
+      environment = platformConfig(context.env ?? {}).APP_ENV;
+    } catch {
+      const knownEnvironment = environmentSchema.safeParse(context.env?.APP_ENV);
+      if (knownEnvironment.success) environment = knownEnvironment.data;
+      if (context.req.path !== "/health/live") {
+        const response = context.json(
+          {
+            error: {
+              code: "CONFIGURATION_INVALID",
+              message: "Platform configuration is invalid.",
+              requestId: context.get("requestId"),
+            },
+          },
+          503,
+        );
+        emitEvent(
+          {
+            event: "platform_failure",
+            service,
+            environment,
+            status: 503,
+            requestId: context.get("requestId"),
+          },
+          sink,
+        );
+        emitEvent(
+          {
+            event: "http_request",
+            service,
+            environment,
+            status: 503,
+            requestId: context.get("requestId"),
+            durationMs: performance.now() - started,
+            route: routeCategory(context.req.path),
+          },
+          sink,
+        );
+        return response;
+      }
+    }
     await next();
+    emitEvent(
+      {
+        event: "http_request",
+        service,
+        environment,
+        requestId: context.get("requestId"),
+        status: context.res.status,
+        durationMs: performance.now() - started,
+        route: routeCategory(context.req.path),
+      },
+      sink,
+    );
   });
-  app.use("*", secureHeaders());
   app.use("*", (context, next) => {
     const origin = context.req.header("Origin") ?? "";
     const approved =

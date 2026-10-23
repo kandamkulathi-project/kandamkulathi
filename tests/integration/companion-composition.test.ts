@@ -19,14 +19,19 @@ const publicRequest = (body: unknown) => ({
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify(body),
 });
+const request = (
+  app: ReturnType<typeof createCompanionApi>,
+  input: Parameters<typeof app.request>[0],
+  init?: RequestInit,
+) => app.request(input, init, { APP_ENV: "local" });
 
 describe("combined Companion composition — synthetic ports are not provider/database proof", () => {
   it("mounts both fail-closed adapters in the default Worker and keeps readiness unavailable", async () => {
     const fixture = await knowledgeFixture();
-    const response = await companion.request(knowledge, publicRequest(fixture.request));
+    const response = await request(companion, knowledge, publicRequest(fixture.request));
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ status: "not-ready", reason: "NOT_CONFIGURED" });
-    const channel = await companion.request(challenge, {
+    const channel = await request(companion, challenge, {
       headers: { Authorization: "Bearer fabricated", "X-Role": "admin" },
     });
     expect(channel.status).toBe(503);
@@ -37,27 +42,27 @@ describe("combined Companion composition — synthetic ports are not provider/da
       expect(item.headers.get("x-request-id")).toBeTruthy();
     }
     expect(response.headers.get("x-request-id")).not.toBe(channel.headers.get("x-request-id"));
-    expect((await companion.request("http://localhost/health/ready")).status).toBe(503);
+    expect((await request(companion, "http://localhost/health/ready")).status).toBe(503);
   });
 
   it("does not let a missing channel adapter block authorized public knowledge", async () => {
     const fixture = await knowledgeFixture();
     const app = createCompanionApi({ knowledge: fixture });
-    const response = await app.request(knowledge, publicRequest(fixture.request));
+    const response = await request(app, knowledge, publicRequest(fixture.request));
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ status: "ready" });
-    expect((await app.request(challenge)).status).toBe(503);
-    expect((await app.request("http://localhost/health/ready")).status).toBe(503);
+    expect((await request(app, challenge)).status).toBe(503);
+    expect((await request(app, "http://localhost/health/ready")).status).toBe(503);
   });
 
   it("can verify a configured challenge without pretending missing storage or knowledge is ready", async () => {
     const app = createCompanionApi({ whatsapp: { config } });
-    const verified = await app.request(challenge);
+    const verified = await request(app, challenge);
     expect(verified.status).toBe(200);
     expect(await verified.text()).toBe("123");
-    expect((await app.request(webhook, publicRequest({}))).status).toBe(503);
-    expect((await app.request(knowledge, publicRequest({}))).status).toBe(503);
-    expect((await app.request("http://localhost/health/ready")).status).toBe(503);
+    expect((await request(app, webhook, publicRequest({}))).status).toBe(503);
+    expect((await request(app, knowledge, publicRequest({}))).status).toBe(503);
+    expect((await request(app, "http://localhost/health/ready")).status).toBe(503);
   });
 
   it("preserves raw signed bytes and independent knowledge routing when both test ports exist", async () => {
@@ -100,7 +105,7 @@ describe("combined Companion composition — synthetic ports are not provider/da
         },
       ],
     });
-    const receipt = await app.request(webhook, {
+    const receipt = await request(app, webhook, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -110,11 +115,11 @@ describe("combined Companion composition — synthetic ports are not provider/da
     });
     expect(receipt.status).toBe(200);
     expect(inbox.commitBatch).toHaveBeenCalledOnce();
-    const publicResponse = await app.request(knowledge, publicRequest(fixture.request));
+    const publicResponse = await request(app, knowledge, publicRequest(fixture.request));
     expect(publicResponse.status).toBe(200);
     expect(await publicResponse.json()).toMatchObject({ status: "ready" });
     expect(
-      (await app.request("http://localhost/v1/channels/whatsapp/send", publicRequest({}))).status,
+      (await request(app, "http://localhost/v1/channels/whatsapp/send", publicRequest({}))).status,
     ).toBe(503);
   });
 });
