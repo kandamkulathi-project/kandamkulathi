@@ -1,4 +1,4 @@
-import { createCompanion } from "./knowledge/service";
+import { createCompanionApi } from "./service";
 
-// Deliberately no store, authority bypass, fixtures, model or provider bindings.
-export default createCompanion();
+// No default durable store, knowledge authority, fixtures or model is supplied.
+export default createCompanionApi();

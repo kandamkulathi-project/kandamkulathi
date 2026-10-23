@@ -20,7 +20,10 @@ export function createKnowledgeService(dependencies?: KnowledgeDependencies) {
   };
 }
 
-function registerKnowledgeRoutes(app: ServiceApp, dependencies?: KnowledgeDependencies): void {
+export function registerKnowledgeRoutes(
+  app: ServiceApp,
+  dependencies?: KnowledgeDependencies,
+): void {
   const service = createKnowledgeService(dependencies);
   app.post("/v1/knowledge/public-product", async (context) => {
     if (

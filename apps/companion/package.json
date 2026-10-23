@@ -11,6 +11,7 @@
   "dependencies": {
     "@kandamkulathi/contracts": "workspace:*",
     "@kandamkulathi/domain": "workspace:*",
+    "@kandamkulathi/providers": "workspace:*",
     "@kandamkulathi/server": "workspace:*"
   },
   "devDependencies": {
