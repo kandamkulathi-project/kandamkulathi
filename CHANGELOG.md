@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### P1-DEV-001 PR #3 second review — 2026-10-23 (independent retest Pending)
+
+- Keep successful final-publication jobs eligible for execution retries; enforce execution backoff without spending attempts on immediate duplicate delivery, while retaining deadlines and bounded budgets.
+- Reject a PostgreSQL `ROLLBACK` command tag returned by `COMMIT` after a callback catches an aborted statement, rather than reporting discarded writes as success.
+- Reserve backup destinations synchronously before database work; publish complete artifact/manifest pairs without replacing existing output and clean up only invocation-owned files.
+- Add real PostgreSQL regression/recovery cases and command-tag unit coverage; preserve all earlier platform/Worker tests, applied migration digests and cloud/independent acceptance blockers. This fixes the retained PostgreSQL path; it does not implement or certify the separately planned D1 adaptation.
+- Align Expo 58 to exact patch 58.0.17 after the SDK compatibility gate rejected 58.0.16; retain React/React Native/Node/pnpm and the existing stack.
+- Carry the client branch's actual Xcode 4 security regressions with the SDK patch: require upstream legacy-uuid removal, valid project generation/round trip, collision handling and entropy failure. Remove the obsolete Xcode 3 uuid override; retain all installed-source/registry security gates.
+
 ### P1-DEV-001 PR #3 correctness fixes — 2026-10-21 (independent retest Pending)
 
 - Reserve each transaction connection synchronously before awaiting `BEGIN`, reject overlapping/nested callers and release on every exit, including a failed `BEGIN`.

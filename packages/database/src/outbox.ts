@@ -101,12 +101,13 @@ export async function claimDue(
       lease_token = NULL, lease_until = NULL FROM expired e WHERE o.id = e.id`,
       [limit],
     );
-    // Publication exhaustion does not cancel a successful final notification awaiting delivery.
-    // Its bounded recovery window (or an earlier business deadline) must elapse first.
+    // Once a notification has reached execution, its execution budget/backoff applies.
+    // Publication exhaustion only expires never-consumed notifications; the deadline still wins.
     await client.query(
       `WITH exhausted AS (SELECT id FROM platform.outbox
       WHERE status NOT IN ('succeeded','suppressed','dead') AND (execution_attempts >= 5 OR
-      (publish_attempts >= 5 AND (status <> 'queued' OR next_attempt_at <= clock_timestamp())))
+      (publish_attempts >= 5 AND execution_attempts = 0
+      AND (status <> 'queued' OR next_attempt_at <= clock_timestamp())))
       AND (lease_until IS NULL OR lease_until <= clock_timestamp()) FOR UPDATE SKIP LOCKED LIMIT $1)
       UPDATE platform.outbox o SET status = 'dead', failure_code = 'retry_exhausted',
       lease_token = NULL, lease_until = NULL FROM exhausted e WHERE o.id = e.id`,
@@ -217,6 +218,8 @@ export async function acquireExecution(
       next_attempt_at = clock_timestamp() + interval '30 seconds',
       execution_attempts = execution_attempts + 1 WHERE id = $1 AND execution_attempts < 5
       AND due_at <= clock_timestamp()
+      AND (execution_attempts = 0 OR status IN ('dispatching','queued')
+        OR next_attempt_at <= clock_timestamp())
       AND (status = 'dispatching' OR lease_until IS NULL OR lease_until <= clock_timestamp())
       RETURNING *, 0::float8 AS pickup_ms`,
       [body.id],

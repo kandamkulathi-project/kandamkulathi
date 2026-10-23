@@ -302,6 +302,12 @@ test("transactional effect crash rolls back receipt/effect, then redelivery succ
     "UPDATE platform.outbox SET lease_until=clock_timestamp()-interval '1 second' WHERE id=$1",
     [input.id],
   );
+  assert.equal(await receive(input), "busy", "An expired lease must not bypass execution backoff");
+  assert.deepEqual(await counts(), { jobs: 1, receipts: 0, effects: 0 });
+  await fixture.source.query(
+    "UPDATE platform.outbox SET next_attempt_at=clock_timestamp()-interval '1 second' WHERE id=$1",
+    [input.id],
+  );
   assert.equal(await receive(input), "succeeded");
   assert.deepEqual(await counts(), { jobs: 1, receipts: 1, effects: 1 });
 });

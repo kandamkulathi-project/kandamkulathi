@@ -83,7 +83,11 @@ export async function transaction<T>(client: Client, callback: () => Promise<T>)
     await client.query("SET LOCAL lock_timeout = '2s'");
     await client.query("SET LOCAL idle_in_transaction_session_timeout = '5s'");
     const result = await callback();
-    await client.query("COMMIT");
+    const committed = await client.query("COMMIT");
+    // An aborted transaction answers COMMIT with a successful ROLLBACK command tag.
+    // The server has closed the boundary; do not return the callback's discarded result.
+    begun = false;
+    if (committed.command !== "COMMIT") throw new Error("Platform transaction did not commit.");
     return result;
   } catch (error) {
     if (begun) await client.query("ROLLBACK");

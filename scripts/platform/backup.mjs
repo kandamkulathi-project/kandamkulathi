@@ -3,12 +3,16 @@ import { spawn, spawnSync } from "node:child_process";
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { once } from "node:events";
 import {
+  closeSync,
   createReadStream,
   createWriteStream,
   existsSync,
+  fstatSync,
+  linkSync,
+  lstatSync,
   mkdirSync,
+  openSync,
   readFileSync,
-  renameSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -30,6 +34,15 @@ import { readManifest } from "./manifest.mjs";
 
 const magic = Buffer.from("KAVB001\n");
 const maxHeader = 64 * 1024;
+// Never unlink another invocation's file, including a replacement at an owned path.
+const removeOwned = (path, identity) => {
+  try {
+    const current = lstatSync(path, { bigint: true });
+    if (current.dev === identity.dev && current.ino === identity.ino) rmSync(path);
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+};
 const toolEnvironment = () =>
   Object.fromEntries(
     Object.entries(process.env).filter(([key]) =>
@@ -172,88 +185,113 @@ export async function exportEncrypted({
   }
   mkdirSync(dirname(resolve(output)), { recursive: true });
   const partial = `${output}.partial`;
-  assert(!existsSync(partial), "Incomplete previous export requires investigation");
-  return withAdmin(connectionString, async (client) => {
-    assert.equal(
-      Math.floor(
-        Number((await client.query("SHOW server_version_num")).rows[0].server_version_num) / 10000,
-      ),
-      17,
-      "PostgreSQL 17 required",
+  const manifestPath = `${output}.manifest.json`;
+  // wx reserves this destination synchronously, before connecting or awaiting anything.
+  // A loser never enters this try/finally and therefore cannot delete the owner's partial.
+  let descriptor = openSync(partial, "wx", 0o600);
+  let partialIdentity;
+  let manifestIdentity;
+  let published = false;
+  try {
+    partialIdentity = fstatSync(descriptor, { bigint: true });
+    assert(
+      !existsSync(output) && !existsSync(manifestPath),
+      "Existing backup or manifest requires investigation",
     );
-    await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
-    try {
-      const role = (await client.query(roleProofSql, ["k_backup_runtime"])).rows[0];
-      assert(
-        role?.permitted && !role.privileged && !role.owns_objects && role.major === 17,
-        "Use the restricted non-owner backup login",
+    return await withAdmin(connectionString, async (client) => {
+      assert.equal(
+        Math.floor(
+          Number((await client.query("SHOW server_version_num")).rows[0].server_version_num) /
+            10000,
+        ),
+        17,
+        "PostgreSQL 17 required",
       );
-      const target = (
-        await client.query(
-          "SELECT environment,namespace,dataset_class FROM platform.environment WHERE singleton",
-        )
-      ).rows[0];
-      assert(
-        target?.environment === environment &&
-          target.namespace === namespace &&
-          target.dataset_class === (environment === "production" ? "production" : "synthetic"),
-        "Wrong source environment",
-      );
-      const snapshot = (await client.query("SELECT pg_export_snapshot() AS id")).rows[0].id;
-      assert.match(snapshot, /^[A-F0-9]+-[A-F0-9]+-\d+$/i);
-      const metadata = {
-        version: 1,
-        environment,
-        namespace,
-        keyId,
-        createdAt: new Date().toISOString(),
-        sourceIdentity: databaseIdentity(url),
-        // This client and pg_dump share the exported repeatable-read snapshot. The operator's
-        // checkout may be older; retain the actual ledger and refuse incompatible restoration.
-        migrations: await installedMigrations(client),
-        controlTotals: await controlTotals(client),
-        objects,
-      };
-      const bytes = Buffer.from(JSON.stringify(metadata));
-      assert(bytes.length <= maxHeader, "Recovery metadata too large");
-      const length = Buffer.alloc(4);
-      length.writeUInt32BE(bytes.length);
-      const iv = randomBytes(12);
-      const header = Buffer.concat([magic, length, bytes, iv]);
-      const cipher = createCipheriv("aes-256-gcm", secret, iv);
-      cipher.setAAD(header);
-      const { child, completed } = launch(
-        "pg_dump",
-        ["--format=custom", "--no-owner", "--enable-row-security", `--snapshot=${snapshot}`],
-        url,
-      );
-      const outputStream = createWriteStream(partial, { flags: "wx", mode: 0o600 });
-      outputStream.write(header);
+      await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
       try {
-        await pipeline(child.stdout, cipher, outputStream, { end: false });
-        outputStream.end(cipher.getAuthTag());
-        await finished(outputStream);
-        await completed;
+        const role = (await client.query(roleProofSql, ["k_backup_runtime"])).rows[0];
+        assert(
+          role?.permitted && !role.privileged && !role.owns_objects && role.major === 17,
+          "Use the restricted non-owner backup login",
+        );
+        const target = (
+          await client.query(
+            "SELECT environment,namespace,dataset_class FROM platform.environment WHERE singleton",
+          )
+        ).rows[0];
+        assert(
+          target?.environment === environment &&
+            target.namespace === namespace &&
+            target.dataset_class === (environment === "production" ? "production" : "synthetic"),
+          "Wrong source environment",
+        );
+        const snapshot = (await client.query("SELECT pg_export_snapshot() AS id")).rows[0].id;
+        assert.match(snapshot, /^[A-F0-9]+-[A-F0-9]+-\d+$/i);
+        const metadata = {
+          version: 1,
+          environment,
+          namespace,
+          keyId,
+          createdAt: new Date().toISOString(),
+          sourceIdentity: databaseIdentity(url),
+          // This client and pg_dump share the exported repeatable-read snapshot. The operator's
+          // checkout may be older; retain the actual ledger and refuse incompatible restoration.
+          migrations: await installedMigrations(client),
+          controlTotals: await controlTotals(client),
+          objects,
+        };
+        const bytes = Buffer.from(JSON.stringify(metadata));
+        assert(bytes.length <= maxHeader, "Recovery metadata too large");
+        const length = Buffer.alloc(4);
+        length.writeUInt32BE(bytes.length);
+        const iv = randomBytes(12);
+        const header = Buffer.concat([magic, length, bytes, iv]);
+        const cipher = createCipheriv("aes-256-gcm", secret, iv);
+        cipher.setAAD(header);
+        const { child, completed } = launch(
+          "pg_dump",
+          ["--format=custom", "--no-owner", "--enable-row-security", `--snapshot=${snapshot}`],
+          url,
+        );
+        const outputStream = createWriteStream(partial, { fd: descriptor, autoClose: true });
+        descriptor = undefined; // The stream now owns the descriptor, including error/close paths.
+        try {
+          outputStream.write(header);
+          await pipeline(child.stdout, cipher, outputStream, { end: false });
+          outputStream.end(cipher.getAuthTag());
+          await finished(outputStream);
+          await completed;
+        } catch (error) {
+          child.kill();
+          outputStream.destroy();
+          await finished(outputStream).catch(() => {});
+          throw error;
+        }
+        await client.query("COMMIT");
+        const sha256 = await hashFile(partial);
+        const inventory = { ...metadata, sha256, bytes: statSync(partial).size };
+        const manifestDescriptor = openSync(manifestPath, "wx", 0o600);
+        try {
+          manifestIdentity = fstatSync(manifestDescriptor, { bigint: true });
+          writeFileSync(manifestDescriptor, `${JSON.stringify(inventory, null, 2)}\n`);
+        } finally {
+          closeSync(manifestDescriptor);
+        }
+        // Publish only after its complete manifest exists. A hard link is atomic and refuses
+        // an existing final name; rename can replace a completed artifact on POSIX.
+        linkSync(partial, output);
+        published = true;
+        return inventory;
       } catch (error) {
-        child.kill();
-        outputStream.destroy();
+        await client.query("ROLLBACK");
         throw error;
       }
-      await client.query("COMMIT");
-      renameSync(partial, output);
-      const sha256 = await hashFile(output);
-      const inventory = { ...metadata, sha256, bytes: statSync(output).size };
-      writeFileSync(`${output}.manifest.json`, `${JSON.stringify(inventory, null, 2)}\n`, {
-        flag: "wx",
-        mode: 0o600,
-      });
-      return inventory;
-    } catch (error) {
-      await client.query("ROLLBACK");
-      rmSync(partial, { force: true });
-      throw error;
-    }
-  });
+    });
+  } finally {
+    if (descriptor !== undefined) closeSync(descriptor);
+    if (!published && manifestIdentity) removeOwned(manifestPath, manifestIdentity);
+    if (partialIdentity) removeOwned(partial, partialIdentity);
+  }
 }
 
 async function hashFile(path) {

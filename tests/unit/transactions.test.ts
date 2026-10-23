@@ -13,6 +13,7 @@ describe("exclusive transaction lifecycle", () => {
         await new Promise<void>((resolve) => {
           begin = resolve;
         });
+      return { command: sql, rows: [] };
     });
     const client = { query } as unknown as DatabaseClient;
     const callback = vi.fn(async () => 42);
@@ -32,7 +33,7 @@ describe("exclusive transaction lifecycle", () => {
     const query = vi
       .fn()
       .mockRejectedValueOnce(new Error("begin-failed"))
-      .mockResolvedValue({ rows: [] });
+      .mockImplementation(async (sql: string) => ({ command: sql, rows: [] }));
     const client = { query } as unknown as DatabaseClient;
     const callback = vi.fn(async () => 42);
     await expect(transaction(client, callback)).rejects.toThrow("begin-failed");
@@ -51,6 +52,7 @@ describe("exclusive transaction lifecycle", () => {
           failOnce = false;
           throw new Error("synthetic-query-failure");
         }
+        return { command: sql, rows: [] };
       });
       const client = { query } as unknown as DatabaseClient;
       await expect(
@@ -74,4 +76,25 @@ describe("exclusive transaction lifecycle", () => {
     expect(query.mock.calls.at(-1)).toEqual(["ROLLBACK"]);
     expect(inTransaction(client)).toBe(false);
   });
+
+  it.each(["ROLLBACK", "", "SELECT"])(
+    "rejects a non-COMMIT command tag %s without retrying the callback",
+    async (tag) => {
+      let first = true;
+      const query = vi.fn(async (sql: string) => {
+        if (sql === "COMMIT" && first) {
+          first = false;
+          return { command: tag, rows: [] };
+        }
+        return { command: sql, rows: [] };
+      });
+      const client = { query } as unknown as DatabaseClient;
+      const callback = vi.fn(async () => "discarded-result");
+      await expect(transaction(client, callback)).rejects.toThrow("did not commit");
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(query.mock.calls.at(-1)).toEqual(["COMMIT"]);
+      expect(inTransaction(client)).toBe(false);
+      await expect(transaction(client, async () => 42)).resolves.toBe(42);
+    },
+  );
 });

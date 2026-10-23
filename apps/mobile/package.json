@@ -12,10 +12,10 @@
     "build": "expo export --platform android --platform ios --output-dir dist"
   },
   "dependencies": {
-    "expo": "58.0.16",
+    "@kandamkulathi/i18n": "workspace:*",
+    "expo": "58.0.17",
     "react": "19.3.0",
-    "react-native": "0.88.0",
-    "@kandamkulathi/i18n": "workspace:*"
+    "react-native": "0.88.0"
   },
   "devDependencies": {
     "@types/react": "19.3.0"
