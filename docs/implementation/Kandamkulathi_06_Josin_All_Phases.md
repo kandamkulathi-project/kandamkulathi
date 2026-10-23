@@ -295,7 +295,9 @@ Merge necessary test-code changes before freeze; run results belong in the evide
 
 **Handoff:** Publish authoritative commerce responses/state examples to Devadathan/Paul/Denzil; give reconciled totals and provider event references to Mathew/Tinu. Request finance/warehouse approval.
 
-**Traceability:** Named support package; retain parent phase outputs. Requirements: . Outputs: .
+**Traceability:** Named support package. Requirements: R01, R02, R05, R06, R07, R09, R37, R38. Outputs: P1-O03, P1-O04, P1-O09.
+
+**Mapping rationale:** Master §2 links opening catalogue/balances to R01/R05, commercial/payment rules to R02/R07, courier/mandate readiness to R06/R09, and training/financial incident ownership to R37/R38. Phase 1 §3 supplies the existing opening-import, sandbox purchase and company-review evidence outputs above; no legacy technical package is invented. This phase prepares rules, balances, acceptance dependencies and training inputs only. Final recorded finance/warehouse training and authorized live payment/refund/mandate/courier acceptance remain Phase 3 obligations, not G1 completion claims.
 
 ### P1-JOS-099 — Protected defect/retest reserve
 

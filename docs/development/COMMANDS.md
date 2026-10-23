@@ -12,7 +12,7 @@ Run from repository root with Node 24.22.1/pnpm 10.34.7. All application command
 | Lint and formatting check | `pnpm lint` | Biome supported code/config files; docs/Python checked separately. |
 | Format supported files | `pnpm format` | Writes formatting changes. Review resulting diff. |
 | Typecheck all workspaces | `pnpm typecheck` | Strict TS, Astro diagnostics and Expo TS; no credentials. |
-| Unit + HTTP/client boundary tests | `pnpm test` | Integer arithmetic, Hono HTTP safety, strict session/grant/return/link contracts, storage ordering, locale formatting and capture cancellation/cleanup. Node runtime and synthetic ports; not native-device/database proof. |
+| Unit + HTTP/client boundary tests | `pnpm test` | Integer arithmetic, Hono HTTP/client safety, current identity/consent, booking intents, primary-knowledge safety, webhook crypto/receipt and channel-state contracts. Node runtime and synthetic authority/repositories; not real authentication, durability, native-device or database proof. |
 | Interactive focused tests | `pnpm test:watch` | Vitest watch; stop manually. |
 | Build starter artifacts | `pnpm build` | Static Astro/Vite assets, Expo Android/iOS JS exports and both Worker dry bundles. Writes ignored `dist` output; no deploy/native signing. |
 | Security regressions and policy controls | `pnpm test:security` | Expo-resolved Forge/braces and patch-decision regressions; mobile input/secret guards and actual Expo iOS/Android plugin introspection for local/dev fixtures. No native compilation or signing. |
@@ -28,8 +28,8 @@ Run from repository root with Node 24.22.1/pnpm 10.34.7. All application command
 | Expo compatibility/config | `pnpm mobile:check` | Dependency check and public config resolution; no device/store claim. |
 | Raw registry advisories | `pnpm audit --audit-level high` | Unsuppressed base-version scan; still returns nonzero for the two locally patched packages. Use with installed-source verification, never describe it as a clean scan. |
 | Browser installation | `pnpm exec playwright install chromium` | Downloads the pinned test browser. Linux CI additionally installs OS dependencies. |
-| Browser + actual Worker runtime | `pnpm test:e2e` | Builds, then Chromium UI/locale/mobile-width tests and actual local workerd requests; owns four ports, no reused servers. |
-| CI E2E after build | `pnpm exec playwright test` | Same tests; assumes current build artifacts exist. |
+| Browser + actual Worker runtime | `pnpm test:e2e` | Builds, then Chromium UI/locale/mobile-width and actual local workerd fail-closed requests, followed by actual supervised dev startup; owns four ports sequentially, no reused servers. No functioning business journey is implied. |
+| CI E2E after build | `pnpm exec playwright test`, then `pnpm exec playwright test --config playwright.dev.config.ts` | Preview/Worker and separate development lifecycle campaigns; assumes current build artifacts exist. |
 | Offline SQL generation | `pnpm db:generate` | Generates SQL from reviewed Drizzle definitions. Namespaces-only starter is not an implemented schema. No connection/migration/push. |
 | Docs and traceability | `python scripts/check_repository.py` | Links, 38 requirements, 109 package/branch assignments, 480 hours, case IDs, limited secret patterns and CI wiring. No app execution claim. |
 | Docs guard negative controls | `python -m unittest discover -s tests/repository -v` | Ambiguous member/manual selection under reversed filesystem order, missing app CI contract, portable links, source inventory, secret redaction and fenced examples. |

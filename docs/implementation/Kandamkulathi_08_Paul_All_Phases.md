@@ -243,7 +243,9 @@ Merge necessary test-code changes before freeze; run results belong in the evide
 
 **Handoff:** Send bounded screen PRs and screenshots to Devadathan; send reproducible UI/device cases to Tinu and contract mismatches to Mathew/Josin rather than patching business logic locally.
 
-**Traceability:** Named support package; retain parent phase outputs. Requirements: . Outputs: .
+**Traceability:** Named support package. Requirements: R25, R37, R38. Outputs: P1-O01, P1-O06, P1-O09.
+
+**Mapping rationale:** Master §2 supplies native delivery (R25), guides/training (R37) and release/operating readiness (R38). Phase 1 §3 requires build-linked artifacts (P1-O01), real-device channel evidence (P1-O06) and company-review/gate records (P1-O09). This package collects device/store inputs, draft guide evidence and development-candidate smoke only; public installation checks and approved walkthrough recording remain Phase 3 duties under the release manager. No public release or completed training is claimed at G1.
 
 ### P1-PAU-099 — Protected defect/retest reserve
 
@@ -433,7 +435,9 @@ Merge necessary test-code changes before freeze; run results belong in the evide
 
 **Handoff:** Send bounded screen PRs and screenshots to Devadathan; send reproducible UI/device cases to Tinu and contract mismatches to Mathew/Josin rather than patching business logic locally.
 
-**Traceability:** Named support package; retain parent phase outputs. Requirements: . Outputs: .
+**Traceability:** Named support package. Requirements: R25, R37, R38. Outputs: P2-O04, P2-O06, P2-O07.
+
+**Mapping rationale:** Master §2 retains R25 complete builds before public release, R37 guide drafts before recorded training and R38 integrated operating controls before final proof. Phase 2 §3 maps these to native candidate/device evidence (P2-O04), training/handover preparation (P2-O06) and exact-candidate/external-status records (P2-O07). Support here is device/store-input and draft-guide readiness, not public installation or completed recording; those remain Phase 3 duties. Missing approvals stay Pending.
 
 ### P2-PAU-099 — Protected defect/retest reserve
 

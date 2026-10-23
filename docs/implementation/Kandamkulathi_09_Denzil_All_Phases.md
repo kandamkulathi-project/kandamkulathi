@@ -244,7 +244,9 @@ Merge necessary test-code changes before freeze; run results belong in the evide
 
 **Handoff:** Send bounded UI/content/locale/SEO/report/guide PRs to Devadathan and relevant domain owner; hand approved source/version and validation evidence to Tinu. Medical approval remains with the physician.
 
-**Traceability:** Named support package; retain parent phase outputs. Requirements: . Outputs: .
+**Traceability:** Named support package. Requirements: R08, R16, R22, R25, R34, R37, R38. Outputs: P1-O06, P1-O07, P1-O09.
+
+**Mapping rationale:** Master §2 supplies approved message templates (R08), approved knowledge/language records (R16/R22), store/listing dependencies (R25/R34) and guides/operating handover (R37/R38). Phase 1 §3 provides channel/language foundations (P1-O06), approved-content provenance (P1-O07) and company-review/readiness evidence (P1-O09). Maintain records and initial guide/training inputs only; final listing/store approvals, recorded training and actual handover remain Phase 3 obligations, not G1 deliverables. Record missing approvals without supplying medical approval, credentials or live sends.
 
 ### P1-DEN-099 — Protected defect/retest reserve
 
@@ -441,7 +443,9 @@ Merge necessary test-code changes before freeze; run results belong in the evide
 
 **Handoff:** Send bounded UI/content/locale/SEO/report/guide PRs to Devadathan and relevant domain owner; hand approved source/version and validation evidence to Tinu. Medical approval remains with the physician.
 
-**Traceability:** Named support package; retain parent phase outputs. Requirements: . Outputs: .
+**Traceability:** Named support package. Requirements: R08, R16, R22, R25, R34, R37, R38. Outputs: P2-O01, P2-O03, P2-O04, P2-O05, P2-O06, P2-O07.
+
+**Mapping rationale:** Master §2 links message-template readiness (R08), approved content/languages (R16/R22), store/listing status (R25/R34) and role guides/operating handover (R37/R38). Phase 2 §3 places their supporting records in commerce messaging (P2-O01), content/communication (P2-O03), native readiness (P2-O04), listing configuration (P2-O05), draft training/handover materials (P2-O06) and external/company status evidence (P2-O07). Finalize this phase's guide drafts and readiness records only; recorded training, public approvals and final handover remain Phase 3. Pending company/provider decisions stay blockers, not assumed approvals.
 
 ### P2-DEN-099 — Protected defect/retest reserve
 
