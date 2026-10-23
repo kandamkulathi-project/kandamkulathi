@@ -65,11 +65,11 @@ describe("real security scanner end-to-end negative controls", () => {
       for (const key of keys) process.env[key] = join(root, ".local-data", `synthetic-${key}`);
       const report = await sast();
       assert.equal(report.results.length, 0);
-      assert(report.paths.scanned.includes("packages/server/src/index.ts"));
+      // Scanner output uses native separators; apply the same coverage checks on each OS.
+      const scanned = report.paths.scanned.map((path) => path.replaceAll("\\", "/"));
+      assert(scanned.includes("packages/server/src/index.ts"));
       assert(
-        report.paths.scanned.every(
-          (path) => !/(^|\/)(node_modules|dist|\.wrangler|\.astro)\//.test(path),
-        ),
+        scanned.every((path) => !/(^|\/)(node_modules|dist|\.wrangler|\.astro)\//.test(path)),
         "Generated artifacts must not replace the authored-source target set",
       );
     } finally {
