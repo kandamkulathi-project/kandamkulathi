@@ -1,6 +1,28 @@
 # Changelog
 
+## P1-DEV-003 review corrections — 2026-10-23 (independent review Pending)
+
+- Retire mutation keys after validated results or definitive rejections; preserve ambiguous retries. Add replay-aware consent withdrawal and receipt-free payment polling regressions, including a server-committed lost response.
+- Preserve the local logout block across visibility, page restoration and automatic expiry; explicit user retry remains available. Extend browser coverage to assert no passive session reads or private-content restoration.
+- Retain independent stop/deletion obligations after recording cleanup failure, retry unfinished work and block new capture until cleanup succeeds. Cover failed stop, deletion, partial preparation and disposal; installed-device evidence remains Pending.
+- Incorporate the reviewed PR #4 squash merge from `dev`, resolving foundation conflicts without merging this feature or changing company requirements, stack, assignments or phase gates. Add Tinu's independent retest register.
+
+## 2026-10-22 — P1-DEV-003 local sensitive clients (review/integration Pending)
+
+- Recheck operation expiry at actual SDK launch after asynchronous setup. A permanent Chromium regression first reproduced checkout opening after expiry while its script was delayed; shared/native/browser deadline guards now prevent it and retain server reconciliation.
+
+- Added strict proposed consent/security/payment/booking/intake/membership contracts, session-bound uncached requests, CSRF/idempotency preparation, synchronous duplicate protection and stale-response fencing.
+- Added minimal web/native consent and clinical views, current-price checks before Razorpay checkout, server-only payment reconciliation, booking expiry and consultation access/expiry controls. Optional marketing remains separate; no diagnosis or private-call success is fabricated.
+- Pinned the official native Razorpay adapter and retained the agreed stack. Native compilation/devices, actual APIs/providers/signaling, cloud setup, independent review and all phase acceptance remain Pending.
+- Added permanent unit/HTTP/Chromium boundary regressions, including an unmocked sensitive POST to the unavailable local Worker. Recorded the PR #4 base dependency and owner/Tinu handoffs in `docs/development/SENSITIVE_CLIENT_FLOWS.md`; canonical company requirements, six-member plans and gates are unchanged.
+
 ## Unreleased
+
+### PR #5 native logout correction — 2026-10-24 (independent review Pending)
+
+- Preserve local logout denial across passive native lifecycle refreshes, including combined remote logout and credential-removal failures; only explicit revalidation may retry access.
+- Add reproducing native-controller/component journeys while retaining the supported-device acceptance requirement; synthetic native tests do not establish real SecureStore or device behavior.
+- Integrate reviewed platform `dev` without discarding its environment guards, Cron/Queue handlers or real PostgreSQL gates. Isolate external scanners from inherited Git-hook selectors, with environment and real-scanner regressions; preserve staged-index selection and all fail-closed checks.
 
 ### P1-DEV-001 PR #3 second review — 2026-10-23 (independent retest Pending)
 

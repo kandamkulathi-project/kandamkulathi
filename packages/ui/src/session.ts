@@ -5,26 +5,51 @@ import { useCallback, useEffect, useRef, useState } from "react";
 /** Clears private UI on background/navigation and revalidates; no persisted credentials. */
 export function useSession(origin: string, local: boolean) {
   const [attempt, setAttempt] = useState(0);
+  const [blocked, setBlocked] = useState(false);
+  const blockedRef = useRef(false);
   const latestAttempt = useRef(attempt);
-  latestAttempt.current = attempt;
   const [result, setResult] = useState<Resource<ClientSession>>({ status: "loading" });
-  const reload = useCallback(() => setAttempt((value) => value + 1), []);
+  const revalidate = useCallback(() => {
+    if (blockedRef.current) return;
+    setResult({ status: "loading" });
+    setAttempt(++latestAttempt.current);
+  }, []);
+  // Only an explicit user retry may clear a local logout/revocation block.
+  const reload = useCallback(() => {
+    blockedRef.current = false;
+    setBlocked(false);
+    revalidate();
+  }, [revalidate]);
+  const invalidate = useCallback(() => {
+    blockedRef.current = true;
+    latestAttempt.current++;
+    setBlocked(true);
+    setResult({ status: "anonymous" });
+  }, []);
   useEffect(() => {
     const controller = new AbortController();
+    if (blocked) return () => controller.abort();
     setResult({ status: "loading" });
     if (document.hidden) return () => controller.abort();
     let expiry: ReturnType<typeof setTimeout> | undefined;
     const timeout = setTimeout(() => {
+      if (blockedRef.current || latestAttempt.current !== attempt) return;
       controller.abort();
       setResult({ status: "error" });
     }, 5000);
     void loadSession(origin, local, controller.signal).then((value) => {
-      if (controller.signal.aborted || document.hidden || latestAttempt.current !== attempt) return;
+      if (
+        blockedRef.current ||
+        controller.signal.aborted ||
+        document.hidden ||
+        latestAttempt.current !== attempt
+      )
+        return;
       clearTimeout(timeout);
       setResult(value);
       if (value.status === "ready")
         expiry = setTimeout(
-          reload,
+          revalidate,
           Math.min(2147483647, Math.max(0, Date.parse(value.data.expiresAt) - Date.now())),
         );
     });
@@ -33,18 +58,14 @@ export function useSession(origin: string, local: boolean) {
       clearTimeout(timeout);
       clearTimeout(expiry);
     };
-  }, [origin, local, attempt, reload]);
+  }, [origin, local, attempt, revalidate, blocked]);
   useEffect(() => {
-    const invalidate = () => {
-      setResult({ status: "loading" });
-      reload();
-    };
-    document.addEventListener("visibilitychange", invalidate);
-    window.addEventListener("pageshow", invalidate);
+    document.addEventListener("visibilitychange", revalidate);
+    window.addEventListener("pageshow", revalidate);
     return () => {
-      document.removeEventListener("visibilitychange", invalidate);
-      window.removeEventListener("pageshow", invalidate);
+      document.removeEventListener("visibilitychange", revalidate);
+      window.removeEventListener("pageshow", revalidate);
     };
-  }, [reload]);
-  return { result, reload };
+  }, [revalidate]);
+  return { result, reload, invalidate };
 }

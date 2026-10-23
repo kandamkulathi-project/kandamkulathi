@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { LocalDeviceCheck } from "./src/LocalDeviceCheck";
 import { receivedLink } from "./src/native";
+import { NativeSensitiveFlows } from "./src/SensitiveFlows";
 
 export default function App() {
   const [locale, setLocale] = useState<Locale>("en");
@@ -75,8 +76,8 @@ export default function App() {
           ))}
         </View>
         {fontError && <Text accessibilityRole="alert">{text.checkFailed}</Text>}
-        <Text style={[styles.copy, { fontFamily }]}>{text.anonymous}</Text>
         {linkPending && <Text accessibilityLiveRegion="polite">{text.anonymous}</Text>}
+        <NativeSensitiveFlows locale={locale} fontFamily={fontFamily} />
         <LocalDeviceCheck locale={locale} />
         <Text style={[styles.heading, { fontFamily }]} accessibilityRole="header">
           {text.companion}

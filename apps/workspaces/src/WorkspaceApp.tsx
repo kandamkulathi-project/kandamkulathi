@@ -3,13 +3,14 @@ import { type Workspace, workspaceNames } from "@kandamkulathi/contracts/client"
 import { foundation, type Locale, messages } from "@kandamkulathi/i18n";
 import { Button, DeviceCheck, Field, LanguageSelect, Notice, useSession } from "@kandamkulathi/ui";
 import { useEffect, useState } from "react";
+import { SensitiveFlows } from "./SensitiveFlows";
 
 export default function App() {
   const [locale, setLocale] = useState<Locale>("en");
   const [draft, setDraft] = useState("");
   const text = foundation[locale];
   const route = workspaceNames.find((value) => location.pathname === `/${value}`);
-  const { result, reload } = useSession(
+  const { result, reload, invalidate } = useSession(
     import.meta.env.VITE_CORE_API_ORIGIN ?? "http://127.0.0.1:8787",
     import.meta.env.DEV || location.hostname === "127.0.0.1",
   );
@@ -68,6 +69,19 @@ export default function App() {
             <h2>{text.empty}</h2>
             <p>{text.pending}</p>
           </section>
+        )}
+        {(status === "ready" || status === "anonymous") && (
+          <SensitiveFlows
+            key={
+              result.status === "ready"
+                ? `${result.data.userId}:${result.data.expiresAt}`
+                : "anonymous"
+            }
+            session={result.status === "ready" ? result.data : null}
+            route={route}
+            locale={locale}
+            onRevoked={invalidate}
+          />
         )}
         {!route && (
           <>
