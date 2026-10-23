@@ -1,15 +1,25 @@
 import { workspaceAccess } from "@kandamkulathi/client";
+import { sensitiveClient } from "@kandamkulathi/client/sensitive";
 import { type Workspace, workspaceNames } from "@kandamkulathi/contracts/client";
 import { foundation, type Locale, messages } from "@kandamkulathi/i18n";
-import { Button, DeviceCheck, Field, LanguageSelect, Notice, useSession } from "@kandamkulathi/ui";
-import { useEffect, useState } from "react";
+import {
+  Button,
+  CompanionShell,
+  DeviceCheck,
+  LanguageSelect,
+  Notice,
+  useSession,
+} from "@kandamkulathi/ui";
+import { useEffect, useMemo, useState } from "react";
+import { KnowledgeEditor } from "./KnowledgeEditor";
+import { SensitiveFlows } from "./SensitiveFlows";
 
 export default function App() {
   const [locale, setLocale] = useState<Locale>("en");
   const [draft, setDraft] = useState("");
   const text = foundation[locale];
   const route = workspaceNames.find((value) => location.pathname === `/${value}`);
-  const { result, reload } = useSession(
+  const { result, reload, invalidate } = useSession(
     import.meta.env.VITE_CORE_API_ORIGIN ?? "http://127.0.0.1:8787",
     import.meta.env.DEV || location.hostname === "127.0.0.1",
   );
@@ -17,6 +27,19 @@ export default function App() {
     result.status === "ready" && route && !workspaceAccess(result.data, route)
       ? "denied"
       : result.status;
+  const companion = useMemo(
+    () =>
+      result.status === "ready"
+        ? sensitiveClient({
+            origin: import.meta.env.VITE_COMPANION_API_ORIGIN ?? "http://127.0.0.1:8788",
+            local: import.meta.env.DEV || location.hostname === "127.0.0.1",
+            session: result.data,
+            onRevoked: invalidate,
+          })
+        : undefined,
+    [result, invalidate],
+  );
+  useEffect(() => () => companion?.dispose(), [companion]);
   useEffect(() => {
     document.documentElement.lang = locale;
     document.title = text.workspace;
@@ -69,21 +92,39 @@ export default function App() {
             <p>{text.pending}</p>
           </section>
         )}
+        {(status === "ready" || status === "anonymous") && (
+          <SensitiveFlows
+            key={
+              result.status === "ready"
+                ? `${result.data.userId}:${result.data.expiresAt}`
+                : "anonymous"
+            }
+            session={result.status === "ready" ? result.data : null}
+            route={route}
+            locale={locale}
+            onRevoked={invalidate}
+          />
+        )}
+        {status === "ready" &&
+          result.status === "ready" &&
+          (route === "staff" || route === "physician") && (
+            <KnowledgeEditor
+              key={`${result.data.userId}:${result.data.expiresAt}:${locale}`}
+              session={result.data}
+              locale={locale}
+              onRevoked={invalidate}
+            />
+          )}
         {!route && (
           <>
             <DeviceCheck locale={locale} />
-            <section aria-label={text.companion}>
-              <h2>{text.companion}</h2>
-              <Notice>{text.citationPending}</Notice>
-              <Field
-                id="message-draft"
-                label={text.draft}
-                help={text.draftHelp}
-                value={draft}
-                onChange={setDraft}
-              />
-              <Button disabled>{text.sendPending}</Button>
-            </section>
+            <CompanionShell
+              key={`${result.status === "ready" ? result.data.userId + result.data.expiresAt : result.status}:${locale}`}
+              client={companion}
+              locale={locale}
+              draft={draft}
+              onDraft={setDraft}
+            />
           </>
         )}
         <footer>{text.footer}</footer>

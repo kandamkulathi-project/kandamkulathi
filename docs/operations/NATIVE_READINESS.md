@@ -1,4 +1,4 @@
-# Native and provider proof register — P1-DEV-002
+# Native and provider proof register — P1-DEV-002 / P1-DEV-003 / P1-DEV-004
 
 Owner Devadathan; independent sensitive reviewer Mathew. Company scope and canonical tests are unchanged. **All real-device/provider/store acceptance below is Pending. Cloud setup remains deferred by user instruction.** Prepared source/configuration and JavaScript exports do not establish a signed, installed or approved native application.
 
@@ -11,14 +11,18 @@ Owner Devadathan; independent sensitive reviewer Mathew. Company scope and canon
 | Network / backup | Actual Expo config introspection tests enforce ATS, nonlocal Android cleartext denial, backup exclusions and no background audio | Installed binary manifest/Info.plist/device behavior / Devadathan + Mathew |
 | Secure storage | Native adapter plus synthetic diagnostic; shared ordering/failure tests | Locked-device, restart, logout, reinstall/keychain persistence, backup/restore and account-change cases / Devadathan |
 | Authentication | Native system-browser launch and single-use return contract; no session bypass | WorkOS/server PKCE/state binding, code exchange, verified session/MFA and physical cold/warm return / Mathew + Devadathan |
-| Payments | Return envelope always requires server verification | Compatible Razorpay native checkout adapter selection/compilation and test-mode return/cancel/unknown-result reconciliation / Josin + Devadathan |
-| Consultation video | Local camera/audio permissions and bounded cleanup only | Native WebRTC adapter/SDK compilation, authenticated Durable Object signaling, membership/join window, TURN and private web↔native call / Mathew + Devadathan |
+| Payments | Return envelope and shared reconciliation require server verification; official native Razorpay 3.0.0 adapter pinned and JS exported | Actual native SDK compilation/linking, server auth/commerce integration and real test-mode return/cancel/timeout/unknown-result reconciliation / Josin + Devadathan |
+| Consultation video | Local camera/audio diagnostics plus typed membership/window/revision/expiry control and delayed-setup cleanup; UI starts no private call | Native WebRTC adapter/SDK compilation, reviewed signaling transport, actual identity/consent/assignment enforcement, TURN and private web↔native call / Mathew + Devadathan |
 | Voice | Bounded local native audio capture/cleanup and editable draft contract | Actual microphone/revocation/background tests; approved authenticated upload/transcription, correction and explicit send / Mathew + Devadathan |
 | Push / links | Permission request and strict cold/warm link parser; no registration/send | APNs/FCM credentials, authenticated device registration, ownership changes, foreground/background delivery and per-record API authorization / Mathew + Devadathan |
 | Languages | Draft EN/ML/TA labels, bundled licensed fonts and browser layout checks | Company translations, localized OS prompts, physical font shaping/font scaling and screen-reader review / Devadathan + Denzil + company |
 | Public stores | EAS profile inputs and local isolation guards prepared | Company Apple/Google accounts, signing/recovery, privacy/data/permission disclosures, reviewer access, actual listing assets, submission and approval / Devadathan + company |
 
 ## Required device campaign
+
+P1-DEV-004 adds the [web/native cited Companion and exact-origin transport](../development/FRONTEND_SECURITY_REVIEW.md). Only matching, approved, current language/version sources can render; reviewed voice text has no implicit send/action. A separate Companion public origin is required for company builds. JS exports/config checks and printable-Hermes secret scanning remain local evidence, not installed-device or signing acceptance.
+
+P1-DEV-003's [local source and API handoff](../development/SENSITIVE_CLIENT_FLOWS.md) adds consent/intake and web/native payment/booking controls. Browser provider fixtures and a transport-port unit test are local boundary checks; every real-device/provider row remains Pending. In particular the installed native Razorpay entry has no close method: verify lifecycle fencing, pending reconciliation and the SDK-level duplicate lock on an installed binary.
 
 For every row record actual date, source SHA, configuration/SDK/native-build identifiers, phone model/OS, environment/provider mode, exact canonical case IDs, expected/actual result and restricted evidence link. Never record credentials, codes, tokens, consultation recordings or patient data. Tinu coordinates full phase acceptance; Devadathan runs specialist device checks and Mathew independently reviews sensitive evidence.
 
@@ -31,3 +35,19 @@ For every row record actual date, source SHA, configuration/SDK/native-build ide
 7. Test EN/ML/TA, large fonts, screen reader, focus/keyboard, safe areas and narrow screens. Review OS permission descriptions and privacy/disclosure text with company owners. Complete canonical cases and record blockers without substituting developer fixture results.
 
 Local evidence limitations: the current host is Windows, with no Java toolchain found and no Android SDK at the conventional path. No Android/iOS native binary was compiled, signed, installed or submitted. Chromium physical/fake-device acquisition returned `NotSupportedError`; canvas-stream UI coverage does not prove a camera works. Missing device/provider proofs must trigger forecast and follow-up, not an invented pass. Company accounts/cloud setup and all G1 acceptance remain Pending.
+
+## Store-release input checklist — all actual inputs Pending
+
+Use the existing project-day deadlines in the [external readiness register](../governance/EXTERNAL_READINESS_REGISTER.md); these are prerequisites, not a new allocation or calendar commitment. Do not enter passwords, private signing keys, MFA recovery codes or patient records in Git.
+
+| Input / evidence | Responsible owner | Deadline / gate |
+|---|---|---|
+| Company Apple/Google developer eligibility, legal account ownership and payment/contact details; actual Expo organization/project and approved app/bundle identifiers | Devadathan + company store owner (company person unassigned) | D1 eligibility; unresolved inputs forecast immediately |
+| Registered Core/Companion HTTPS origins, WorkOS native returns, company URL association, notification references and provider-mode/audience matrix | Devadathan + Mathew + company service owner | D1 real SDK proof; reviewed before company build |
+| Listing text and screenshot plan: actual product identity, EN/ML/TA support, real shopping/consultation/Companion screens, contact/support and age/content declarations; no fabricated screens or cure claims | Devadathan + Denzil + company content/clinical owners | Prepare D1; verified complete submission D7 |
+| Privacy/data-safety and permission disclosures for microphone/camera/notifications, health/identity data, payments, AI/voice/video processors, retention/deletion and account removal | Mathew + Devadathan + company privacy/clinical owners | D1 policies/processor review; complete with actual flows before D7 submission |
+| App signing, restricted CI/build credential storage, certificate/keystore ownership, backup/rotation/recovery references and designated company recovery holder | Devadathan + company store/security owner | Before first signed binary; submission-ready D7 |
+| Least-privilege synthetic reviewer accounts, backend availability, test-only payment steps, access to gated flows and safe review notes without credentials in repository | Devadathan + Mathew + Josin + company store owner | Tested complete submission D7 |
+| Signed binary checks, Android/iPhone OS/device/accessibility matrix, actual listing screenshots, store submission IDs and subsequent review/appeal records | Devadathan + Tinu + company store owner | Complete submission D7; actual public approval/install required G3 |
+
+The company must assign the unassigned external owner and approve the final wording/identifiers. Code/config creation, internal distribution and TestFlight do not meet the required public-store acceptance. Keep evidence in the restricted store/provider manifest with exact candidate/build IDs.

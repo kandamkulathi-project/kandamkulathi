@@ -48,6 +48,8 @@ jobs:
         run: pnpm verify
       - name: Verify Expo dependency and public configuration compatibility
         run: pnpm mobile:check
+      - name: Audit built public, workspace and native client artifacts
+        run: pnpm audit:clients
       - name: Install test browser
         run: pnpm exec playwright install --with-deps chromium
       - name: Browser and actual local workerd smoke tests

@@ -14,6 +14,7 @@ Run from repository root with Node 24.22.1/pnpm 10.34.7. All application command
 | Unit + HTTP/client boundary tests | `pnpm test` | Integer arithmetic, Hono HTTP safety, strict session/grant/return/link contracts, storage ordering, locale formatting and capture cancellation/cleanup. Node runtime and synthetic ports; not native-device/database proof. |
 | Interactive focused tests | `pnpm test:watch` | Vitest watch; stop manually. |
 | Build starter artifacts | `pnpm build` | Static Astro/Vite assets, Expo Android/iOS JS exports and both Worker dry bundles. Writes ignored `dist` output; no deploy/native signing. |
+| Built client security audit | `pnpm audit:clients` | Requires current public/workspace/native exports. Checks source maps/private file types, configured backend/private-fixture markers and Gitleaks patterns in text/printable Hermes strings. Fails on missing outputs; no provider calls. |
 | Security regressions and policy controls | `pnpm test:security` | Expo-resolved Forge/braces and patch-decision regressions; mobile input/secret guards and actual Expo iOS/Android plugin introspection for local/dev fixtures. No native compilation or signing. |
 | Verified dependency decision | `pnpm security:check` | Checks installed source/patch/advisory fingerprints, runs exploit regressions, scans the full registry and saves untouched JSON in ignored `test-results`. Any unremediated severity or missing proof fails. |
 | Local commit gate | `pnpm precommit` | Full application/security/browser/docs verification of staged-clean inputs; refuses shared-branch commits. Installed automatically by local `pnpm install`, or `pnpm hooks:install`. |
@@ -45,6 +46,10 @@ Run from repository root with Node 24.22.1/pnpm 10.34.7. All application command
 | Diff/state | `git diff --check`, `git status --short --branch` | Review local state; no destructive action. |
 
 ## Continuous integration
+
+P1-DEV-004 adds [knowledge/editor/Companion and artifact security checks](FRONTEND_SECURITY_REVIEW.md). `application-checks` and the local commit gate run `pnpm audit:clients` after builds; no new check name, paid tool, dependency or cloud service is introduced.
+
+P1-DEV-003 adds sensitive session/CSRF, current-price/payment reconciliation, consent/intake, booking/membership and lifecycle regressions to the existing unit and browser commands. [Exact local scope and pending integrations](SENSITIVE_CLIENT_FLOWS.md) distinguishes fixtures from the actual Worker 503 cases. There is no new provider execution command, native binary build or cloud dependency in these tests.
 
 [Application workflow](../../.github/workflows/application.yml) executes locked install, verification, Expo compatibility, dependency audit and Chromium/workerd E2E on PRs/pushes to `dev`/`main`. [Documentation workflow](../../.github/workflows/documentation.yml) executes independent Python checks. Actions use pinned commits, read-only permissions, no persisted checkout credentials and no provider/deployment secrets. There is no public deployment workflow.
 

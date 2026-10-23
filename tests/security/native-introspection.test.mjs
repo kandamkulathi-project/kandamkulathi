@@ -20,6 +20,8 @@ for (const environment of ["local", "dev"]) {
           EXPO_PUBLIC_APP_ENV: environment,
           EXPO_PUBLIC_CORE_API_ORIGIN:
             environment === "local" ? "http://127.0.0.1:8787" : "https://dev-api.example.com",
+          EXPO_PUBLIC_COMPANION_API_ORIGIN:
+            environment === "local" ? "http://127.0.0.1:8788" : "https://dev-companion.example.com",
           MOBILE_IOS_BUNDLE_ID: "com.examplecompany.kandamkulathi.dev",
           MOBILE_ANDROID_APPLICATION_ID: "com.examplecompany.kandamkulathi.dev",
           MOBILE_EXPO_OWNER: "synthetic-company",

@@ -85,7 +85,8 @@ export function createService(service: Service, sink?: LogSink) {
     return cors({
       origin: approved ? origin : [],
       credentials: approved,
-      allowMethods: ["GET", "HEAD", "OPTIONS"],
+      allowMethods: ["GET", "HEAD", "OPTIONS", "POST"],
+      allowHeaders: ["Content-Type", "X-CSRF-Token", "Idempotency-Key"],
       exposeHeaders: ["X-Request-ID"],
     })(context, next);
   });

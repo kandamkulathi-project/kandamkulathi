@@ -12,18 +12,20 @@ export function recordingProbe(
 ) {
   let generation = 0;
   let busy = false;
-  let prepared = false;
+  let stopPending = false;
+  let discardPending = false;
   let disposed = false;
   let stopping = 0;
   let task = Promise.resolve();
   let timer: ReturnType<typeof setTimeout> | undefined;
   const cleanup = async () => {
-    if (!prepared) return;
-    prepared = false;
-    try {
+    if (stopPending) {
       await port.stop();
-    } finally {
+      stopPending = false;
+    }
+    if (discardPending) {
       await port.discard();
+      discardPending = false;
     }
   };
   const stop = () => {
@@ -33,9 +35,15 @@ export function recordingProbe(
     stopping++;
     task = task
       .then(cleanup, cleanup)
-      .then(() => {
-        if (!disposed) changed("idle");
-      })
+      .then(
+        () => {
+          if (!disposed) changed("idle");
+        },
+        (error: unknown) => {
+          if (!disposed) changed("failed");
+          throw error;
+        },
+      )
       .finally(() => {
         busy = false;
         stopping--;
@@ -44,7 +52,8 @@ export function recordingProbe(
   };
   return {
     start() {
-      if (disposed || busy || prepared || stopping > 0) return task;
+      if (disposed || busy || stopPending || discardPending || stopping > 0)
+        return task.catch(() => {}); // Refused starts must not leak a previous cleanup rejection.
       busy = true;
       const current = ++generation;
       changed("requesting");
@@ -56,8 +65,10 @@ export function recordingProbe(
             changed("denied");
             return;
           }
+          // Preparation may allocate a file before failing; retain both cleanup obligations.
+          stopPending = true;
+          discardPending = true;
           await port.prepare();
-          prepared = true;
           if (disposed || generation !== current) {
             await cleanup();
             return;

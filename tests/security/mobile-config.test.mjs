@@ -18,6 +18,10 @@ test("nonlocal builds refuse missing company identifiers, insecure URLs and publ
     { EXPO_PUBLIC_API_KEY: "synthetic" },
     { EXPO_PUBLIC_DATABASE_URL: "synthetic-credential" },
     { EXPO_PUBLIC_CORE_API_ORIGIN: "https://user:password@example.com" },
+    { EXPO_PUBLIC_COMPANION_API_ORIGIN: "http://api.example.com" },
+    { EXPO_PUBLIC_COMPANION_API_ORIGIN: "https://api.example.com/v1" },
+    { EXPO_PUBLIC_COMPANION_API_ORIGIN: "https://api.example.com?token=private" },
+    { EXPO_PUBLIC_COMPANION_API_ORIGIN: "https://user:password@api.example.com" },
   ])
     assert.throws(() => mobileConfig({}, env));
 });
@@ -27,6 +31,7 @@ test("company development build uses only selected public fields and explicit id
     {
       EXPO_PUBLIC_APP_ENV: "dev",
       EXPO_PUBLIC_CORE_API_ORIGIN: "https://dev-api.example.com",
+      EXPO_PUBLIC_COMPANION_API_ORIGIN: "https://dev-companion.example.com",
       MOBILE_IOS_BUNDLE_ID: "com.examplecompany.kandamkulathi.dev",
       MOBILE_ANDROID_APPLICATION_ID: "com.examplecompany.kandamkulathi.dev",
       MOBILE_EXPO_OWNER: "synthetic-company",
@@ -36,5 +41,6 @@ test("company development build uses only selected public fields and explicit id
   );
   assert.equal(config.scheme, "kandamkulathi-dev");
   assert.equal(config.extra.coreApiOrigin, "https://dev-api.example.com");
+  assert.equal(config.extra.companionApiOrigin, "https://dev-companion.example.com");
   assert(!JSON.stringify(config).includes("private-not-exported"));
 });
