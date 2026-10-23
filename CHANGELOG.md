@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-10-23 — PR #6 dependency/conflict alignment (independent review Pending)
+
+- Incorporate P1-DEV-003's `d779e0b` fixes and the reviewed `dev` foundation at `b71429c`, preserving the knowledge/editor/artifact-security additions.
+- Combine synchronous page-navigation fencing with sticky logout blocking. Normal page restoration revalidates; navigation, visibility, expiry and persisted pageshow cannot undo logout. Extend browser coverage for both normal resume and failed-logout navigation.
+- Retain replay-aware consent/payment tests and retryable native audio cleanup. Cloud, provider/device integration, independent review and phase acceptance remain Pending.
+- Preserve explicit chat/handoff operation IDs as their request keys across replay, retaining the original stable-message assertion and adding committed-response-loss/duplicate-click coverage; later distinct actions still use new IDs.
+
+## P1-DEV-003 review corrections — 2026-10-23 (independent review Pending)
+
+- Retire mutation keys after validated results or definitive rejections; preserve ambiguous retries. Add replay-aware consent withdrawal and receipt-free payment polling regressions, including a server-committed lost response.
+- Preserve the local logout block across visibility, page restoration and automatic expiry; explicit user retry remains available. Extend browser coverage to assert no passive session reads or private-content restoration.
+- Retain independent stop/deletion obligations after recording cleanup failure, retry unfinished work and block new capture until cleanup succeeds. Cover failed stop, deletion, partial preparation and disposal; installed-device evidence remains Pending.
+- Incorporate the reviewed PR #4 squash merge from `dev`, resolving foundation conflicts without merging this feature or changing company requirements, stack, assignments or phase gates. Add Tinu's independent retest register.
+
 ## 2026-10-22 — P1-DEV-004 local frontend security (integration/review Pending)
 
 - Added structured public knowledge draft/review/withdrawal shells, independent approval controls and strict current-source cited Companion rendering on web/native. Safety blocks remain approved plaintext; unsupported actions execute nothing and human help is only explicitly queued.

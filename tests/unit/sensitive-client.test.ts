@@ -31,6 +31,7 @@ const json = (data: unknown, status = 200) =>
 function setup(
   handler: (url: string, init?: RequestInit) => Response | Promise<Response> = () => json(payment),
 ) {
+  let operation = 0;
   const transport = vi.fn<typeof fetch>(async (url, init) =>
     String(url).endsWith("/v1/security/context") ? json(context) : handler(String(url), init),
   );
@@ -40,7 +41,7 @@ function setup(
     local: false,
     session,
     transport,
-    uuid: () => otherReference,
+    uuid: () => `30000000-0000-4000-8000-${String(++operation).padStart(12, "0")}`,
     onRevoked: revoked,
   });
   return { client, transport, revoked };
@@ -80,7 +81,7 @@ describe("strict proposed sensitive contracts", () => {
 });
 
 describe("session-bound uncached API access", () => {
-  it("uses credentialed fixed routes, CSRF and a stable idempotency key without persisting credentials", async () => {
+  it("uses credentialed fixed routes, CSRF and a fresh identity for each completed action", async () => {
     const { client, transport } = setup(() => json({ ...consents, ...choices }));
     expect((await client.saveConsents(choices)).status).toBe("ready");
     expect((await client.saveConsents(choices)).status).toBe("ready");
@@ -90,9 +91,127 @@ describe("session-bound uncached API access", () => {
       expect(url).toBe(`${origin}/v1/consents`);
       expect(init).toMatchObject({ cache: "no-store", credentials: "include", redirect: "error" });
       expect(new Headers(init?.headers).get("X-CSRF-Token")).toBe(context.csrfToken);
-      expect(new Headers(init?.headers).get("Idempotency-Key")).toBe(otherReference);
+      expect(new Headers(init?.headers).get("Idempotency-Key")).toMatch(/^[a-f0-9-]{36}$/);
       expect(JSON.parse(String(init?.body))).toEqual(choices);
     }
+    expect(
+      new Set(posts.map(([, init]) => new Headers(init?.headers).get("Idempotency-Key"))).size,
+    ).toBe(2);
+    client.dispose();
+  });
+  it("applies false -> true -> false consent actions against a replaying server", async () => {
+    let current = { ...consents, ...choices };
+    const replay = new Map<string, typeof current>();
+    const { client } = setup((_url, init) => {
+      const key = new Headers(init?.headers).get("Idempotency-Key") ?? "";
+      expect(key).not.toBe("");
+      const cached = replay.get(key);
+      if (cached) return json(cached);
+      current = { ...current, ...JSON.parse(String(init?.body)) };
+      replay.set(key, current);
+      return json(current);
+    });
+    for (const consultationAccepted of [false, true, false]) {
+      expect(await client.saveConsents({ ...choices, consultationAccepted })).toMatchObject({
+        status: "ready",
+        data: { consultationAccepted },
+      });
+      expect(current.consultationAccepted).toBe(consultationAccepted);
+    }
+    expect(replay.size).toBe(3);
+    client.dispose();
+  });
+  it("gets pending then paid without receipts instead of replaying an earlier poll", async () => {
+    const replay = new Map<string, unknown>();
+    let verifications = 0;
+    const { client } = setup((_url, init) => {
+      expect(JSON.parse(String(init?.body))).toEqual({});
+      const key = new Headers(init?.headers).get("Idempotency-Key") ?? "";
+      expect(key).not.toBe("");
+      if (!replay.has(key))
+        replay.set(key, {
+          ...payment,
+          checkout: null,
+          status: ++verifications === 1 ? "pending" : "paid",
+        });
+      return json(replay.get(key));
+    });
+    expect(await client.reconcile(reference)).toMatchObject({
+      status: "ready",
+      data: { status: "pending" },
+    });
+    expect(await client.reconcile(reference)).toMatchObject({
+      status: "ready",
+      data: { status: "paid" },
+    });
+    expect(verifications).toBe(2);
+    client.dispose();
+  });
+  it.each([403, 409, 410])("retires an operation after definitive HTTP %i", async (code) => {
+    let requests = 0;
+    const { client, transport } = setup(() =>
+      ++requests === 1 ? json({}, code) : json({ ...consents, ...choices }),
+    );
+    await client.saveConsents(choices);
+    expect((await client.saveConsents(choices)).status).toBe("ready");
+    const keys = transport.mock.calls
+      .filter(([, init]) => init?.method === "POST")
+      .map(([, init]) => new Headers(init?.headers).get("Idempotency-Key"));
+    expect(new Set(keys).size).toBe(2);
+    client.dispose();
+  });
+  it.each(["unavailable", "server-error", "malformed"])(
+    "retains an operation after an ambiguous %s result",
+    async (kind) => {
+      let requests = 0;
+      const { client, transport } = setup(() =>
+        ++requests === 1
+          ? kind === "unavailable"
+            ? json({}, 503)
+            : kind === "server-error"
+              ? json({}, 500)
+              : json({ invalid: true })
+          : json({ ...consents, ...choices }),
+      );
+      await client.saveConsents(choices);
+      expect((await client.saveConsents(choices)).status).toBe("ready");
+      const keys = transport.mock.calls
+        .filter(([, init]) => init?.method === "POST")
+        .map(([, init]) => new Headers(init?.headers).get("Idempotency-Key"));
+      expect(keys).toHaveLength(2);
+      expect(new Set(keys).size).toBe(1);
+      client.dispose();
+    },
+  );
+  it("does not exhaust retry-key memory after more than 64 completed actions", async () => {
+    const { client } = setup(() => json({ ...consents, ...choices }));
+    for (let i = 0; i < 65; i++)
+      expect(
+        (await client.saveConsents({ ...choices, privacyVersion: `privacy-${i}` })).status,
+      ).toBe("ready");
+    client.dispose();
+  });
+  it("does not evict an ambiguous operation when retry-key memory is full", async () => {
+    let unavailable = true;
+    const { client, transport } = setup(() =>
+      unavailable ? json({}, 503) : json({ ...consents, ...choices }),
+    );
+    for (let i = 0; i < 64; i++)
+      expect(
+        (await client.saveConsents({ ...choices, privacyVersion: `privacy-${i}` })).status,
+      ).toBe("unavailable");
+    expect((await client.saveConsents({ ...choices, privacyVersion: "privacy-64" })).status).toBe(
+      "error",
+    );
+    const posts = () => transport.mock.calls.filter(([, init]) => init?.method === "POST");
+    expect(posts()).toHaveLength(64);
+    unavailable = false;
+    expect((await client.saveConsents({ ...choices, privacyVersion: "privacy-0" })).status).toBe(
+      "ready",
+    );
+    expect(new Headers(posts()[64]?.[1]?.headers).get("Idempotency-Key")).toBe(
+      new Headers(posts()[0]?.[1]?.headers).get("Idempotency-Key"),
+    );
     client.dispose();
   });
   it("reserves the mutation slot before awaiting security context", async () => {
@@ -223,16 +342,37 @@ describe("session-bound uncached API access", () => {
   });
   it("retains the same operation key after an uncertain response instead of minting a replacement action", async () => {
     let submissions = 0;
-    const uuid = vi.fn(() => otherReference);
-    const transport = vi.fn<typeof fetch>(async (url) => {
+    let verifications = 0;
+    const replay = new Map<string, unknown>();
+    const uuid = vi.fn().mockReturnValueOnce(otherReference).mockReturnValueOnce(reference);
+    const transport = vi.fn<typeof fetch>(async (url, init) => {
       if (String(url).endsWith("context")) return json(context);
+      const key = new Headers(init?.headers).get("Idempotency-Key") ?? "";
+      expect(key).not.toBe("");
+      if (!replay.has(key))
+        replay.set(key, {
+          ...payment,
+          status: ++verifications === 1 ? "pending" : "paid",
+          checkout: null,
+        });
+      // The server committed and stored its replay result before the response was lost.
       if (++submissions === 1) throw new Error("Synthetic lost response");
-      return json({ ...payment, status: "pending", checkout: null });
+      return json(replay.get(key));
     });
     const client = sensitiveClient({ origin, local: false, session, transport, uuid });
     expect((await client.reconcile(reference)).status).toBe("unknown");
-    expect((await client.reconcile(reference)).status).toBe("ready");
+    expect(await client.reconcile(reference)).toMatchObject({
+      status: "ready",
+      data: { status: "pending" },
+    });
     expect(uuid).toHaveBeenCalledOnce();
+    expect(verifications).toBe(1);
+    expect(await client.reconcile(reference)).toMatchObject({
+      status: "ready",
+      data: { status: "paid" },
+    });
+    expect(uuid).toHaveBeenCalledTimes(2);
+    expect(verifications).toBe(2);
     client.dispose();
   });
 });

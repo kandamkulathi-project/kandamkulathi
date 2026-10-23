@@ -191,8 +191,49 @@ describe("chat, handoff and independent review", () => {
     expect(new Headers(posts[0]?.[1]?.headers).get("Idempotency-Key")).toBe(
       new Headers(posts[1]?.[1]?.headers).get("Idempotency-Key"),
     );
+    expect(new Headers(posts[0]?.[1]?.headers).get("Idempotency-Key")).toBe(input.operationId);
     client.dispose();
   });
+  it.each(["chat", "handoff"] as const)(
+    "preserves explicit %s identity across committed lost responses and replay",
+    async (kind) => {
+      const ledger = new Map<string, unknown>();
+      let effects = 0;
+      let posts = 0;
+      const transport = vi.fn<typeof fetch>(async (url, init) => {
+        if (String(url).endsWith("context")) return json(context);
+        const key = new Headers(init?.headers).get("Idempotency-Key") ?? "";
+        expect(key).not.toBe("");
+        if (!ledger.has(key)) {
+          effects++;
+          ledger.set(key, kind === "chat" ? reply : { id: key, status: "queued" });
+        }
+        if (++posts === 1) throw new Error("Synthetic committed response lost");
+        return json(ledger.get(key));
+      });
+      const client = sensitiveClient({
+        origin: "https://companion.example.com",
+        local: false,
+        session,
+        transport,
+      });
+      const run = (id: string) =>
+        kind === "chat"
+          ? client.chat({ operationId: id, locale: "en", message: "Synthetic question" })
+          : client.requestHandoff(id, "en");
+      expect((await run(reference)).status).toBe("unknown");
+      expect((await run(reference)).status).toBe("ready");
+      expect((await run(reference)).status).toBe("ready");
+      expect(effects).toBe(1);
+      expect((await run(otherReference)).status).toBe("ready");
+      expect(effects).toBe(2);
+      const keys = transport.mock.calls
+        .filter(([, init]) => init?.method === "POST")
+        .map(([, init]) => new Headers(init?.headers).get("Idempotency-Key"));
+      expect(keys).toEqual([reference, reference, reference, otherReference]);
+      client.dispose();
+    },
+  );
   it("keeps a provider outage unavailable and never fabricates human attendance", async () => {
     const { client } = setup(() => json({}, 503));
     expect(
