@@ -1,0 +1,17 @@
+{
+  "name": "@kandamkulathi/client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./media": "./src/media.ts",
+    "./capture": "./src/capture.ts"
+  },
+  "dependencies": {
+    "@kandamkulathi/contracts": "workspace:*"
+  }
+}

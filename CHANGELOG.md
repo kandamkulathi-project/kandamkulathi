@@ -18,6 +18,13 @@
 - Bind encrypted exports to the installed migration IDs/checksums in their consistent database snapshot and compare the restored ledger against authenticated metadata before reporting validation success. Reject newer or changed schemas with an incompatible checkout and quarantine failed restore targets.
 - Add reproducing real PostgreSQL regressions, transaction/migration unit tests, a final-publication real Worker/Queue case and a linked independent retest register for Tinu. Applied migration files, company requirements, team assignments and deferred cloud setup are unchanged.
 
+### P1-DEV-002 credentialed CORS correction — 2026-10-22 (independent review Pending)
+
+- Align the shared HTTP boundary with the session client's credentialed requests, granting CORS only to the four existing exact local web origins in explicit local mode. Other origins and unconfigured nonlocal environments remain denied; allowed methods and session authorization are unchanged.
+- Add the reproducing unmocked Chromium-to-Core 503/unavailable regression and HTTP GET/preflight/denial coverage. Keep synthetic session/grant tests and all cloud/native/provider acceptance pending.
+- Refresh the six exact Expo SDK 58 patch pins required by the live compatibility check: Expo 58.0.17, Audio 58.0.10, Camera 58.0.12, Constants 58.0.13, Linking 58.0.14 and Notifications 58.1.6. Retain SDK 58, React/React Native, all other direct pins and the existing native/security checks.
+- Track upstream config-plugins' Xcode 4 dependency, which removes uuid; remove the obsolete uuid override and replace its retired buffer-API test with actual native cryptographic-ID collision/entropy-failure coverage, preserving identifier and project read/write assertions.
+
 ### Node 24 security runtime update — 2026-10-21
 
 - Updated both runtime pins and the installation minimum to Node 24.22.1 after the official release feed identified it as a security release. The Node 24 stack and pnpm pin are unchanged.
@@ -31,6 +38,13 @@
 - Added real PostgreSQL and local workerd Cron/Queue E2E checks to the existing application CI and local commit gate; added a loopback-only k6 liveness smoke and setup/handoff evidence.
 - Fixed CI's missing PostgreSQL 17 client package by configuring the official signed PGDG source before the fallback installation; repository regression checks reject missing or unauthenticated sources.
 - User selected local completion. No company provisioning/deployment, hosted database/alert/rollback proof, domain completion or phase acceptance is implied.
+
+### P1-DEV-002 local client foundation (review and real-device proof Pending)
+
+- Added shared session/grant, single-use callback, notification-reference and cited-reply contracts; uncached request states and expiry/background invalidation without fake sign-in or payment success.
+- Added reusable controls, workspace navigation, editable Companion draft shell, complete development label keys and bundled licensed Malayalam/Tamil fonts.
+- Added Expo-matched secure storage, browser return, linking, camera/audio/notification/font modules, isolated company-input build guards and native transport/backup/background-audio policy.
+- Added permission/capture cleanup regressions, actual Expo native config-plugin inspection, browser access/expiry/layout/lifecycle tests and explicit junior/domain handoffs. Cloud/provider/native SDK compilation, actual device/store proof and all phase acceptance remain Pending.
 
 ### Security automation (independent review Pending)
 

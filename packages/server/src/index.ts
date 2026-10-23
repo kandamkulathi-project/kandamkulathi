@@ -72,23 +72,23 @@ export function createService(service: Service, sink?: LogSink) {
       sink,
     );
   });
-  app.use(
-    "*",
-    cors({
-      origin: (origin, context) =>
-        context.env?.APP_ENV === "local" &&
-        [
-          "http://localhost:4321",
-          "http://127.0.0.1:4321",
-          "http://localhost:5173",
-          "http://127.0.0.1:5173",
-        ].includes(origin)
-          ? origin
-          : undefined,
+  app.use("*", (context, next) => {
+    const origin = context.req.header("Origin") ?? "";
+    const approved =
+      context.env?.APP_ENV === "local" &&
+      [
+        "http://localhost:4321",
+        "http://127.0.0.1:4321",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+      ].includes(origin);
+    return cors({
+      origin: approved ? origin : [],
+      credentials: approved,
       allowMethods: ["GET", "HEAD", "OPTIONS"],
       exposeHeaders: ["X-Request-ID"],
-    }),
-  );
+    })(context, next);
+  });
   app.use(
     "*",
     bodyLimit({

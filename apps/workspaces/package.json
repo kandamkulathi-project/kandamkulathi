@@ -10,6 +10,8 @@
     "preview": "vite preview --host 127.0.0.1 --port 5173 --strictPort"
   },
   "dependencies": {
+    "@kandamkulathi/client": "workspace:*",
+    "@kandamkulathi/contracts": "workspace:*",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "@kandamkulathi/i18n": "workspace:*",

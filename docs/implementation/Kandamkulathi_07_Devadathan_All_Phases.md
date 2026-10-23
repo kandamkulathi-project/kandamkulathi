@@ -184,6 +184,8 @@ Where a retained specification spans client/backend/content work, own only this 
 
 ### P1-DEV-002 — Shared frontend/mobile foundation and risky SDK proof
 
+Local implementation/handoff: [client foundation](../development/CLIENT_FOUNDATION.md). [Native/provider proof register](../operations/NATIVE_READINESS.md) keeps cloud, device, SDK and company prerequisites Pending; this does not close the package or G1.
+
 **Allocated time:** 5 hours (implementation / QA preparation). **Branch:** `feature/p1-devadathan-web-native-sdk-proof` → `dev`.
 
 **Inputs and integration handoffs:** P1-DEV-001, P1-MAT-001, P1-JOS-003. Coordinate contracts/fixtures early with these owners; mutual references describe a shared interface, not a requirement to wait for each other’s whole package. UI may begin against reviewed fixtures, but cannot be accepted until its real API/adapter integration passes. Any unresolved interface/readiness issue goes to Mathew/Devadathan that day.

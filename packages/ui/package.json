@@ -10,6 +10,8 @@
     ".": "./src/index.tsx"
   },
   "dependencies": {
+    "@kandamkulathi/client": "workspace:*",
+    "@kandamkulathi/contracts": "workspace:*",
     "react": "19.3.0",
     "@kandamkulathi/i18n": "workspace:*"
   },

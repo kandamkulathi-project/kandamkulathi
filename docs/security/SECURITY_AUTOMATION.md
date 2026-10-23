@@ -1,5 +1,7 @@
 # Security checks and merge enforcement
 
+**2026-10-23 status:** active rulesets now enforce PR approval/last-push approval/resolved threads and force-push/deletion restrictions on shared branches. Required CI contexts were absent from the observed active rules. See the [current remote verification record](../governance/REPOSITORY_SETTINGS.md); earlier plan-entitlement failures below are historical. This PR does not alter remote rules or treat green CI as independent approval.
+
 The application stack, company requirements, phase gates and member assignments are unchanged. These controls check the current candidate; they do not grant production acceptance or establish an absence of vulnerabilities. See also the prepared [GitHub protection payload](../../.github/branch-protection.json).
 
 ## Free scanners and their scope
