@@ -1,0 +1,12 @@
+{
+  "cli": { "appVersionSource": "local", "requireCommit": true },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": { "EXPO_PUBLIC_APP_ENV": "dev" }
+    },
+    "staging": { "distribution": "internal", "env": { "EXPO_PUBLIC_APP_ENV": "staging" } },
+    "production": { "env": { "EXPO_PUBLIC_APP_ENV": "production" } }
+  }
+}

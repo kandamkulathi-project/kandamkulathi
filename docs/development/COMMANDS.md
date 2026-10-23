@@ -1,6 +1,6 @@
 # Actual command registry
 
-Run from repository root with Node 24.22.0/pnpm 10.34.7. All application commands exist; their evidence covers only the starter behavior described below. Python checks are independent and use Python 3.13 standard library.
+Run from repository root with Node 24.22.1/pnpm 10.34.7. All application commands exist; their evidence covers only the starter behavior described below. Python checks are independent and use Python 3.13 standard library.
 
 | Purpose | Command | Scope and side effects |
 |---|---|---|
@@ -11,10 +11,10 @@ Run from repository root with Node 24.22.0/pnpm 10.34.7. All application command
 | Lint and formatting check | `pnpm lint` | Biome supported code/config files; docs/Python checked separately. |
 | Format supported files | `pnpm format` | Writes formatting changes. Review resulting diff. |
 | Typecheck all workspaces | `pnpm typecheck` | Strict TS, Astro diagnostics and Expo TS; no credentials. |
-| Unit + HTTP boundary tests | `pnpm test` | Integer arithmetic/invalid values, actual Hono request routing, deny/unavailable/CORS/size/error/cache behavior. Node test runtime, not database proof. |
+| Unit + HTTP/client boundary tests | `pnpm test` | Integer arithmetic, Hono HTTP safety, strict session/grant/return/link contracts, storage ordering, locale formatting and capture cancellation/cleanup. Node runtime and synthetic ports; not native-device/database proof. |
 | Interactive focused tests | `pnpm test:watch` | Vitest watch; stop manually. |
 | Build starter artifacts | `pnpm build` | Static Astro/Vite assets, Expo Android/iOS JS exports and both Worker dry bundles. Writes ignored `dist` output; no deploy/native signing. |
-| Security regressions and policy controls | `pnpm test:security` | Real Expo-resolved Forge/braces tests and negative controls for patch-aware decisions. Synthetic keys/patterns only. |
+| Security regressions and policy controls | `pnpm test:security` | Expo-resolved Forge/braces and patch-decision regressions; mobile input/secret guards and actual Expo iOS/Android plugin introspection for local/dev fixtures. No native compilation or signing. |
 | Verified dependency decision | `pnpm security:check` | Checks installed source/patch/advisory fingerprints, runs exploit regressions, scans the full registry and saves untouched JSON in ignored `test-results`. Any unremediated severity or missing proof fails. |
 | Local commit gate | `pnpm precommit` | Full application/security/browser/docs verification of staged-clean inputs; refuses shared-branch commits. Installed automatically by local `pnpm install`, or `pnpm hooks:install`. |
 | Security tool setup | `pnpm security:tools` | Downloads fixed official Opengrep/Gitleaks releases; verifies artifact and executable hashes. Cached binaries are rechecked before use. |
@@ -29,7 +29,17 @@ Run from repository root with Node 24.22.0/pnpm 10.34.7. All application command
 | Browser installation | `pnpm exec playwright install chromium` | Downloads the pinned test browser. Linux CI additionally installs OS dependencies. |
 | Browser + actual Worker runtime | `pnpm test:e2e` | Builds, then Chromium UI/locale/mobile-width tests and actual local workerd requests; owns four ports, no reused servers. |
 | CI E2E after build | `pnpm exec playwright test` | Same tests; assumes current build artifacts exist. |
-| Offline SQL generation | `pnpm db:generate` | Generates SQL from reviewed Drizzle definitions. Namespaces-only starter is not an implemented schema. No connection/migration/push. |
+| Offline SQL generation | `pnpm db:generate` | Generates SQL/snapshots from Drizzle definitions. Custom access migrations remain separately reviewed. No database connection or schema push. |
+| Validate planned resource inventory | `pnpm platform:manifest config/environments/dev.json` | Identifiers only; use `--provisioned` to require actual account/endpoint/review evidence. No network/mutation. |
+| Render isolated Worker configuration | `pnpm platform:render config/environments/dev.json core-api .local-data/platform/dev-core.json` | Writes ignored configuration with exact inventory bindings, no secrets/provisioning/deployment. Companion is rendered separately. |
+| Controlled migration | `pnpm db:migrate` | Separate direct runner URL/environment/target/review guards; PostgreSQL 17, immutable checksums and advisory lock. P1 refuses production. Never run from a Worker. |
+| Real PostgreSQL + Cron/Queue E2E | `pnpm test:platform` | Explicit loopback test-admin URL and PostgreSQL 17 client tools; creates/drops fresh synthetic databases/logins, no cloud/provider sends. Required in application CI and local commit gate. |
+| Synthetic transport seed/reset | `pnpm platform:fixtures seed`, `pnpm platform:fixtures reset-probes` | Explicit confirmed local synthetic target only; creates/removes probes, preserving domain obligations and refusing active leases. |
+| Encrypted export/restore | `pnpm platform:backup export .local-data/backups/NAME.kav`, `pnpm platform:backup restore .local-data/backups/NAME.kav` | Restricted backup/direct isolated restore URLs and independent key; snapshot-bound installed migration IDs/checksums, authenticated ciphertext/metadata, checkout compatibility and restored ledger/grants/RLS/control totals. Failed validation quarantines the target; no source overwrite or production restore. |
+| Freeze candidate / dry rehearsal | `pnpm platform:release prepare config/environments/dev.json .local-data/releases/CANDIDATE/artifact.json`, `pnpm platform:release dry-run config/environments/dev.json .local-data/releases/CANDIDATE/artifact.json` | Clean committed source; fresh Worker dry builds, frozen bytes/digests and exact inventory. Never deploys. `check` requires actual provisioned inventory/direct DB and verifies compatibility under a target lock. |
+| SLI report | `pnpm platform:metrics summary .local-data/observability/records.ndjson` | One environment's structured records; reports requests/failures/job first-claim p95/sample count, never fabricates monthly coverage or gate approval. |
+| Alert receiver test | `pnpm platform:metrics alert-test` | Explicit approved target/environment; synthetic metadata only. Implemented HTTP test uses a local receiver; endpoint acceptance is not recipient receipt. |
+| Initial k6 workload | `k6 run tests/load/platform.js` | Explicit loopback `PLATFORM_LOAD_BASE_URL`; five users/30 seconds, liveness only. No capacity/India/business-journey inference. |
 | Docs and traceability | `python scripts/check_repository.py` | Links, 38 requirements, 109 package/branch assignments, 480 hours, case IDs, limited secret patterns and CI wiring. No app execution claim. |
 | Docs guard negative controls | `python -m unittest discover -s tests/repository -v` | Ambiguous member/manual selection under reversed filesystem order, missing app CI contract, portable links, source inventory, secret redaction and fenced examples. |
 | Diff/state | `git diff --check`, `git status --short --branch` | Review local state; no destructive action. |
@@ -40,6 +50,8 @@ Run from repository root with Node 24.22.0/pnpm 10.34.7. All application command
 
 The independent `dependency-audit` job executes the security test pack and `pnpm security:check`, then retains the raw report for seven days. Exact source remediations are [documented](../security/DEPENDENCY_RISKS.md) with independent review Pending; all unremediated severities fail. The [security workflow](../../.github/workflows/security.yml) adds `sast`, `secret-scanning` and `runtime-security`; daily two-branch scans begin after default-branch integration. [Automation/enforcement](../security/SECURITY_AUTOMATION.md) explains clone setup, licensing, scheduled activation, included Actions minutes and the current GitHub plan/admin protection blocker. Remote results are not implied by local success.
 
-Database/RLS/transactions/concurrency, real WorkOS sessions/MFA, live provider callbacks, native signed builds/device SDK tests, AI evals, security assessment, load/soak/recovery and phase acceptance are **not implemented by this starter**. Each responsible member must add real commands/resources/evidence with their feature. No fake passing migration, security, load or provider script exists. Clinical/finance and real-device cases remain in the canonical manual.
+P1-DEV-001 implements transport-specific database/RLS/transaction/concurrency and isolated recovery proofs plus local Worker/Queue E2E. Actual clinical/finance tables/policies, hosted Neon TLS/pool behavior, WorkOS sessions/MFA, real provider callbacks, native signed-device integrations, AI evaluations, full security/performance/soak/recovery and all phase acceptance remain Pending. Each responsible member adds evidence with their feature. Clinical/finance and real-device cases remain in the canonical manual; local transport proof cannot replace them.
 
 For each new operational/test command record workspace/runtime, inputs, provider mode/resources, synthetic fixtures/reset, expected result, side effects, owner, CI job and validated candidate. Only mark a phase/requirement Passed with its own executed evidence.
+
+P1-DEV-001 additions and remaining company-resource verification are tracked in [platform evidence](../operations/P1_PLATFORM_FOUNDATION.md). Runtime isolation, metadata-only telemetry and resource rendering are implemented; a passing manifest is not proof of remote ownership, live integration or a phase gate.

@@ -1,12 +1,14 @@
-import { type Locale, messages } from "@kandamkulathi/i18n";
+import { foundation, type Locale, messages } from "@kandamkulathi/i18n";
 import { LanguageSelect } from "@kandamkulathi/ui";
 import { useEffect, useState } from "react";
 export default function Welcome() {
   const [locale, setLocale] = useState<Locale>("en");
   const text = messages[locale];
+  const ui = foundation[locale];
   useEffect(() => {
     document.documentElement.lang = locale;
-  }, [locale]);
+    document.title = text.title;
+  }, [locale, text.title]);
   return (
     <main>
       <header>
@@ -14,36 +16,34 @@ export default function Welcome() {
         <LanguageSelect locale={locale} onChange={setLocale} />
       </header>
       <section className="hero">
-        <p className="eyebrow">TEAM PREVIEW · BASELINE 0</p>
+        <p className="eyebrow">{ui.preview}</p>
         <h1>{text.title}</h1>
         <p className="lead">{text.welcome}</p>
         <p className="notice" role="status">
           {text.notice}
         </p>
       </section>
-      <section className="cards" aria-label="Planned application areas">
+      <section className="cards" aria-label={ui.workspace}>
         <article>
           <span>01</span>
-          <h2>Commerce</h2>
-          <p>Catalogue, orders and fulfilment.</p>
+          <h2>{ui.commerce}</h2>
+          <p>{ui.commerceDescription}</p>
           <small>{text.status}</small>
         </article>
         <article>
           <span>02</span>
-          <h2>Consultations</h2>
-          <p>Appointments and care workspaces.</p>
+          <h2>{ui.consultations}</h2>
+          <p>{ui.consultationDescription}</p>
           <small>{text.status}</small>
         </article>
         <article>
           <span>03</span>
-          <h2>Companion</h2>
-          <p>Approved knowledge and guided assistance.</p>
+          <h2>{ui.companion}</h2>
+          <p>{ui.companionDescription}</p>
           <small>{text.status}</small>
         </article>
       </section>
-      <footer>
-        Internal development preview · Company content and integrations pending approval.
-      </footer>
+      <footer>{ui.footer}</footer>
     </main>
   );
 }

@@ -15,6 +15,7 @@ export const errorSchema = z.object({
       "APPLICATION_NOT_READY",
       "INTERNAL_ERROR",
       "PAYLOAD_TOO_LARGE",
+      "CONFIGURATION_INVALID",
     ]),
     message: z.string(),
     requestId: z.string().uuid(),

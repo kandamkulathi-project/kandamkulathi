@@ -2,6 +2,56 @@
 
 ## Unreleased
 
+### PR #8 QA register correction — 2026-10-24 (independent review Pending)
+
+- Reconcile canonical Phase 1 variant coverage, distinguish historical unverified observations from current implementation and pending acceptance, and repair UTF-8 punctuation without inventing execution or approval evidence.
+- Integrate current reviewed platform/client `dev`, preserving newline-terminated runtime pins and required Expo compatibility checks. Isolate external scanner Git-hook context with unit and real-scanner controls, retaining all authored-source targets, rules and mandatory gates.
+- Preserve foreground Astro supervision under agent detection so repeated browser campaigns do not leave a preview server occupying a later candidate's port.
+
+### P1-DEV-001 PR #3 second review — 2026-10-23 (independent retest Pending)
+
+- Keep successful final-publication jobs eligible for execution retries; enforce execution backoff without spending attempts on immediate duplicate delivery, while retaining deadlines and bounded budgets.
+- Reject a PostgreSQL `ROLLBACK` command tag returned by `COMMIT` after a callback catches an aborted statement, rather than reporting discarded writes as success.
+- Reserve backup destinations synchronously before database work; publish complete artifact/manifest pairs without replacing existing output and clean up only invocation-owned files.
+- Add real PostgreSQL regression/recovery cases and command-tag unit coverage; preserve all earlier platform/Worker tests, applied migration digests and cloud/independent acceptance blockers. This fixes the retained PostgreSQL path; it does not implement or certify the separately planned D1 adaptation.
+- Align Expo 58 to exact patch 58.0.17 after the SDK compatibility gate rejected 58.0.16; retain React/React Native/Node/pnpm and the existing stack.
+- Carry the client branch's actual Xcode 4 security regressions with the SDK patch: require upstream legacy-uuid removal, valid project generation/round trip, collision handling and entropy failure. Remove the obsolete Xcode 3 uuid override; retain all installed-source/registry security gates.
+
+### P1-DEV-001 PR #3 correctness fixes — 2026-10-21 (independent retest Pending)
+
+- Reserve each transaction connection synchronously before awaiting `BEGIN`, reject overlapping/nested callers and release on every exit, including a failed `BEGIN`.
+- Preserve successfully queued final-attempt work during its delivery/recovery window; keep five-attempt exhaustion, deadlines, fencing and receipt deduplication.
+- Bind encrypted exports to the installed migration IDs/checksums in their consistent database snapshot and compare the restored ledger against authenticated metadata before reporting validation success. Reject newer or changed schemas with an incompatible checkout and quarantine failed restore targets.
+- Add reproducing real PostgreSQL regressions, transaction/migration unit tests, a final-publication real Worker/Queue case and a linked independent retest register for Tinu. Applied migration files, company requirements, team assignments and deferred cloud setup are unchanged.
+
+### P1-DEV-002 credentialed CORS correction — 2026-10-22 (independent review Pending)
+
+- Align the shared HTTP boundary with the session client's credentialed requests, granting CORS only to the four existing exact local web origins in explicit local mode. Other origins and unconfigured nonlocal environments remain denied; allowed methods and session authorization are unchanged.
+- Add the reproducing unmocked Chromium-to-Core 503/unavailable regression and HTTP GET/preflight/denial coverage. Keep synthetic session/grant tests and all cloud/native/provider acceptance pending.
+- Refresh the six exact Expo SDK 58 patch pins required by the live compatibility check: Expo 58.0.17, Audio 58.0.10, Camera 58.0.12, Constants 58.0.13, Linking 58.0.14 and Notifications 58.1.6. Retain SDK 58, React/React Native, all other direct pins and the existing native/security checks.
+- Track upstream config-plugins' Xcode 4 dependency, which removes uuid; remove the obsolete uuid override and replace its retired buffer-API test with actual native cryptographic-ID collision/entropy-failure coverage, preserving identifier and project read/write assertions.
+
+### Node 24 security runtime update — 2026-10-21
+
+- Updated both runtime pins and the installation minimum to Node 24.22.1 after the official release feed identified it as a security release. The Node 24 stack and pnpm pin are unchanged.
+- Added a regression for patch-release blocking, consistent developer/CI pins and rejection of the superseded runtime; runtime security verification remains fail-closed. [Official Node release feed](https://nodejs.org/dist/index.json).
+
+### P1-DEV-001 local platform foundation (independent review Pending)
+
+- Added isolated environment/resource/provider guards, approved-field telemetry, SLI reporting and a local synthetic alert receiver test.
+- Added Neon PostgreSQL 17 event-scoped transactions, separate non-owner roles, immutable controlled migrations, transport RLS/column controls and leased/idempotent Cron/Queue delivery with explicit retries/DLQs.
+- Added consistent-snapshot AES-256-GCM export, isolated authenticated restore, synthetic probe seed/reset, target deployment locks and versioned artifact/compatibility/dry-build tooling.
+- Added real PostgreSQL and local workerd Cron/Queue E2E checks to the existing application CI and local commit gate; added a loopback-only k6 liveness smoke and setup/handoff evidence.
+- Fixed CI's missing PostgreSQL 17 client package by configuring the official signed PGDG source before the fallback installation; repository regression checks reject missing or unauthenticated sources.
+- User selected local completion. No company provisioning/deployment, hosted database/alert/rollback proof, domain completion or phase acceptance is implied.
+
+### P1-DEV-002 local client foundation (review and real-device proof Pending)
+
+- Added shared session/grant, single-use callback, notification-reference and cited-reply contracts; uncached request states and expiry/background invalidation without fake sign-in or payment success.
+- Added reusable controls, workspace navigation, editable Companion draft shell, complete development label keys and bundled licensed Malayalam/Tamil fonts.
+- Added Expo-matched secure storage, browser return, linking, camera/audio/notification/font modules, isolated company-input build guards and native transport/backup/background-audio policy.
+- Added permission/capture cleanup regressions, actual Expo native config-plugin inspection, browser access/expiry/layout/lifecycle tests and explicit junior/domain handoffs. Cloud/provider/native SDK compilation, actual device/store proof and all phase acceptance remain Pending.
+
 ### Security automation (independent review Pending)
 
 - Added checksum-pinned free Opengrep/Gitleaks scans, fixed vendored rules, live official Node security checks and real scanner negative controls.
@@ -19,7 +69,7 @@
 
 ### Status
 
-Documentation bootstrap only. No application implementation, production deployment, provider approval or application test pass is claimed. Record application changes with R/package IDs and actual validation evidence as implementation proceeds. No released version exists in this changelog.
+Application starter and local platform implementation exist with the scoped evidence above. No released version, company production deployment, provider approval or phase acceptance is claimed. Record subsequent changes with R/package IDs and actual validation evidence.
 
 ## 2026-10-19 — Initial application starter
 

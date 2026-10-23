@@ -70,6 +70,7 @@ try {
     "security:check",
     "mobile:check",
     "test:e2e",
+    "test:platform",
   ]) {
     run("node", [executable, command]);
   }

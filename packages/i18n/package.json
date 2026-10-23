@@ -7,6 +7,7 @@
     "typecheck": "tsc --noEmit"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./fonts.css": "./fonts/fonts.css"
   }
 }

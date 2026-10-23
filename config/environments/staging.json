@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "status": "planned",
+  "environment": "staging",
+  "namespace": "kandamkulathi-staging",
+  "providerMode": "sandbox",
+  "accountId": "",
+  "database": {
+    "majorVersion": 17,
+    "projectId": "",
+    "branchId": "",
+    "runtimeHost": "",
+    "adminHost": "",
+    "name": "",
+    "region": "",
+    "runtimeRole": "k_core_login",
+    "workerRole": "k_jobs_login"
+  },
+  "resources": {
+    "coreWorker": "kandamkulathi-staging-core-api",
+    "companionWorker": "kandamkulathi-staging-companion",
+    "publicBucket": "kandamkulathi-staging-public",
+    "privateBucket": "kandamkulathi-staging-private",
+    "financialQueue": "kandamkulathi-staging-financial",
+    "clinicalQueue": "kandamkulathi-staging-clinical",
+    "engagementQueue": "kandamkulathi-staging-engagement",
+    "financialDlq": "kandamkulathi-staging-financial-dlq",
+    "clinicalDlq": "kandamkulathi-staging-clinical-dlq",
+    "engagementDlq": "kandamkulathi-staging-engagement-dlq"
+  },
+  "evidenceReference": ""
+}

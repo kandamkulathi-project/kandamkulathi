@@ -4,7 +4,9 @@ test("public starter renders, switches locale and fits a mobile viewport", async
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Kandamkulathi", exact: true })).toBeVisible();
-  await expect(page.getByRole("status")).toContainText("Customer services are not available yet");
+  await expect(
+    page.getByRole("status").filter({ hasText: "Customer services are not available yet" }),
+  ).toBeVisible();
   await page.getByRole("combobox").selectOption("ml");
   await expect(page.locator("html")).toHaveAttribute("lang", "ml");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("കണ്ടംകുളത്തി");
@@ -16,9 +18,12 @@ test("public starter renders, switches locale and fits a mobile viewport", async
 });
 test("workspace has no fake sign-in or live actions", async ({ page }) => {
   await page.goto("http://127.0.0.1:5173");
-  await expect(page.getByRole("status")).toContainText("Customer services are not available yet");
+  await expect(
+    page.getByRole("status").filter({ hasText: "Customer services are not available yet" }),
+  ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Physician", exact: true })).toBeVisible();
-  await expect(page.getByRole("button")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Sending is not available yet" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: /sign in|pay now/i })).toHaveCount(0);
   await page.getByRole("combobox").selectOption("ta");
   await expect(page.locator("html")).toHaveAttribute("lang", "ta");
 });
@@ -39,5 +44,16 @@ for (const [port, service] of [
     expect(denied.status()).toBe(503);
     expect(await denied.json()).toMatchObject({ error: { code: "FEATURE_UNAVAILABLE" } });
     expect(denied.headers()["cache-control"]).toBe("no-store");
+    expect(denied.headers()["x-request-id"]).toMatch(/^[0-9a-f-]{36}$/);
+    const privatePath = await request.get(
+      `${base}/v1/patients/synthetic-private-marker?token=synthetic-token`,
+      {
+        headers: { "X-Request-ID": "untrusted-marker" },
+      },
+    );
+    expect(privatePath.status()).toBe(503);
+    expect(await privatePath.text()).not.toMatch(
+      /synthetic-private-marker|synthetic-token|untrusted-marker/,
+    );
   });
 }

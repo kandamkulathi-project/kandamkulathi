@@ -1,5 +1,6 @@
 export const locales = ["en", "ml", "ta"] as const;
 export type Locale = (typeof locales)[number];
+export { formatDate, formatMoney, foundation } from "./foundation";
 export const localeNames: Record<Locale, string> = { en: "English", ml: "മലയാളം", ta: "தமிழ்" };
 // Development labels only. Company/physician review is required for final translations.
 export const messages = {
