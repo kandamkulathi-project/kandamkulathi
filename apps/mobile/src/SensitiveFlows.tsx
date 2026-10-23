@@ -35,6 +35,7 @@ import {
 import { nativeCheckout } from "./checkout";
 import { NativeCompanion } from "./NativeCompanion";
 import { nativeVault } from "./native";
+import { nativeSessionLifecycle } from "./sessionLifecycle";
 
 const Font = createContext<string | undefined>(undefined);
 function Text(props: TextProps) {
@@ -49,14 +50,35 @@ export function NativeSensitiveFlows({
   fontFamily?: string;
 }) {
   const [attempt, setAttempt] = useState(0);
+  const [lifecycle] = useState(nativeSessionLifecycle);
   const refresh = useCallback(() => setAttempt((value) => value + 1), []);
+  const retry = useCallback(() => {
+    lifecycle.retry();
+    refresh();
+  }, [lifecycle, refresh]);
   return (
     <Font.Provider value={fontFamily}>
-      <NativeSessionControls key={attempt} locale={locale} refresh={refresh} />
+      <NativeSessionControls
+        key={attempt}
+        locale={locale}
+        refresh={refresh}
+        retry={retry}
+        lifecycle={lifecycle}
+      />
     </Font.Provider>
   );
 }
-function NativeSessionControls({ locale, refresh }: { locale: Locale; refresh(): void }) {
+function NativeSessionControls({
+  locale,
+  refresh,
+  retry,
+  lifecycle,
+}: {
+  locale: Locale;
+  refresh(): void;
+  retry(): void;
+  lifecycle: ReturnType<typeof nativeSessionLifecycle>;
+}) {
   const text = sensitiveText[locale];
   const fontFamily = useContext(Font);
   const [session, setSession] = useState<Resource<ClientSession>>({ status: "loading" });
@@ -68,16 +90,19 @@ function NativeSessionControls({ locale, refresh }: { locale: Locale; refresh():
   const [declined, setDeclined] = useState<Record<string, boolean>>({});
   const [reference, setReference] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [clock, setClock] = useState(Date.now());
   const generation = useRef(0);
   const [runtime, setRuntime] = useState<{
     client: ReturnType<typeof sensitiveClient>;
     flow: ReturnType<typeof paymentFlow>;
     companion: ReturnType<typeof sensitiveClient>;
+    signOut(): Promise<void>;
   }>();
   useEffect(() => {
     let active = true;
     let epoch = 0;
+    const isCurrent = lifecycle.begin();
     const controller = new AbortController();
     let expiry: ReturnType<typeof setTimeout> | undefined;
     let client: ReturnType<typeof sensitiveClient> | undefined;
@@ -105,8 +130,13 @@ function NativeSessionControls({ locale, refresh }: { locale: Locale; refresh():
       setBusy(false);
     };
     const invalidate = () => {
+      if (!active) return;
+      lifecycle.block();
       generation.current++;
       epoch++;
+      controller.abort();
+      clearTimeout(expiry);
+      clearTimeout(timeout);
       client?.dispose();
       companion?.dispose();
       flow?.dispose();
@@ -121,21 +151,18 @@ function NativeSessionControls({ locale, refresh }: { locale: Locale; refresh():
     };
     const timeout = setTimeout(() => {
       controller.abort();
-      if (active) setSession({ status: "error" });
+      if (active && isCurrent()) setSession({ status: "error" });
     }, 5000);
-    setSession({ status: "loading" });
+    setSession({ status: lifecycle.isBlocked() ? "anonymous" : "loading" });
     clear();
-    if (AppState.currentState === "active")
+    if (!lifecycle.isBlocked() && AppState.currentState === "active")
       void loadSession(origin, environment === "local", controller.signal, transport).then(
         (result) => {
-          if (!active || controller.signal.aborted || epoch !== 0) return;
+          if (!active || !isCurrent() || controller.signal.aborted || epoch !== 0) return;
           clearTimeout(timeout);
           setSession(result);
           if (result.status !== "ready") {
-            if (result.status === "anonymous")
-              void vault.clear().catch(() => {
-                if (active) setNotice("error");
-              });
+            if (result.status === "anonymous") invalidate();
             return;
           }
           client = sensitiveClient({
@@ -162,14 +189,41 @@ function NativeSessionControls({ locale, refresh }: { locale: Locale; refresh():
             uuid: Crypto.randomUUID,
             onRevoked: invalidate,
           });
-          setRuntime({ client, flow, companion });
+          const currentClient = client;
+          const currentFlow = flow;
+          setRuntime({
+            client,
+            flow,
+            companion,
+            async signOut() {
+              if (!active || lifecycle.isBlocked()) return;
+              // Fence resume and discard private UI immediately, before remote revocation awaits.
+              // Keep the client alive only to attempt logout; its onRevoked performs final cleanup.
+              lifecycle.block();
+              generation.current++;
+              clearTimeout(expiry);
+              currentFlow.dispose();
+              companion?.dispose();
+              checkout.dispose();
+              clear();
+              setLoggingOut(true);
+              setSession({ status: "anonymous" });
+              setNotice("anonymous");
+              try {
+                await currentClient.signOut();
+              } finally {
+                if (active) setLoggingOut(false);
+              }
+            },
+          });
           expiry = setTimeout(
             invalidate,
             Math.min(2147483647, Date.parse(result.data.expiresAt) - Date.now()),
           );
         },
       );
-    const lifecycle = AppState.addEventListener("change", (state) => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      lifecycle.suspend();
       generation.current++;
       epoch++;
       controller.abort();
@@ -180,8 +234,8 @@ function NativeSessionControls({ locale, refresh }: { locale: Locale; refresh():
       clear();
       clearTimeout(expiry);
       clearTimeout(timeout);
-      setSession({ status: "loading" });
-      if (state === "active") refresh();
+      setSession({ status: lifecycle.isBlocked() ? "anonymous" : "loading" });
+      if (state === "active") lifecycle.resume(refresh);
     });
     const timer = setInterval(() => setClock(Date.now()), 1000);
     return () => {
@@ -195,11 +249,11 @@ function NativeSessionControls({ locale, refresh }: { locale: Locale; refresh():
       clearTimeout(expiry);
       clearTimeout(timeout);
       clearInterval(timer);
-      lifecycle.remove();
+      subscription.remove();
     };
-  }, [refresh]);
+  }, [refresh, lifecycle]);
   async function run<T>(action: () => Promise<SensitiveResult<T>>, accept: (value: T) => void) {
-    if (busy || !runtime || AppState.currentState !== "active") return;
+    if (busy || !runtime || lifecycle.isBlocked() || AppState.currentState !== "active") return;
     const current = generation.current;
     setBusy(true);
     setNotice("loading");
@@ -244,15 +298,11 @@ function NativeSessionControls({ locale, refresh }: { locale: Locale; refresh():
     <View style={{ gap: 16 }}>
       <Text accessibilityRole="header">{text.title}</Text>
       <Text accessibilityLiveRegion="polite">{text[notice]}</Text>
-      <Button title={text.refresh} onPress={refresh} />
+      <Button title={text.refresh} disabled={loggingOut} onPress={retry} />
       {session.status !== "ready" && <Text>{text[session.status]}</Text>}
       {session.status === "ready" && runtime && (
         <>
-          <Button
-            title={text.signOut}
-            disabled={busy}
-            onPress={() => void run(runtime.client.signOut, () => setNotice("signedOut"))}
-          />
+          <Button title={text.signOut} disabled={busy} onPress={() => void runtime.signOut()} />
           {session.data.workspaces.includes("customer") && (
             <>
               <Button

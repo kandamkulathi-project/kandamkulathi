@@ -73,20 +73,39 @@ export function sourceSnapshot(root = repository) {
     ),
   ].sort();
   const files = names.map((name) => record(root, name));
+  // -v lowercases assume-unchanged tags; skip-worktree is S (or s with both flags).
+  // NUL delimiters retain spaces/newlines in paths. Inspect only: never clear users' flags.
+  const maskedFiles = git(root, ["ls-files", "--cached", "-v", "-z"])
+    .split("\0")
+    .filter(Boolean)
+    .map((entry) => {
+      assert(entry.length > 2 && entry[1] === " ", "Invalid candidate index flags");
+      return { path: entry.slice(2), tag: entry[0] };
+    })
+    .filter(({ tag }) => tag === "S" || /^[a-z]$/.test(tag));
   return {
     head: git(root, ["rev-parse", "HEAD"]),
     tree: git(root, ["rev-parse", "HEAD^{tree}"]),
     indexTree: git(root, ["write-tree"]),
     branch: git(root, ["branch", "--show-current"]),
     dirty: git(root, ["status", "--porcelain", "--untracked-files=all"]) !== "",
+    maskedFiles,
     worktreeSha256: digest(JSON.stringify(files)),
     files,
   };
 }
 
-export function requireCommitted(source) {
+function requireUnmasked(source) {
   assert(
-    !source.dirty && source.tree === source.indexTree,
+    Array.isArray(source?.maskedFiles) && source.maskedFiles.length === 0,
+    "Masked tracked files or missing/malformed masking evidence refused",
+  );
+}
+
+export function requireCommitted(source) {
+  requireUnmasked(source);
+  assert(
+    source.dirty === false && typeof source.tree === "string" && source.tree === source.indexTree,
     "Commit all intended work before recording a candidate",
   );
 }
@@ -165,6 +184,7 @@ export function artifactsSnapshot(root = repository) {
 
 export function snapshot(root = repository) {
   const source = sourceSnapshot(root);
+  requireUnmasked(source);
   const { files, ...identity } = source;
   const artifacts = artifactsSnapshot(root);
   return {
@@ -175,6 +195,8 @@ export function snapshot(root = repository) {
 
 export function validateBinding(binding, expected, runId) {
   assert.equal(binding?.format, 1, "Unknown browser evidence format");
+  for (const candidate of [expected, binding.before, binding.after])
+    requireUnmasked(candidate?.source);
   assert.equal(binding.runId, runId, "Stale browser evidence/run ID");
   assert.equal(binding.bindingStatus, "passed", "Browser candidate binding failed");
   assert.equal(binding.testStatus, "passed", "Browser tests did not pass");

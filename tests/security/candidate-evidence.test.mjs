@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import {
   artifactsSnapshot,
   inside,
@@ -65,6 +67,47 @@ test("untracked source and non-root snapshots cannot masquerade as the committed
     assert.throws(() => requireCommitted(sourceSnapshot(folder)), /Commit/);
     assert.throws(() => sourceSnapshot(join(folder, "apps")), /repository root/);
   }));
+for (const [flag, tag] of [
+  ["--assume-unchanged", "h"],
+  ["--skip-worktree", "S"],
+]) {
+  for (const modified of [false, true]) {
+    test(`${flag} refuses ${modified ? "modified" : "unchanged"} tracked source without clearing flags`, () =>
+      fixture(({ folder, runGit }) => {
+        runGit(["update-index", flag, "source.txt"]);
+        if (modified) writeFileSync(join(folder, "source.txt"), "uncommitted synthetic source\n");
+        const flags = runGit(["ls-files", "-v", "-z"]);
+        const source = sourceSnapshot(folder);
+        assert.equal(source.dirty, false); // Git's ordinary status cannot establish this boundary.
+        assert.throws(() => requireCommitted(source), /masked/i);
+        assert.deepEqual(source.maskedFiles, [{ path: "source.txt", tag }]);
+        assert.throws(() => snapshot(folder), /masked/i);
+        assert.equal(runGit(["ls-files", "-v", "-z"]), flags);
+      }));
+  }
+}
+test("combined masking flags retain the lowercase skip-worktree tag and spaced path", () =>
+  fixture(({ folder, runGit }) => {
+    writeFileSync(join(folder, "masked name.txt"), "synthetic source\n");
+    runGit(["add", "masked name.txt"]);
+    runGit(["commit", "--quiet", "-m", "Synthetic spaced path"]);
+    for (const flag of ["--skip-worktree", "--assume-unchanged"])
+      runGit(["update-index", flag, "masked name.txt"]);
+    const source = sourceSnapshot(folder);
+    assert.throws(() => requireCommitted(source), /masked/i);
+    assert.deepEqual(source.maskedFiles, [{ path: "masked name.txt", tag: "s" }]);
+  }));
+test("legitimate CRLF checkout normalization remains a clean committed candidate", () =>
+  fixture(({ folder, runGit }) => {
+    writeFileSync(join(folder, ".gitattributes"), "source.txt text eol=crlf\n");
+    writeFileSync(join(folder, "source.txt"), "synthetic source\r\n");
+    runGit(["add", ".gitattributes", "source.txt"]);
+    runGit(["commit", "--quiet", "-m", "Synthetic checkout normalization"]);
+    const source = sourceSnapshot(folder);
+    requireCommitted(source);
+    assert.equal(source.dirty, false);
+    assert.equal(readFileSync(join(folder, "source.txt"), "utf8"), "synthetic source\r\n");
+  }));
 test("all five artifact roots are required and every file is fingerprinted", () =>
   fixture(({ folder }) => {
     const before = artifactsSnapshot(folder);
@@ -103,6 +146,72 @@ test("passing browser evidence is local-only and never grants phase acceptance",
     assert.equal(result.phaseDecision, "not-issued");
     assert(!JSON.stringify(result).includes("synthetic source"));
   }));
+test("missing, malformed or nonempty masking evidence cannot be forged into a committed binding", () =>
+  fixture(async ({ folder }) => {
+    const result = await binding(folder);
+    for (const maskedFiles of [undefined, null, false, {}, "", ["source.txt"]]) {
+      const source = { ...sourceSnapshot(folder), maskedFiles };
+      assert.throws(() => requireCommitted(source), /masked/i);
+      // Matching forged expected/before/after records must not bypass field validation.
+      const expected = { ...snapshot(folder), source };
+      const forged = { ...result, before: expected, after: expected };
+      assert.throws(() => validateBinding(forged, expected, result.runId), /masked/i);
+    }
+    for (const side of ["before", "after"]) {
+      const forged = structuredClone(result);
+      delete forged[side].source.maskedFiles;
+      assert.throws(() => validateBinding(forged, snapshot(folder), result.runId), /masked/i);
+    }
+  }));
+for (const flag of ["none", "--assume-unchanged", "--skip-worktree"]) {
+  test(`actual browser-free Playwright CLI reporter campaign ${flag}`, () =>
+    fixture(({ folder, runGit }) => {
+      const reporter = fileURLToPath(
+        new URL("../../scripts/verification/playwright.mjs", import.meta.url),
+      );
+      writeFileSync(
+        join(folder, "playwright.config.mjs"),
+        `export default { testDir: '.', testMatch: 'probe.spec.mjs', outputDir: 'test-results/runner-output', workers: 1, retries: 0, reporter: [[${JSON.stringify(reporter)}, { repositoryRoot: ${JSON.stringify(folder)} }]] };`,
+      );
+      writeFileSync(
+        join(folder, "probe.spec.mjs"),
+        "import { test, expect } from '@playwright/test'; test('synthetic Node assertion; no browser', () => { expect(1 + 1).toBe(2); });\n",
+      );
+      runGit(["add", "."]);
+      runGit(["commit", "--quiet", "-m", "Synthetic Node reporter campaign"]);
+      if (flag !== "none") {
+        runGit(["update-index", flag, "source.txt"]);
+        writeFileSync(join(folder, "source.txt"), "uncommitted synthetic source\n");
+      }
+      const flags = runGit(["ls-files", "-v", "-z"]);
+      const result = spawnSync(
+        process.execPath,
+        [
+          fileURLToPath(import.meta.resolve("@playwright/test/cli")),
+          "test",
+          "--config",
+          join(folder, "playwright.config.mjs"),
+        ],
+        {
+          cwd: folder,
+          encoding: "utf8",
+          timeout: 30000,
+          maxBuffer: 1024 * 1024,
+          env: { ...process.env, CI: "true" },
+        },
+      );
+      assert.ifError(result.error);
+      assert.equal(result.status, flag === "none" ? 0 : 1, result.stdout + result.stderr);
+      const report = JSON.parse(
+        readFileSync(join(folder, "test-results/p1-candidate-binding.json"), "utf8"),
+      );
+      assert.equal(report.testStatus, "passed");
+      assert.equal(report.attempts.passed, 1);
+      assert.equal(report.bindingStatus, flag === "none" ? "passed" : "failed");
+      assert.equal(runGit(["ls-files", "-v", "-z"]), flags);
+      if (flag === "none") validateBinding(report, snapshot(folder), report.runId);
+    }));
+}
 test("stale run IDs and a changed artifact set cannot reuse a passing browser result", () =>
   fixture(async ({ folder }) => {
     const result = await binding(folder);

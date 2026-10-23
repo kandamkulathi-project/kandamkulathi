@@ -37,4 +37,4 @@ packages/providers  packages/ui          packages/i18n
 tests/unit          tests/integration    tests/e2e
 ```
 
-The starter establishes these directories and `packages/server` for the shared HTTP boundary. Exact manifests, tools and lockfile exist; database tables/roles, provider/model configuration and business features do not. See [starter status](../development/STARTER_STATUS.md) and [commands](../development/COMMANDS.md). Maintain interface/consumer ownership and additive migration compatibility.
+The starter establishes these directories and `packages/server` for the shared HTTP boundary. P1-DEV-001 adds runtime isolation, telemetry, transport-only PostgreSQL tables/roles, event-scoped Neon transactions, leased Cron/Queue delivery and local recovery/release tests. Business tables/policies, provider/model integration and company-resource verification remain Pending. See [platform handoff](../development/PLATFORM_FOUNDATION.md), [starter status](../development/STARTER_STATUS.md) and [commands](../development/COMMANDS.md). Maintain interface/consumer ownership and additive migration compatibility.

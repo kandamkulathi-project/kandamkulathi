@@ -67,6 +67,40 @@ class RepositoryGuardTests(unittest.TestCase):
                 actual = set(CHECK.bootstrap_source_findings([root/name for name in names]))
             self.assertEqual(actual, {'migration.sql', 'server.py', 'package.json', 'apps/api/config.json'})
 
+    def test_platform_tests_cannot_be_removed_from_application_ci_or_commit_gate(self):
+        real_read = Path.read_text
+        for target, before, after, message in (
+            ('.github/workflows/application.yml', 'pnpm test:platform', 'disabled-platform-test', 'Application CI must execute pnpm test:platform'),
+            ('scripts/security/pre-commit.mjs', '"test:platform"', '"disabled-platform-test"', 'Local commit gate must execute platform tests'),
+        ):
+            def without_platform(path, *args, **kwargs):
+                content = real_read(path, *args, **kwargs)
+                return content.replace(before, after) if path == CHECK.ROOT/target else content
+            with patch.object(Path, 'read_text', without_platform):
+                with self.assertRaisesRegex(ValueError, message):
+                    CHECK.check_application_contract()
+
+    def test_postgres_client_fallback_requires_available_signed_package_source(self):
+        CHECK.check_application_contract()
+        real_read = Path.read_text
+        for before, after in (
+            ('https://apt.postgresql.org/pub/repos/apt', 'https://example.invalid/packages'),
+            ('signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc', 'trusted=yes'),
+        ):
+            def broken_source(path, *args, **kwargs):
+                content = real_read(path, *args, **kwargs)
+                return content.replace(before, after) if path == CHECK.ROOT/'.github/workflows/application.yml' else content
+            with patch.object(Path, 'read_text', broken_source):
+                with self.assertRaisesRegex(ValueError, 'official signed repository'):
+                    CHECK.check_application_contract()
+
+    def test_environment_example_rejects_live_flags_and_secret_values(self):
+        CHECK.check_env_example('RESOURCE_NAMESPACE=kandamkulathi-local\nPROVIDER_MODE=stub\nDATABASE_URL=')
+        for example in ('RESOURCE_NAMESPACE=kandamkulathi-production', 'ALLOW_LIVE_SENDS=true',
+                        'PROVIDER_MODE=live', 'DATABASE_URL=synthetic-credential'):
+            with self.assertRaisesRegex(ValueError, 'exact safe public defaults'):
+                CHECK.check_env_example(example)
+
     def test_obvious_secret_detection_does_not_return_the_value(self):
         token = 'sk-' + 'A'*32
         findings = CHECK.secret_findings('OPENAI_API_KEY=' + token)

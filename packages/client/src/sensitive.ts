@@ -35,6 +35,7 @@ import {
   videoGrantSchema,
 } from "@kandamkulathi/contracts/sensitive";
 import { apiOrigin } from "./index";
+import { knowledgeSaveResultSchema } from "./knowledge";
 
 export type SensitiveResult<T> =
   | { status: "ready"; data: T }
@@ -256,7 +257,7 @@ export function sensitiveClient(options: {
       return parsed.success && reference(operationId)
         ? mutate(
             "/v1/knowledge/drafts",
-            draftSchema,
+            knowledgeSaveResultSchema(parsed.data),
             parsed.data,
             `draft:${parsed.data.id ?? operationId}:${parsed.data.expectedRevision ?? "new"}`,
           )
