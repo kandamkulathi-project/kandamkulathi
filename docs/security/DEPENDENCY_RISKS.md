@@ -1,10 +1,10 @@
 # Dependency remediation and remaining risks
 
-**Updated:** 2026-10-22. **Status:** Two high findings locally source-patched with verification; independent senior review Pending. The two moderate findings have been removed through a targeted esbuild override and upstream removal of Xcode's uuid dependency, with real-library regressions. No phase, production or cryptographic-audit approval is asserted. **Owners:** Devadathan and Mathew; no author self-approval.
+**Updated:** 2026-10-24. **Status:** Two packages retain locally source-patched verification; independent senior review Pending. The current registry reports only the Forge high finding. Eight newly reported advisories are addressed by published fixed releases, with actual parent-resolved regressions. The earlier moderate findings were removed through a targeted esbuild override and upstream removal of Xcode's uuid dependency. No phase, production or cryptographic-audit approval is asserted. **Owners:** Devadathan and Mathew; no author self-approval.
 
 ## Current findings
 
-The verified raw registry report contains the two high findings whose original package versions remain locally source-patched; every candidate must obtain a fresh report. No published fixed versions for those high findings were available during investigation. The moderate findings are addressed below. No versions were fabricated, packages renamed or advisories ignored; the gate blocks unremediated findings at every severity.
+The current verified raw registry report contains the Forge high finding whose original package version remains locally source-patched; every candidate must obtain a fresh report. The braces patch/proof is retained even though the current report no longer includes its advisory. No versions were fabricated, packages renamed or advisories ignored; the gate blocks unremediated findings at every severity.
 
 | Finding | Dependency path | Remediation / remaining action |
 |---|---|---|
@@ -15,11 +15,27 @@ The verified raw registry report contains the two high findings whose original p
 
 ## Verification rather than an advisory exclusion
 
+### 2026-10-24 published fixes and Expo compatibility
+
+The fresh baseline report reproduced eight unremediated advisories. Scoped exact overrides replace Expo CLI's Zod 3.25.76 with **4.6.6** (`GHSA-mrhx-c7xc-m3w5`), Undici **7.29.1 → 7.30.1** (`GHSA-4qv8-2p9j-2685`, `GHSA-f72v-6w45-q472`, `GHSA-xjj6-f33q-929c`), and fast-uri **3.1.8 → 3.1.9** (`GHSA-w74x-v6f9-j3xg`, `GHSA-xhq7-xmqj-769h`, `GHSA-wjr9-j795-jxcr`, `GHSA-333x-w4r6-6crp`). These are registry-published fixed versions, not new local-patch dispositions. Root application Zod pins remain unchanged. The Zod override is limited to Expo CLI; its actual plugin/output and strict MCP command schemas are tested across the major-version change. Recheck that boundary on every CLI update and remove overrides when compatible parents adopt fixed releases.
+
+Expo **58.0.19**, dev-client **58.0.15**, file-system **58.0.11**, and font **58.0.10** match the current SDK's compatibility check; React Native and the agreed stack are unchanged. The lockfile retains both existing patch hashes. `tests/security/current-dependencies.test.mjs` exercises constrained array/map/set early rejection, actual Expo schemas, URI encoded schemes/relative resolution/invalid hosts/suffix path serialization, SSE retained-state bounds, uppercase/mixed-case integrity over loopback HTTP, and excessive content-encoding with early-close in an isolated child process. Native device/signing and future unbounded collection input remain outside these proofs.
+
+Reuse the mobile manifest, workspace override policy and lockfile together; install with `pnpm install --frozen-lockfile`, then rerun `pnpm test:security`, `pnpm security:check` and `pnpm mobile:check`. Integrated branches with additional internal workspace importers must reconcile those importer additions without dropping these override resolutions or patch hashes. No audit exclusions, fingerprint refreshes or weakened source-location checks are part of this update. Rollback restores all three dependency files together, but reintroduces the eight blocking advisories and is not a passing security candidate.
+
+### Relocated generated installation boundary
+
+On inode-constrained development hosts, the checkout's entire ignored `node_modules` may be relocated through a root directory symlink. Verification resolves that exact root once and requires every remediated package's real directory to remain strictly inside it. Its package identity and fingerprinted source files must also resolve inside that package. An unrelated external virtual store is not approved: it must reside under the resolved installation root (normally `.pnpm`). There is no environment waiver or additional root allowlist. Missing/dangling/non-directory roots, sibling/lookalike directories, traversal paths, nested package symlink escapes and source-directory escapes fail closed; all version/source/patch/advisory checks remain in force.
+
+`tests/security/dependency-location.test.mjs` reproduces the old relocated-root rejection and verifies the real-filesystem positive/negative boundaries. Existing policy negative controls now use real synthetic installation paths as well as controlled tampered bytes. The complete dependency check is additionally exercised against the author's actual relocated installation. Independent security review of this containment change is **Pending** before merge; a passing author gate is not that review.
+
+Identity discovery validates absolute, non-traversing package paths and canonical package/manifest containment **before** reading any dependency metadata, including aliases and unrelated dependencies. Repository-owned immediate `apps/*` and `packages/*` workspace members may supply metadata only when both lexical and canonical paths remain workspace members; they never qualify as installed patch evidence. Missing cross-platform binaries are skipped only under trusted installation paths; existing packages with missing manifests and external workspace/package/identity escapes fail closed. Read-spy regressions verify that rejected external manifests are never read.
+
 `pnpm security:check` first verifies every discovered installed node-forge/braces copy: actual package identity/version, exact changed-source SHA-256 and committed patch SHA-256 against `security-remediations.json`. It then runs the real Expo-resolved library regressions and obtains the complete fresh registry audit. Only the two exact advisory-content fingerprints with verified installed code can be classified `VERIFIED_LOCAL_PATCH`.
 
 Unknown/changed/unverified findings at every severity fail. Missing/tampered files, unexpected versions, additional unpatched copies, changed advisory scope, failed regressions, invalid/offline audit responses and muted advisories fail. The CLI prints every finding; CI retains the untouched JSON as `dependency-audit-<run id>` for seven days and includes the disposition in the job summary. A green verification result means the stated source-remediation checks passed; **it does not mean the registry reports zero vulnerabilities**.
 
-`pnpm audit --audit-level high` remains available, unsuppressed, and currently returns nonzero for the unchanged base-version findings. Do not delete the raw report, add ignore IDs, automatically refresh fingerprints or replace this verification with an unconditional success. [ADR 0005](../architecture/adr/0005-toolchain-security-backports.md) records provenance, evidence, maintenance and removal.
+`pnpm audit --audit-level high` remains available, unsuppressed, and currently returns nonzero for the unchanged Forge base-version finding. Do not delete the raw report, add ignore IDs, automatically refresh fingerprints or replace this verification with an unconditional success. [ADR 0005](../architecture/adr/0005-toolchain-security-backports.md) records provenance, evidence, maintenance and removal.
 
 ## Release and maintenance
 
