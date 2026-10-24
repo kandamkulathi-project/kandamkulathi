@@ -49,7 +49,22 @@ export function createTranscriptionProvider(
         });
         if (!response.ok) {
           await response.body?.cancel();
-          return { status: response.status === 429 ? "rate-limited" : "unknown" };
+          // Explicit request/access rejection is terminal, not uncertain processing.
+          // Provider credentials/access belong to server configuration, not the native session.
+          // Keep the allowlist narrow: other errors (especially 5xx) remain unknown.
+          switch (response.status) {
+            case 400:
+            case 413:
+            case 415:
+              return { status: "invalid" };
+            case 401:
+            case 403:
+              return { status: "not-configured" };
+            case 429:
+              return { status: "rate-limited" };
+            default:
+              return { status: "unknown" };
+          }
         }
         if (!response.headers.get("content-type")?.includes("application/json") || !response.body) {
           await response.body?.cancel();

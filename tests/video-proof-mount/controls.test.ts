@@ -1,4 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
+import type { VideoState } from "../../packages/client/src/private-video";
 import {
   type ProofOwner,
   type ProofSnapshot,
@@ -40,6 +41,117 @@ it("loads immutable metadata, consumes once on explicit join, no credentials in 
   const parsed = readVideoProofInvitation(rawInvitation, endpoint, now);
   expect(Object.isFrozen(parsed)).toBe(true);
   expect(Object.isFrozen(parsed.member)).toBe(true);
+});
+
+it.each([false, true])(
+  "setup rejection is unavailable, including cleanup notification=%s",
+  async (notifyClosed) => {
+    const changed = vi.fn(),
+      clear = vi.fn(),
+      dispose = vi.fn();
+    let notify!: (state: VideoState) => void;
+    let signal!: AbortSignal;
+    const connect = vi.fn(async (_grant, pending: AbortSignal) => {
+      signal = pending;
+      if (notifyClosed) notify("closed");
+      throw new Error("Synthetic setup denied");
+    });
+    const controls = videoProofControls({
+      endpoint,
+      now: () => now,
+      onChange: changed,
+      onClear: clear,
+      create: (_invitation, _signal, state) => {
+        notify = state;
+        return { connect, dispose };
+      },
+    });
+    controls.load(rawInvitation);
+    await controls.start();
+    expect(changed).toHaveBeenLastCalledWith({ state: "unavailable" });
+    expect(changed).not.toHaveBeenCalledWith({ state: "connected" });
+    expect(changed).not.toHaveBeenCalledWith({ state: "closed" });
+    expect(dispose).toHaveBeenCalledOnce();
+    expect(clear).toHaveBeenCalledOnce();
+    expect(signal.aborted).toBe(true);
+    await controls.start();
+    expect(connect).toHaveBeenCalledOnce();
+    expect(JSON.stringify(changed.mock.calls)).not.toContain(grant.ticket);
+    controls.dispose();
+  },
+);
+
+it.each(["stop", "dispose", "deadline"] as const)(
+  "late setup rejection cannot override %s or restore a connection",
+  async (cancel) => {
+    vi.useFakeTimers();
+    const changed = vi.fn(),
+      dispose = vi.fn();
+    let notify!: (state: VideoState) => void;
+    let reject!: (reason: Error) => void;
+    let signal!: AbortSignal;
+    const connect = vi.fn((_grant, pending: AbortSignal) => {
+      signal = pending;
+      return new Promise<{ close(): void }>((_resolve, fail) => {
+        reject = fail;
+      });
+    });
+    const controls = videoProofControls({
+      endpoint,
+      now: () => now,
+      onChange: changed,
+      onClear: vi.fn(),
+      create: (_invitation, _signal, state) => {
+        notify = state;
+        return { connect, dispose };
+      },
+    });
+    controls.load(rawInvitation);
+    const joining = controls.start();
+    await Promise.resolve();
+    expect(connect).toHaveBeenCalledOnce();
+    if (cancel === "stop") controls.stop();
+    else if (cancel === "dispose") controls.dispose();
+    else await vi.advanceTimersByTimeAsync(30000);
+    const calls = changed.mock.calls.length;
+    notify("closed");
+    notify("connected");
+    reject(new Error("Synthetic late setup rejection"));
+    await joining;
+    expect(changed.mock.calls).toHaveLength(calls);
+    if (cancel === "stop") expect(changed).toHaveBeenLastCalledWith({ state: "closed" });
+    if (cancel === "deadline") expect(changed).toHaveBeenLastCalledWith({ state: "unavailable" });
+    expect(signal.aborted).toBe(true);
+    expect(dispose).toHaveBeenCalledOnce();
+    await controls.start();
+    expect(connect).toHaveBeenCalledOnce();
+    controls.dispose();
+  },
+);
+
+it("a peer closure after successful setup stays closed; setup alone never claims connected", async () => {
+  const changed = vi.fn(),
+    dispose = vi.fn();
+  let notify!: (state: VideoState) => void;
+  const controls = videoProofControls({
+    endpoint,
+    now: () => now,
+    onChange: changed,
+    onClear: vi.fn(),
+    create: (_invitation, _signal, state) => {
+      notify = state;
+      return { connect: async () => ({ close: vi.fn() }), dispose };
+    },
+  });
+  controls.load(rawInvitation);
+  await controls.start();
+  expect(changed).not.toHaveBeenCalledWith({ state: "connected" });
+  notify("connected");
+  expect(changed).toHaveBeenLastCalledWith({ state: "connected" });
+  notify("closed");
+  expect(changed).toHaveBeenLastCalledWith({ state: "closed" });
+  expect(dispose).toHaveBeenCalledOnce();
+  controls.dispose();
 });
 
 it("stop/background during lazy SDK renderer import disposes late owner and never connects", async () => {

@@ -93,12 +93,13 @@ export function videoProofControls(options: {
       setupDeadline = setTimeout(() => stop("unavailable"), 30000);
       options.onChange({ state: "authorizing" });
       const alive = () => !disposed && epoch === attempt && !abort.signal.aborted;
+      let setupComplete = false;
       try {
         if (current.member.expiresAt <= now()) throw new Error("Expired proof invitation");
         const opened = await options.create(current, abort.signal, (state) => {
           if (!alive()) return;
           if (state === "connected") clearTimeout(setupDeadline);
-          if (state === "closed") stop();
+          if (state === "closed") stop(setupComplete ? "closed" : "unavailable");
           else options.onChange({ state });
         });
         if (!alive()) {
@@ -107,6 +108,7 @@ export function videoProofControls(options: {
         }
         owner = opened;
         const connection = await opened.connect(current.grant, abort.signal);
+        setupComplete = true;
         if (!alive()) connection.close();
       } catch {
         if (alive()) stop("unavailable");

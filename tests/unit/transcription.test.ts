@@ -67,6 +67,57 @@ it("uses the exact approved endpoint/model without redirects, caps streamed resp
   expect(transport).toHaveBeenCalledTimes(5);
 });
 
+it.each([
+  [400, "invalid"],
+  [413, "invalid"],
+  [415, "invalid"],
+  [401, "not-configured"],
+  [403, "not-configured"],
+  [429, "rate-limited"],
+] as const)(
+  "treats explicit provider HTTP %i rejection as terminal %s without reading private errors or retrying",
+  async (status, result) => {
+    const cancel = vi.fn();
+    const transport = vi.fn(async () => new Response(new ReadableStream({ cancel }), { status }));
+    const provider = createTranscriptionProvider(transcriptionBindings, transport);
+    expect(
+      await provider.transcribe(syntheticTranscriptionAudio(), new AbortController().signal),
+    ).toEqual({ status: result });
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(transport).toHaveBeenCalledTimes(1);
+  },
+);
+
+it.each([404, 408, 409, 422, 500, 502, 503, 504])(
+  "keeps unmapped provider HTTP %i uncertain without retrying",
+  async (status) => {
+    const transport = vi.fn(async () => new Response(null, { status }));
+    expect(
+      await createTranscriptionProvider(transcriptionBindings, transport).transcribe(
+        syntheticTranscriptionAudio(),
+        new AbortController().signal,
+      ),
+    ).toEqual({ status: "unknown" });
+    expect(transport).toHaveBeenCalledTimes(1);
+  },
+);
+
+it.each(["not-json", '{"text":123}', '{"error":"synthetic"}'])(
+  "keeps invalid successful provider body %s uncertain",
+  async (body) => {
+    const transport = vi.fn(
+      async () => new Response(body, { headers: { "Content-Type": "application/json" } }),
+    );
+    expect(
+      await createTranscriptionProvider(transcriptionBindings, transport).transcribe(
+        syntheticTranscriptionAudio(),
+        new AbortController().signal,
+      ),
+    ).toEqual({ status: "unknown" });
+    expect(transport).toHaveBeenCalledTimes(1);
+  },
+);
+
 it("requires an explicit upload action, fences late text, and does not replay unknown uploads", async () => {
   const capture = {
     permission: vi.fn(async () => true),

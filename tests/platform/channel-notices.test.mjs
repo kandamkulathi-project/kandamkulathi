@@ -123,6 +123,11 @@ test("signed persisted event -> committed quota/reservation -> actual HTTP -> fe
         [sent.biz_opaque_callback_data],
       );
     res.setHeader("content-type", "application/json");
+    if (mode === "rejected") {
+      res.statusCode = 400;
+      res.end(JSON.stringify({ error: { code: 100 } }));
+      return;
+    }
     res.end(
       JSON.stringify({
         messaging_product: "whatsapp",
@@ -263,6 +268,35 @@ test("signed persisted event -> committed quota/reservation -> actual HTTP -> fe
       "UPDATE engagement.channel_notice_capabilities SET capability=jsonb_set(capability,'{expiresAt}',to_jsonb($1::text))",
       [capability.expiresAt],
     );
+    mode = "rejected";
+    const rejected = await enqueue("notice.rejected");
+    const rejectionBefore = calls;
+    assert.equal(await execute(rejected), "succeeded");
+    assert.equal(calls, rejectionBefore + 1);
+    assert.equal(
+      await db.runtime("jobs", (context) => acquireExecution(context.client, rejected)),
+      "terminal",
+    );
+    const rejectedRow = (
+      await db.source.query(
+        "SELECT n.state,n.provider_message_id,o.status,o.execution_attempts FROM engagement.channel_notices n JOIN platform.outbox o ON o.operation_id=n.operation_id WHERE o.id=$1",
+        [rejected.id],
+      )
+    ).rows[0];
+    assert.deepEqual(rejectedRow, {
+      state: "rejected",
+      provider_message_id: null,
+      status: "succeeded",
+      execution_attempts: 1,
+    });
+    // Crash after rejection disposition but before platform checkpoint: finish without another send.
+    await db.source.query("DELETE FROM platform.receipts WHERE job_id=$1", [rejected.id]);
+    await db.source.query(
+      "UPDATE platform.outbox SET status='pending',completed_at=NULL,lease_token=NULL,lease_until=NULL,next_attempt_at=clock_timestamp()-interval '1 second' WHERE id=$1",
+      [rejected.id],
+    );
+    assert.equal(await execute(rejected), "succeeded");
+    assert.equal(calls, rejectionBefore + 1);
     for (const nextMode of ["unknown", "stale"]) {
       mode = nextMode;
       const envelope = await enqueue(`notice.${mode}`);
@@ -285,9 +319,37 @@ test("signed persisted event -> committed quota/reservation -> actual HTTP -> fe
     );
     assert.equal(
       (await db.source.query("SELECT count(*)::int AS n FROM platform.receipts")).rows[0].n,
-      4,
+      5,
     );
     await db.runtime("jobs", async ({ client }) => {
+      const terminalBefore = (
+        await client.query(
+          "SELECT * FROM engagement.channel_notices WHERE state IN ('accepted','rejected','unknown') ORDER BY inbox_id",
+        )
+      ).rows;
+      assert.deepEqual([...new Set(terminalBefore.map((row) => row.state))].sort(), [
+        "accepted",
+        "rejected",
+        "unknown",
+      ]);
+      // No live lease is present; jobs cannot erase an accepted ID or rewrite any terminal state.
+      for (const row of terminalBefore) {
+        for (const next of ["unknown", "rejected", "accepted"]) {
+          const changed = await client.query(
+            "UPDATE engagement.channel_notices SET state=$2,provider_message_id=$3 WHERE inbox_id=$1 RETURNING inbox_id",
+            [row.inbox_id, next, next === "accepted" ? "wamid.synthetic.forged" : null],
+          );
+          assert.equal(changed.rowCount, 0);
+        }
+      }
+      assert.deepEqual(
+        (
+          await client.query(
+            "SELECT * FROM engagement.channel_notices WHERE state IN ('accepted','rejected','unknown') ORDER BY inbox_id",
+          )
+        ).rows,
+        terminalBefore,
+      );
       await assert.rejects(
         client.query("UPDATE engagement.channel_notice_capabilities SET capability='{}'"),
       );

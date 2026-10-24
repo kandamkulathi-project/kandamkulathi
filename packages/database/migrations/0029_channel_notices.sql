@@ -48,7 +48,7 @@ CREATE POLICY notice_insert ON engagement.channel_notices FOR INSERT TO k_jobs_r
   )
 );
 CREATE POLICY notice_update ON engagement.channel_notices FOR UPDATE TO k_jobs_runtime
-  USING (true) WITH CHECK (
+  USING (state='sending') WITH CHECK (
     state='unknown' OR (state IN ('accepted','rejected') AND EXISTS (
       SELECT 1 FROM platform.outbox o WHERE o.operation_id=channel_notices.operation_id
         AND o.subject_id=channel_notices.inbox_id AND o.lease_token=channel_notices.lease_token

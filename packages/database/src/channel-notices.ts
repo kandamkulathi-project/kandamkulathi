@@ -40,12 +40,14 @@ export function channelNoticeHandler(
       if (!fence.rowCount) throw new Error("Notice execution fence unavailable.");
       const ingress = await channelIngressHandler.decide(context, job);
       if (ingress !== "allow") throw new Error("Notice ingress unavailable.");
+      // Platform/ingress locks serialize this obligation. A plain read also sees immutable
+      // terminal rows, which the UPDATE policy intentionally excludes from row locking.
       const previous = await client.query<{ state: string }>(
-        "SELECT state FROM engagement.channel_notices WHERE inbox_id=$1 FOR UPDATE",
+        "SELECT state FROM engagement.channel_notices WHERE inbox_id=$1",
         [job.subjectId],
       );
       if (previous.rows[0]) {
-        if (["accepted", "suppressed"].includes(previous.rows[0].state)) return null;
+        if (["accepted", "rejected", "suppressed"].includes(previous.rows[0].state)) return null;
         // A prior process may have died after commit or after provider acceptance. No resend.
         if (previous.rows[0].state === "sending")
           await client.query(
@@ -103,7 +105,7 @@ export function channelNoticeHandler(
         language: cap.language,
       };
     });
-    if (submission === null) return; // Durable accepted OR explicitly suppressed notice; human route is complete.
+    if (submission === null) return; // Durable terminal disposition; not necessarily provider acceptance.
     if (submission === "blocked") throw new Error("Notice requires operator reconciliation.");
     // A committed sending reservation survives cancellation/crash. Provider I/O is never in SQL.
     signal.throwIfAborted();
@@ -135,6 +137,6 @@ export function channelNoticeHandler(
       );
       if (updated.rowCount !== 1) throw new Error("Notice completion fence expired.");
     });
-    if (result.state !== "accepted") throw new Error("Notice not acknowledged by provider.");
+    if (result.state === "unknown") throw new Error("Notice requires operator reconciliation.");
   };
 }

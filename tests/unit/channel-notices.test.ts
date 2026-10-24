@@ -1,8 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { configuredChannelNoticeHandler } from "../../apps/core-api/src/channel-notice-runtime.ts";
 import { noticeCapabilitySchema } from "../../packages/contracts/src/channel-notices.ts";
+import { channelNoticeHandler } from "../../packages/database/src/channel-notices.ts";
 import { maySubmitNotice } from "../../packages/domain/src/channel-notices.ts";
 import { whatsappNoticeProvider } from "../../packages/providers/src/whatsapp-notice.ts";
+
+vi.mock("../../packages/database/src/channel-notices.ts", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../../packages/database/src/channel-notices.ts")>();
+  return { ...actual, channelNoticeHandler: vi.fn(actual.channelNoticeHandler) };
+});
 
 const now = Date.parse("2026-10-24T12:00:00Z");
 const cap = noticeCapabilitySchema.parse({
@@ -60,16 +67,54 @@ describe("bounded approved notices", () => {
     );
     expect(maySubmitNotice(cap, event, now + 3601000)).toBe(false);
   });
-  it("fails closed for absent config, stub sends and forbidden live sends", () => {
-    expect(typeof configuredChannelNoticeHandler({ APP_ENV: "local" })).toBe("function");
-    expect(
-      typeof configuredChannelNoticeHandler({
-        APP_ENV: "dev",
-        RESOURCE_NAMESPACE: "kandamkulathi-dev",
-        PROVIDER_MODE: "live",
-        ALLOW_LIVE_SENDS: "true",
-      }),
-    ).toBe("function");
+  it.each([
+    {
+      name: "stub",
+      overrides: { PROVIDER_MODE: "stub", ALLOW_LIVE_SENDS: "false" },
+      allowed: false,
+    },
+    {
+      name: "sandbox",
+      overrides: { PROVIDER_MODE: "sandbox", ALLOW_LIVE_SENDS: "false" },
+      allowed: false,
+    },
+    {
+      name: "missing capability",
+      overrides: { CHANNEL_NOTICE_CAPABILITY_ID: undefined },
+      allowed: false,
+    },
+    {
+      name: "missing token",
+      overrides: { WHATSAPP_NOTICE_ACCESS_TOKEN: undefined },
+      allowed: false,
+    },
+    {
+      name: "missing Graph version",
+      overrides: { WHATSAPP_GRAPH_VERSION: undefined },
+      allowed: false,
+    },
+    { name: "live without permission", overrides: { ALLOW_LIVE_SENDS: "false" }, allowed: false },
+    {
+      name: "live outside production",
+      overrides: { APP_ENV: "dev", RESOURCE_NAMESPACE: "kandamkulathi-dev" },
+      allowed: false,
+    },
+    { name: "permitted production live", overrides: {}, allowed: true },
+  ])("gates the real Graph adapter: $name", ({ overrides, allowed }) => {
+    vi.mocked(channelNoticeHandler).mockClear();
+    configuredChannelNoticeHandler({
+      APP_ENV: "production",
+      RESOURCE_NAMESPACE: "kandamkulathi-production",
+      PROVIDER_MODE: "live",
+      ALLOW_LIVE_SENDS: "true",
+      CHANNEL_NOTICE_CAPABILITY_ID: cap.id,
+      WHATSAPP_NOTICE_ACCESS_TOKEN: "synthetic",
+      WHATSAPP_GRAPH_VERSION: "v23.0",
+      ...overrides,
+    });
+    expect(channelNoticeHandler).toHaveBeenCalledExactlyOnceWith(
+      ...(allowed ? [cap.id, expect.objectContaining({ send: expect.any(Function) })] : []),
+    );
   });
   it("submits only the approved zero-parameter template and validates the real receipt", async () => {
     const provider = whatsappNoticeProvider({

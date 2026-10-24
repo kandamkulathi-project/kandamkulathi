@@ -6,16 +6,17 @@ No UI or provider operation is added.
 
 ## Integrated composition / migration contract
 
-The completion working tree registers the migration and mounts the endpoint through
-the existing event-bound Core runtime. The instructions below describe that binding;
+Commit `c396c41` registers the migration and mounts the endpoint through
+the existing event-bound Core runtime. The details below describe that existing binding;
 final combined checks and independent acceptance remain separate.
 
-- Register additive `0028_order_cancellation.sql` after 0027 in the migration journal.
-  This patch deliberately does not edit the journal, manifests or root composition.
-- Before the Core unavailable catch-all, import from
-  `apps/core-api/src/commerce-cancellation.ts` and call
+- Additive `0028_order_cancellation.sql` is registered after 0027 in the migration journal,
+  followed by the separate notice and transcription migrations 0029 and 0030.
+- Before the Core unavailable catch-all, the runtime already imports from
+  `apps/core-api/src/commerce-cancellation.ts` and calls
   `registerCommerceCancellationRoutes(app, configuredCommerceCancellationDependencies(bindings, identity, request, commerce))`
-  with the existing event-bound identity runtime and commerce dependencies.
+  with the existing event-bound identity runtime and commerce dependencies. Do not register
+  the migration or mount the route a second time when following this handoff.
 - Direct source exports are available in `packages/contracts/src/commerce-cancellation.ts`,
   `packages/domain/src/commerce-cancellation.ts` and
   `packages/database/src/commerce-cancellation.ts`. No package export map change required

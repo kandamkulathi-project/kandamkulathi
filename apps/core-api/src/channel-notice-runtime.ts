@@ -12,7 +12,7 @@ export function configuredChannelNoticeHandler(env: Record<string, unknown>): Ex
     const capability = canonicalUuidSchema.safeParse(env.CHANNEL_NOTICE_CAPABILITY_ID);
     if (
       !capability.success ||
-      config.PROVIDER_MODE === "stub" ||
+      config.PROVIDER_MODE !== "live" ||
       typeof env.WHATSAPP_NOTICE_ACCESS_TOKEN !== "string" ||
       !env.WHATSAPP_NOTICE_ACCESS_TOKEN ||
       typeof env.WHATSAPP_GRAPH_VERSION !== "string"

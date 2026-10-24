@@ -15,7 +15,10 @@ import {
   type TranscriptionTicket,
   transcriptionAdmission,
 } from "../../packages/database/src/transcription-admission";
-import { createTranscriptionProvider } from "../../packages/providers/src/transcription";
+import {
+  createTranscriptionProvider,
+  transcriptionEndpoint,
+} from "../../packages/providers/src/transcription";
 import { digest } from "../../packages/providers/src/workos/oauth";
 import { createService } from "../../packages/server/src/index";
 import { transcriptionBindings, transcriptionInput } from "../fixtures/transcription";
@@ -536,4 +539,111 @@ describe("transcription admission — real PostgreSQL, canonical DB/native guard
       ).rejects.toThrow(/check constraint/);
     }
   });
+
+  it.each([
+    [400, "invalid"],
+    [413, "invalid"],
+    [415, "invalid"],
+    [401, "not-configured"],
+    [403, "not-configured"],
+    [429, "rate-limited"],
+  ] as const)(
+    "settles only the rejected HTTP %i provider operation as %s, retaining lifetime usage",
+    async (status, expected) => {
+      // Restore current synthetic privacy after the earlier revocation case; never bypass guards.
+      await fixture.source.query(
+        "INSERT INTO core.identity_consents(id,actor_id,record) VALUES($1,$2,$3::jsonb) ON CONFLICT(id) DO UPDATE SET record=EXCLUDED.record",
+        [ids.other, ids.actor, JSON.stringify({ ...base.authority.consents[0], decidedAt: from })],
+      );
+      const before = (await journal()).length;
+      await provision(before + 2, 2);
+      const other = ticket();
+      expect(await command("reserve", other)).toBe("admitted");
+      let calls = 0;
+      const server = createServer(async (incoming, outgoing) => {
+        for await (const _part of incoming) {
+          /* Drain only synthetic multipart input, never log it. */
+        }
+        calls++;
+        outgoing.writeHead(status, { "Content-Type": "application/json" });
+        outgoing.end('{"error":{"message":"private synthetic provider detail"}}');
+      });
+      await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const address = server.address();
+      if (!address || typeof address === "string") throw new Error("Loopback unavailable");
+      const service = app(async (url, init) => {
+        expect(url).toBe(transcriptionEndpoint);
+        expect(init?.redirect).toBe("error");
+        // Test-only transport redirect to an actual loopback HTTP provider stub.
+        return fetch(`http://127.0.0.1:${address.port}/v1/audio/transcriptions`, init);
+      });
+      try {
+        const response = await upload(service);
+        expect(response.status).toBe(status === 429 ? 429 : 503);
+        expect(await response.json()).toEqual({ status: expected });
+        const after = await journal();
+        expect(after).toHaveLength(before + 2);
+        expect(after.find((row) => row.operation_id === other.operationId)?.completed).toBe(false);
+        const rejected = after.filter(
+          (row) =>
+            !after.slice(0, before).some((old) => old.operation_id === row.operation_id) &&
+            row.operation_id !== other.operationId,
+        );
+        expect(rejected).toHaveLength(1);
+        expect(rejected[0]?.completed).toBe(true); // Only this unexpired operation/fence is released.
+        expect(await command("complete", other)).toBe("released");
+        expect((await upload(service)).status).toBe(429); // Both used quota units persist, despite free slots.
+        expect(calls).toBe(1); // No implicit retry or second dispatch on exhausted quota.
+      } finally {
+        await new Promise<void>((resolve, reject) =>
+          server.close((error) => (error ? reject(error) : resolve())),
+        );
+      }
+    },
+  );
+
+  it.each([500, 503, 200])(
+    "retains the exact uncertain lease for provider HTTP %i or invalid successful body",
+    async (status) => {
+      const before = (await journal()).length;
+      await provision(before + 2, 1); // Leave quota available: the unresolved slot must block dispatch.
+      let calls = 0;
+      const server = createServer(async (incoming, outgoing) => {
+        for await (const _part of incoming) {
+          /* Synthetic multipart only. */
+        }
+        calls++;
+        outgoing.writeHead(status, { "Content-Type": "application/json" });
+        outgoing.end('{"error":"not a transcript"}');
+      });
+      await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+      const address = server.address();
+      if (!address || typeof address === "string") throw new Error("Loopback unavailable");
+      const service = app(async (url, init) => {
+        expect(url).toBe(transcriptionEndpoint);
+        return fetch(`http://127.0.0.1:${address.port}/v1/audio/transcriptions`, init);
+      });
+      try {
+        const response = await upload(service);
+        expect(response.status).toBe(503);
+        expect(await response.json()).toEqual({ status: "unknown" });
+        const after = await journal();
+        expect(after).toHaveLength(before + 1);
+        const unresolved = after.filter((row) => !row.completed);
+        expect(unresolved).toHaveLength(1);
+        expect((await upload(service)).status).toBe(429);
+        expect(calls).toBe(1);
+        // Test-owner reconciliation only after the synthetic HTTP response is known finished.
+        await fixture.source.query(
+          "UPDATE core.transcription_admissions SET completed_at=clock_timestamp(),reconciliation_reference='synthetic-stub-quiescence',fence=$2 WHERE operation_id=$1",
+          [unresolved[0]?.operation_id, randomUUID()],
+        );
+        expect(await journal()).toHaveLength(before + 1); // Never refund the lifetime unit.
+      } finally {
+        await new Promise<void>((resolve, reject) =>
+          server.close((error) => (error ? reject(error) : resolve())),
+        );
+      }
+    },
+  );
 });

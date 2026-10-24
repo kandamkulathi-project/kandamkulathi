@@ -126,13 +126,13 @@ test("actual WorkspaceApp mounts explicit controls, clears invitation, captures 
   );
 });
 
-test("an invitation with unbound endpoint fails without sending ticket or capturing media", async ({
+test("unbound invitations and transport setup denial stay unavailable without capturing media", async ({
   page,
 }) => {
   let sent = false;
   await page.route(endpoint, (route) => {
     sent = true;
-    return route.abort();
+    return route.fulfill({ status: 403, contentType: "application/json", body: "null" });
   });
   await page.goto("/");
   const panel = page.getByRole("region", { name: "Synthetic video compatibility check" });
@@ -143,4 +143,26 @@ test("an invitation with unbound endpoint fails without sending ticket or captur
   await expect(panel.getByRole("status")).toContainText("Unavailable");
   expect(sent).toBe(false);
   await expect(panel.getByRole("button", { name: "Join synthetic video proof" })).toBeDisabled();
+  const now = Date.now(),
+    expiresAt = now + 60000;
+  await panel.getByLabel("Private server-issued synthetic invitation JSON").fill(
+    JSON.stringify({
+      ...invitation,
+      grant: { ...invitation.grant, expiresAt: new Date(expiresAt).toISOString() },
+      member: { ...invitation.member, notBefore: now - 1000, expiresAt },
+    }),
+  );
+  await panel.getByRole("button", { name: "Load private invitation" }).click();
+  await expect(panel.getByRole("button", { name: "Join synthetic video proof" })).toBeEnabled();
+  await panel.getByRole("button", { name: "Join synthetic video proof" }).click();
+  await expect(panel.getByRole("status")).toContainText("Unavailable");
+  expect(sent).toBe(true);
+  await expect(panel.getByLabel("Private server-issued synthetic invitation JSON")).toHaveValue("");
+  await expect(panel.getByRole("button", { name: "Join synthetic video proof" })).toBeDisabled();
+  expect(
+    await panel
+      .locator("video")
+      .first()
+      .evaluate((element) => (element as HTMLVideoElement).srcObject),
+  ).toBe(null);
 });

@@ -16,7 +16,7 @@ policy, identity or consent is invented. Existing clinical `transportPending` st
   root/session/customer/checkout/locale keys are unchanged.
 - `App.tsx` mounts the independent `SyntheticDiagnostics` host, not clinical
   `SensitiveFlows`. Native video requires `__DEV__`, `extra.environment` local/dev, and
-  `extra.p1VideoProof.enabled === true`. The small configuration merge below supplies it.
+  `extra.p1VideoProof.enabled === true`. The integrated configuration below supplies it.
   **No ticket, invitation or TURN credential may enter public environment/config.**
   The native SDK/RTCView loads only after explicit Join; Expo Go/web are unavailable.
   Real local/remote streams render with actual SDK `RTCView`. Signaling explicitly uses the
@@ -28,15 +28,17 @@ policy, identity or consent is invented. Existing clinical `transportPending` st
   authority and manual Stop clear private media. No passive resume or
   duplicate Join imports/captures. Pending renderer import is deadline/abort fenced too.
 
-Parent still owns **only installation/integration plumbing**: the exact two SDK dependencies,
-official plugin wrapper registration, two client exports, lockfile and the small config merge below.
-The mounts/UI are implemented here, not deferred. New shared helpers use existing repository
-source-relative imports and need no additional package export/dependency.
+Commit `c396c41` includes the installation/integration plumbing: exact pins
+`react-native-webrtc@155.0.1` and `@config-plugins/react-native-webrtc@15.0.2`,
+official plugin wrapper registration, client exports, lockfile and the config wiring below.
+The actual workspace/native mounts and controls are implemented, not deferred. Shared helpers
+use existing repository source-relative imports and need no additional package export/dependency.
 
-### Preserve the parent's config/policy parser
+### Integrated config/policy parser
 
-This patch intentionally contains **no `config.mjs` or `SensitiveFlows.tsx` diff**. Preserve the
-existing last plugin and transcription notices/approval parser. Merge only these two lines:
+`apps/mobile/config.mjs` already registers `./plugins/withPrivateVideoProof.cjs`, imports
+`parseVideoProofConfig` and merges its result alongside the transcription notices/approval
+settings. The existing wiring is shown below; do not apply it a second time:
 
 ```js
 import { parseVideoProofConfig } from "./videoProofConfig.mjs";
@@ -49,8 +51,8 @@ Enable with `MOBILE_VIDEO_PROOF_APPROVED=true` and
 These are build inputs, **not new `EXPO_PUBLIC_*` variables**, so the strict public-variable
 allowlist need not change. The helper returns only `p1VideoProof` with a validated nonsecret
 HTTPS endpoint. It refuses staging/production and malformed flags. It does not parse or touch
-transcription notices. Existing parent helper `apps/mobile/src/privateVideoSignaling.ts` is
-required, not redelivered. The independent native proof uses its synthetic server ticket,
+transcription notices. The included `apps/mobile/src/privateVideoSignaling.ts` helper supplies
+the native streaming signaling adapter. The independent native proof uses its synthetic server ticket,
 not customer WorkOS authority; business logout does not revoke that separate ticket. Select
 Stop to terminate the synthetic room; background/expiry/room revocation also terminate it.
 
@@ -160,8 +162,10 @@ Observed after applying the supplied security delta locally: 10 control/invitati
 2 actual-root Chromium cases and 3 configuration/issuer cases passed. Both scoped TypeScript
 checks passed, including the actual mobile `expo/fetch` helper; Biome and repository/document
 checks passed. Earlier desktop/mobile-width screenshots were inspected; the visual controls
-are unchanged. The relocated parent helper is required instead of the old misplaced
-`tests/video-proof/expo-fetch-types.ts`; neither that stale helper nor security changes are
-redelivered here.
-Full `pnpm verify`, full E2E, signed binaries, actual provider/cloud DO and device/TURN media
-were not run in this bounded mount task. No commit, push, deployment or parent source edit.
+are unchanged. These are historical scoped results; commit `c396c41` includes the shared
+helpers, security corrections, configuration and actual-root controls. No separate patch
+delivery or mounting step remains. Its mandatory combined gate and subsequent clean committed
+`verify:p1-local` passed. PR #12 review findings are being corrected separately; those earlier
+passes do not establish that the corrections have passed or been pushed. Signed binaries,
+actual provider/cloud DO and device/TURN media verification remain Pending. No deployment,
+clinical grant or G1 acceptance is established by these software checks.

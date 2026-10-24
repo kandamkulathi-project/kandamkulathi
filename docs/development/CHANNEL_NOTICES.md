@@ -11,8 +11,10 @@ security review remain **Pending**; no G1/provider acceptance is claimed.
 The jobs runtime accepts `CHANNEL_NOTICE_CAPABILITY_ID`,
 `WHATSAPP_NOTICE_ACCESS_TOKEN` (secret) and `WHATSAPP_GRAPH_VERSION` (explicit
 supported version, e.g. the company's reviewed current Graph version). Existing
-`PROVIDER_MODE` and production `ALLOW_LIVE_SENDS` gates remain enforced. Stub mode
-cannot send or report provider success. Missing send configuration durably suppresses
+`PROVIDER_MODE=live`, production environment and `ALLOW_LIVE_SENDS=true` are all
+required for the real Graph adapter. Stub and sandbox modes cannot use it or report
+provider success. Synthetic loopback tests inject their own transport instead.
+Missing send configuration durably suppresses
 the notice as `configuration_unavailable`; it never substitutes text or a fake receipt.
 Independent human routing still commits. Existing unconfigured webhook inputs retain
 their existing HTTP 503 behavior. There is **no public send/configuration API**.
@@ -80,7 +82,11 @@ queue envelopes. The provider receives only the exact zero-parameter template.
 Provider acceptance is persisted separately from platform completion under both
 the domain token and current platform lease, held through commit. An accepted
 receipt means API acceptance only, never delivery/read. Durable accepted replay
-does not call HTTP again. Explicit structured client rejection remains rejected.
+does not call HTTP again. Explicit structured client rejection remains rejected,
+completes processing without retry exhaustion, and never creates a provider-accepted
+receipt. Replaying that durable rejection also never calls HTTP again. Jobs may
+transition only prior `sending` rows; accepted, rejected, unknown and suppressed
+dispositions are immutable to jobs, including their provider message IDs.
 Network loss, invalid/oversized receipts, server errors and a process/lease loss
 after reservation remain unknown (or sending until the next delivery marks them
 unknown); **none automatically resends**. Quota is not refunded on uncertainty.
@@ -101,6 +107,7 @@ Run the focused unit test and serialized real PostgreSQL/loopback HTTP proof:
 
 ```sh
 pnpm exec vitest run tests/unit/channel-notices.test.ts
+mkdir -p /tmp/opencode
 flock /tmp/opencode/kandamkulathi-p1-e2e.lock node --test tests/platform/channel-notices.test.mjs
 ```
 
@@ -111,7 +118,8 @@ real HTTP after commit, receipts, revocation and no resend after lost response o
 expired fence. Unit cases cover quota/expiry/freshness/identity and provider errors.
 
 After review/mount/migration, an authorized tester must provision an actual
-approved test capability and sandbox credential (never commit them), send a
+approved test capability and explicitly permitted production live credential
+(never commit them; the real Graph adapter is not enabled by sandbox mode), send a
 current signed ingress event from its bound test sender, run the existing
 dispatcher/consumer, and inspect the private notice/provider receipt. Redeliver
 the same event/job and verify no second HTTP send. Disable approval or exhaust

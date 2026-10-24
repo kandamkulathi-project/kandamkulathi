@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### GitHub CodeRabbit completion review corrections — 2026-10-24
+
+- Restrict the real WhatsApp sender to permitted production live mode; keep terminal notice receipts immutable and process definitive rejection without resend or fabricated acceptance.
+- Release transcription concurrency for explicitly allowlisted provider rejections while retaining lifetime usage and unknown-outcome fences.
+- Distinguish private-video setup failure from normal post-setup closure without weakening media cleanup or late-callback guards. Correct integrated setup and verification handoffs.
+
 ### Phase 1 bounded completion and review corrections — 2026-10-24 (combined verification Pending)
 
 - Mount explicitly confirmed unpaid cancellation (0028), independently routed durable notice (0029), and native transcription with approved notices, review-only draft insertion, retained cleanup obligations and server-enforced quota/concurrency admission (0030). No policies or approvals are seeded.
