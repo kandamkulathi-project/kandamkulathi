@@ -54,10 +54,11 @@ and independent acceptance obligations are unchanged.
 Separate saved-address/account editing, reorder, courier fulfillment and generated
 invoice/return workflows are explicitly unavailable in this slice. Full production
 voice/video/push delivery is later-phase work; bounded Phase 1 proofs still require
-actual approved provider/device evidence. The combined software candidate has passed
-local verification and scoped review; final hosted integration checks and the `dev`
-merge remain pending. Do not reclassify a failing software check as an external
-approval blocker.
+actual approved provider/device evidence. Completed local verification is bound to
+`07703df099246e6e6c89135136528887bde55f52`, as detailed below; it is not a blanket
+claim for later commits. Review of this documentation correction, final exact-head
+hosted integration checks and the `dev` merge remain pending. Do not reclassify a
+failing software check as an external approval blocker.
 
 ## Verification and handoff
 
@@ -114,9 +115,18 @@ application check. The focused correction now handles only role-creation collisi
 errors, revalidates all profiles and commits a short role-only transaction before
 the unchanged atomic domain migration. A real cross-database regression reproduced
 the original collision; corrected focused checks passed 20 platform database,
-15 commerce-jobs and 10 security/unit cases. The new correction still requires
-its full gate, independent review and final exact-head hosted checks before the
-consolidated `dev` merge; no failed-check waiver has occurred. See the
+15 commerce-jobs and 10 security/unit cases. The correction received independent
+security review; its full mandatory gate and new clean committed verification
+passed at `07703df099246e6e6c89135136528887bde55f52`, tree
+`c3795a9f18f81f54c32ea8617cdf2a6523aad326`: 1,829 main tests, 205 browser cases,
+108 platform cases and 111 security cases, plus the other required checks. The
+clean bundle is `private-evidence/P1-DEV-090/2026-10-24T16-00-24.099Z-c39f3a45-90be-4ae1-b22b-bea31a46ac96`.
+The first gate stopped on npm audit `ETIMEDOUT`; the unchanged dependency check
+passed one retry and the complete gate then reran successfully. No security
+failure was suppressed. A later documentation-only correction does not transfer
+this clean-verification claim to a new commit. Final exact-head hosted checks and
+the consolidated `dev` merge remain pending; no failed-check waiver has occurred.
+See the
 [administrative rollback boundary](PLATFORM_FOUNDATION.md#local-administrative-tools).
 
 User-directed manual testing is documented in the [manual handoff](PHASE1_MANUAL_TESTING.md).
