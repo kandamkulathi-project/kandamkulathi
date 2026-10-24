@@ -2,11 +2,32 @@
 
 ## Unreleased
 
+### Phase 1 parallel backlog integration — 2026-10-24 (verification and independent review Pending)
+
+- Preserve existing owner implementation candidates and the incumbent interface while integrating separately authored Phase 1 changes. Company/provider/device acceptance and G1 remain Pending.
+- Add an exact browser-origin mutation boundary with denial before feature execution, preserving separate authentication, current authorization and CSRF obligations.
+- Add Tinu's deterministic fixture aliases, candidate-bound evidence ledger and mandatory Node QA regressions; no mock or aggregate row can grant canonical acceptance.
+- Integrate canonical persisted identity/privacy, commerce/payment, booking, source-backed knowledge authoring, scoped staff reads and EN/ML/TA web/native journeys; mount actual native sign-in/consent/verified secure-vault/logout controls without fabricating provider success.
+- Bind financial outbox insertion to persisted obligations/ledger/expiration references with additive migration 0026; preserve immutable migrations and existing authorization assertions. Keep uncertain expired financial work in durable financial review.
+- Repair expired native privacy-session logout with narrowly bound additive migration 0027; preserve expired business-auth denial, provider-confirmed revocation and stable-key pending reconciliation. Preserve unavailable versus denied admission through Companion and booking mutation adapters.
+- Publish a scoped [integration register](docs/development/PHASE1_INTEGRATION.md) and [manual testing handoff](docs/development/PHASE1_MANUAL_TESTING.md); final combined checks and independent review remain required before commit/merge. No G1 or device/provider acceptance is implied.
+
 ### PR #8 QA register correction — 2026-10-24 (independent review Pending)
 
 - Reconcile canonical Phase 1 variant coverage, distinguish historical unverified observations from current implementation and pending acceptance, and repair UTF-8 punctuation without inventing execution or approval evidence.
 - Integrate current reviewed platform/client `dev`, preserving newline-terminated runtime pins and required Expo compatibility checks. Isolate external scanner Git-hook context with unit and real-scanner controls, retaining all authored-source targets, rules and mandatory gates.
 - Preserve foreground Astro supervision under agent detection so repeated browser campaigns do not leave a preview server occupying a later candidate's port.
+
+### Mathew/platform integration — 2026-10-24 (independent review Pending)
+
+- Merge reviewed platform PR #3 from `dev`, preserving safe configuration/logging, PostgreSQL transport infrastructure, real database CI/hooks and Core Cron/Queue handlers alongside the identity fetch boundary.
+- Keep third-argument feature registration behind platform guards, preserve both Companion registrations, and extend composition regressions for explicit local test configuration and invalid-environment denial before adapter access. Business adapters and all domain/provider/clinical acceptance remain Pending.
+
+### Local development supervision — 2026-10-23 (review Pending)
+
+- Keep Astro dev and preview in the foreground under agent detection so `pnpm dev` does not stop sibling services after a successful background launcher exit and Playwright can supervise preview cleanup.
+- Add a script contract regression and actual four-service browser/Worker lifecycle campaign to `pnpm test:e2e`; readiness and business/provider acceptance remain Pending.
+- Isolate external scanners from inherited Git hook repository selectors, while preserving Git's actual candidate index. This prevents generated ignored bundles being parsed as authored source during linked-worktree commits; rules and fail-closed gates are unchanged, with real scanner and environment regressions.
 
 ### P1-DEV-001 PR #3 second review — 2026-10-23 (independent retest Pending)
 

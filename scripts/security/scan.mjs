@@ -79,7 +79,14 @@ export async function sast(targets = ["apps", "packages", "scripts", ".github"],
   assert([0, 1].includes(result.status), `SAST failed: ${result.stderr}`);
   const report = JSON.parse(result.stdout);
   assert(Array.isArray(report.results) && Array.isArray(report.errors), "Invalid SAST report");
-  assert.equal(report.errors.length, 0, "SAST parsing/configuration errors require review");
+  // Report only classifications/paths: scanner messages may contain source snippets.
+  assert.equal(
+    report.errors.length,
+    0,
+    `SAST parsing/configuration errors require review: ${JSON.stringify(
+      report.errors.map(({ type, path }) => ({ type, path })),
+    )}`,
+  );
   assert(report.paths?.scanned?.length > 0, "SAST scanned no files");
   return report;
 }

@@ -9,8 +9,26 @@ export default defineConfig({
     baseURL: "http://127.0.0.1:4321",
     trace: "retain-on-failure",
   },
-  reporter: process.env.CI ? "github" : "list",
+  reporter: [[process.env.CI ? "github" : "list"], ["./scripts/verification/playwright.mjs"]],
   webServer: [
+    {
+      command:
+        "pnpm --filter @kandamkulathi/workspaces exec vite --config ../../tests/e2e/legacy-knowledge.vite.ts --host 127.0.0.1 --port 15375 --strictPort",
+      url: "http://127.0.0.1:15375/__legacy-knowledge/staff",
+      reuseExistingServer: false,
+    },
+    {
+      command:
+        "pnpm --filter @kandamkulathi/workspaces exec vite --config ../../tests/e2e/web-strict-lifecycle.vite.ts --host 127.0.0.1 --port 15374 --strictPort",
+      url: "http://127.0.0.1:15374",
+      reuseExistingServer: false,
+    },
+    {
+      command:
+        "pnpm --filter @kandamkulathi/workspaces exec vite --config ../../tests/customer-ui/vite.config.ts",
+      url: "http://127.0.0.1:5184",
+      reuseExistingServer: false,
+    },
     {
       command: "pnpm --filter @kandamkulathi/web-public preview",
       url: "http://127.0.0.1:4321",

@@ -6,13 +6,34 @@ export function mobileConfig(base, env) {
   for (const key of Object.keys(env)) {
     if (
       key.startsWith("EXPO_PUBLIC_") &&
-      !["EXPO_PUBLIC_APP_ENV", "EXPO_PUBLIC_CORE_API_ORIGIN"].includes(key)
+      ![
+        "EXPO_PUBLIC_APP_ENV",
+        "EXPO_PUBLIC_CORE_API_ORIGIN",
+        "EXPO_PUBLIC_COMPANION_API_ORIGIN",
+      ].includes(key)
     )
       throw new Error("Unapproved public variable refused");
   }
   const local = environment === "local";
   const origin = env.EXPO_PUBLIC_CORE_API_ORIGIN ?? (local ? "http://127.0.0.1:8787" : "");
   const url = new URL(origin);
+  const companion = new URL(
+    env.EXPO_PUBLIC_COMPANION_API_ORIGIN ?? (local ? "http://127.0.0.1:8788" : ""),
+  );
+  if (
+    companion.username ||
+    companion.password ||
+    companion.search ||
+    companion.hash ||
+    companion.pathname !== "/" ||
+    !(
+      companion.protocol === "https:" ||
+      (local &&
+        companion.protocol === "http:" &&
+        ["127.0.0.1", "localhost"].includes(companion.hostname))
+    )
+  )
+    throw new Error("Invalid public Companion origin");
   if (
     url.username ||
     url.password ||
@@ -86,6 +107,7 @@ export function mobileConfig(base, env) {
     extra: {
       environment,
       coreApiOrigin: url.origin,
+      companionApiOrigin: companion.origin,
       releaseApproved: false,
       ...(env.MOBILE_EAS_PROJECT_ID ? { eas: { projectId: env.MOBILE_EAS_PROJECT_ID } } : {}),
     },

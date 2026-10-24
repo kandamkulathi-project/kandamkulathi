@@ -66,12 +66,38 @@ describe.each(["core-api", "companion"] as const)("%s HTTP boundary", (service) 
         ).toContain("Origin");
         expect(response.headers.get("cache-control")).toBe("no-store");
         if (method === "OPTIONS")
-          expect(response.headers.get("access-control-allow-methods")).toBe("GET,HEAD,OPTIONS");
+          expect(response.headers.get("access-control-allow-methods")).toBe(
+            "GET,HEAD,OPTIONS,POST",
+          );
         else
           expect(errorSchema.parse(await response.json()).error.code).toBe("FEATURE_UNAVAILABLE");
       }
     },
   );
+  it("permits only the declared sensitive POST headers during approved local preflight", async () => {
+    const response = await request("/v1/consents", {
+      method: "OPTIONS",
+      headers: {
+        Origin: "http://127.0.0.1:5173",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "Content-Type,Authorization,X-CSRF-Token,Idempotency-Key",
+      },
+    });
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-headers")).toBe(
+      "Content-Type,Authorization,X-CSRF-Token,Idempotency-Key",
+    );
+    expect(response.headers.get("access-control-allow-methods")).not.toContain("DELETE");
+    const blocked = await request("/v1/consents", {
+      method: "OPTIONS",
+      headers: {
+        Origin: "https://untrusted.invalid",
+        "Access-Control-Request-Method": "POST",
+      },
+    });
+    expect(blocked.headers.get("access-control-allow-origin")).toBeNull();
+    expect(blocked.headers.get("access-control-allow-credentials")).toBeNull();
+  });
   it("denies credentialed CORS for unapproved origins and every unconfigured remote environment", async () => {
     const deniedOrigins = [
       "https://untrusted.invalid",

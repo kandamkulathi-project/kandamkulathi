@@ -53,7 +53,11 @@ describe("real security scanner end-to-end negative controls", () => {
     const { folder, cleanup } = fixture();
     try {
       writeFileSync(join(folder, "broken.ts"), "export function broken( { !!!");
-      await assert.rejects(sast(["broken.ts"], folder));
+      await assert.rejects(sast(["broken.ts"], folder), (error) => {
+        assert.match(error.message, /SAST (failed|parsing\/configuration errors require review)/);
+        assert(!error.message.includes("export function broken"), "Scanner error disclosed source");
+        return true;
+      });
     } finally {
       cleanup();
     }
@@ -65,11 +69,11 @@ describe("real security scanner end-to-end negative controls", () => {
       for (const key of keys) process.env[key] = join(root, ".local-data", `synthetic-${key}`);
       const report = await sast();
       assert.equal(report.results.length, 0);
-      assert(report.paths.scanned.includes("packages/server/src/index.ts"));
+      // Scanner paths use native separators on supported Windows workstations.
+      const scanned = report.paths.scanned.map((path) => path.replaceAll("\\", "/"));
+      assert(scanned.includes("packages/server/src/index.ts"));
       assert(
-        report.paths.scanned.every(
-          (path) => !/(^|\/)(node_modules|dist|\.wrangler|\.astro)\//.test(path),
-        ),
+        scanned.every((path) => !/(^|\/)(node_modules|dist|\.wrangler|\.astro)\//.test(path)),
         "Generated artifacts must not replace the authored-source target set",
       );
     } finally {

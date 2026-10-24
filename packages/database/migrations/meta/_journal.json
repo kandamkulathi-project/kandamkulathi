@@ -15,6 +15,118 @@
       "when": 1792474904915,
       "tag": "0001_platform_access",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792820000000,
+      "tag": "0002_mathew_identity",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792820000001,
+      "tag": "0003_mathew_booking",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792820000002,
+      "tag": "0004_mathew_knowledge",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792820000003,
+      "tag": "0005_mathew_channels",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792820000004,
+      "tag": "0006_mathew_knowledge_index",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792820000005,
+      "tag": "0007_mathew_web_auth_maintenance",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792820000006,
+      "tag": "0008_mathew_native_auth",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792820000007,
+      "tag": "0009_mathew_consent_bootstrap",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792820000020,
+      "tag": "0020_commerce_catalogue",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792820000021,
+      "tag": "0021_commerce_payments",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792820000022,
+      "tag": "0022_commerce_orders_access",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792820000023,
+      "tag": "0023_commerce_clinic_directory",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792820000024,
+      "tag": "0024_commerce_reconcile_jobs_access",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1792820000025,
+      "tag": "0025_outbox_financial_review",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792820000026,
+      "tag": "0026_outbox_payment_authorization",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792820000027,
+      "tag": "0027_native_expired_logout",
+      "breakpoints": true
     }
   ]
 }

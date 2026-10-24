@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { requireCommitted, sourceSnapshot } from "../verification/evidence.mjs";
 import { digest, migrationFiles, operationTarget, withAdmin } from "./database.mjs";
 import { privatePath } from "./files.mjs";
 import { readManifest } from "./manifest.mjs";
@@ -10,16 +11,12 @@ import { renderConfig } from "./render-config.mjs";
 
 export { privatePath } from "./files.mjs";
 export function captureCandidate(cwd = process.cwd()) {
-  const env = { ...process.env };
-  for (const key of ["GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR"])
-    delete env[key];
-  const options = { cwd, env, encoding: "utf8", windowsHide: true, timeout: 10000 };
-  const status = spawnSync("git", ["status", "--porcelain"], options);
-  assert.equal(status.status, 0);
-  assert.equal(status.stdout.trim(), "", "Commit verified inputs before preparing a candidate");
-  const revision = spawnSync("git", ["rev-parse", "HEAD"], options);
-  assert.equal(revision.status, 0);
-  const sha = revision.stdout.trim();
+  const source = sourceSnapshot(cwd);
+  assert.equal(source.dirty, false, "Commit verified inputs before preparing a candidate");
+  // Use the same fail-closed index/masking boundary as committed verification.
+  // Ordinary status hides modified assume-unchanged/skip-worktree source bytes.
+  requireCommitted(source);
+  const sha = source.head;
   assert.match(sha, /^[a-f0-9]{40}$/);
   return sha;
 }

@@ -1,0 +1,16 @@
+.customer-navigation {
+  min-width: 0;
+  border: 0;
+  margin: 0 0 24px;
+  padding: 0;
+}
+
+.customer-navigation legend {
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.customer-navigation button[aria-pressed="false"] {
+  color: #163d36;
+  background: white;
+}

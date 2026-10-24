@@ -18,6 +18,7 @@ const jobSchema = z
       "commerce.reconcile",
       "clinical.reminder",
       "engagement.notify",
+      "knowledge.index",
     ]),
     subjectId: z.uuid(),
     revision: z.number().int().positive(),
@@ -97,7 +98,9 @@ export async function claimDue(
       `WITH expired AS (SELECT id FROM platform.outbox
       WHERE status NOT IN ('succeeded','suppressed','dead') AND deadline_at <= clock_timestamp()
       AND (lease_until IS NULL OR lease_until <= clock_timestamp()) FOR UPDATE SKIP LOCKED LIMIT $1)
-      UPDATE platform.outbox o SET status = 'suppressed', failure_code = 'deadline_elapsed',
+      UPDATE platform.outbox o SET
+      status = CASE WHEN o.kind = 'commerce.reconcile' THEN 'dead' ELSE 'suppressed' END,
+      failure_code = CASE WHEN o.kind = 'commerce.reconcile' THEN 'financial_review_required' ELSE 'deadline_elapsed' END,
       lease_token = NULL, lease_until = NULL FROM expired e WHERE o.id = e.id`,
       [limit],
     );
@@ -232,7 +235,7 @@ export async function executeClaim(
   context: DatabaseContext,
   job: ClaimedJob,
   handlers: Handlers,
-): Promise<"succeeded" | "suppressed" | "stale"> {
+): Promise<"succeeded" | "suppressed" | "stale" | "dead"> {
   return transaction(context.client, async () => {
     const owned = await context.client.query<{ valid: boolean; expired: boolean }>(
       `SELECT
@@ -261,12 +264,17 @@ export async function executeClaim(
       if (fresh.expired) decision = "deadline_elapsed";
     }
     if (decision !== "allow") {
+      const financialReview = decision === "deadline_elapsed" && job.kind === "commerce.reconcile";
       await context.client.query(
-        `UPDATE platform.outbox SET status = 'suppressed', failure_code = $2,
+        `UPDATE platform.outbox SET status = $3, failure_code = $2,
         lease_token = NULL, lease_until = NULL WHERE id = $1`,
-        [job.id, decision],
+        [
+          job.id,
+          financialReview ? "financial_review_required" : decision,
+          financialReview ? "dead" : "suppressed",
+        ],
       );
-      return "suppressed";
+      return financialReview ? "dead" : "suppressed";
     }
     if (!handler) throw new Error("No reviewed domain handler is registered.");
     const receipt = await context.client.query(

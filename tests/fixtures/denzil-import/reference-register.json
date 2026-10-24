@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "synthetic": true,
+  "purpose": "Reference register only; not an opening import or approved company identifiers",
+  "companyReferenceApproval": "pending",
+  "clinics": [
+    {
+      "fixtureId": "syn-clinic-a",
+      "candidateLocationId": "00000000-0000-4000-8000-000000000101",
+      "label": "Synthetic clinic A"
+    }
+  ],
+  "doctors": [
+    {
+      "fixtureId": "syn-doctor-a",
+      "candidateDoctorId": "00000000-0000-4000-8000-000000000201",
+      "label": "Synthetic doctor A",
+      "clinicFixtureIds": ["syn-clinic-a"]
+    }
+  ]
+}
