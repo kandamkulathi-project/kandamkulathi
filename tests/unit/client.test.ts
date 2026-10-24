@@ -7,6 +7,7 @@ import {
   notificationTarget,
   parseNotificationLink,
   returnGuard,
+  watchSessionExpiry,
   workspaceAccess,
 } from "../../packages/client/src/index";
 import { mediaProbe } from "../../packages/client/src/media";
@@ -17,6 +18,41 @@ const id = "dbdfb43b-cde1-4102-95ce-ab0654d1b6cc";
 const session = { userId: id, expiresAt: "2099-01-01T00:00:00Z", workspaces: ["customer"] };
 afterEach(() => vi.useRealTimers());
 describe("session and navigation boundary", () => {
+  it("fences a known session exactly at expiry without waiting for a network result", () => {
+    vi.useFakeTimers();
+    const start = Date.parse("2030-01-01T00:00:00Z");
+    vi.setSystemTime(start);
+    const expired = vi.fn();
+    const stop = watchSessionExpiry(new Date(start + 2000).toISOString(), expired);
+    vi.advanceTimersByTime(1999);
+    expect(expired).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(expired).toHaveBeenCalledOnce();
+    vi.advanceTimersByTime(7000);
+    expect(expired).toHaveBeenCalledOnce();
+    stop();
+  });
+  it("cancels stale deadlines, handles already expired values and rechecks timer-clamped deadlines", () => {
+    vi.useFakeTimers();
+    const start = Date.parse("2030-01-01T00:00:00Z");
+    vi.setSystemTime(start);
+    const expired = vi.fn();
+    watchSessionExpiry(new Date(start).toISOString(), expired)();
+    expect(expired).toHaveBeenCalledOnce();
+    expired.mockClear();
+    const cancelled = watchSessionExpiry(new Date(start + 100).toISOString(), expired);
+    cancelled();
+    vi.advanceTimersByTime(100);
+    expect(expired).not.toHaveBeenCalled();
+    const deadline = Date.now() + 2147483647 + 100;
+    const stop = watchSessionExpiry(new Date(deadline).toISOString(), expired);
+    vi.advanceTimersByTime(2147483647);
+    expect(expired).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(100);
+    expect(expired).toHaveBeenCalledOnce();
+    stop();
+    expect(() => watchSessionExpiry("not-a-deadline", expired)).toThrow("Invalid session deadline");
+  });
   it.each([
     [401, "anonymous"],
     [403, "denied"],
@@ -288,6 +324,81 @@ describe("device lifecycle", () => {
     await stop;
     await next;
     await probe.dispose();
+  });
+  it.each(["stop", "discard"] as const)(
+    "retries unresolved native %s cleanup and blocks new recording",
+    async (failure) => {
+      const port = {
+        permission: vi.fn(async () => true),
+        prepare: vi.fn(async () => {}),
+        record: vi.fn(),
+        stop: vi.fn(async () => {}),
+        discard: vi.fn(async () => {}),
+      };
+      port[failure].mockRejectedValueOnce(new Error("Synthetic cleanup failure"));
+      const changed = vi.fn();
+      const probe = recordingProbe(port, changed);
+      await probe.start();
+      await expect(probe.stop()).rejects.toThrow("Synthetic cleanup failure");
+      await expect(probe.start()).resolves.toBeUndefined();
+      expect(changed).toHaveBeenLastCalledWith("failed");
+      expect(port.permission).toHaveBeenCalledTimes(1);
+      expect(port.record).toHaveBeenCalledTimes(1);
+      await probe.stop();
+      expect(port.stop).toHaveBeenCalledTimes(failure === "stop" ? 2 : 1);
+      expect(port.discard).toHaveBeenCalledTimes(failure === "discard" ? 2 : 1);
+      expect(changed).toHaveBeenLastCalledWith("idle");
+      await probe.start();
+      expect(port.record).toHaveBeenCalledTimes(2);
+      await probe.dispose();
+    },
+  );
+  it("dispose retries deletion without repeating a completed stop", async () => {
+    const stop = vi.fn(async () => {});
+    const discard = vi
+      .fn(async () => {})
+      .mockRejectedValueOnce(new Error("Synthetic deletion failure"));
+    const probe = recordingProbe(
+      {
+        permission: async () => true,
+        prepare: async () => {},
+        record: vi.fn(),
+        stop,
+        discard,
+      },
+      vi.fn(),
+    );
+    await probe.start();
+    await expect(probe.stop()).rejects.toThrow("Synthetic deletion failure");
+    await probe.dispose();
+    expect(stop).toHaveBeenCalledTimes(1);
+    expect(discard).toHaveBeenCalledTimes(2);
+    await probe.dispose();
+    expect(discard).toHaveBeenCalledTimes(2);
+  });
+  it("retains partial preparation cleanup and retries failed stop on dispose", async () => {
+    const prepare = vi.fn(async () => {
+      throw new Error("Synthetic partial prepare");
+    });
+    const stop = vi.fn(async () => {}).mockRejectedValueOnce(new Error("Synthetic stop failure"));
+    const discard = vi.fn(async () => {});
+    const probe = recordingProbe(
+      {
+        permission: async () => true,
+        prepare,
+        record: vi.fn(),
+        stop,
+        discard,
+      },
+      vi.fn(),
+    );
+    await probe.start();
+    await probe.start();
+    expect(prepare).toHaveBeenCalledTimes(1);
+    expect(discard).not.toHaveBeenCalled();
+    await probe.dispose();
+    expect(stop).toHaveBeenCalledTimes(2);
+    expect(discard).toHaveBeenCalledTimes(1);
   });
   it("releases capture on stop, switches and the 30-second bound", async () => {
     vi.useFakeTimers();

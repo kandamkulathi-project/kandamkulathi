@@ -509,10 +509,17 @@ test("deployment lock serializes a target and schema compatibility rejects an in
 });
 
 test("migrations are repeatable and reject tampered applied checksums", async () => {
-  assert.equal(
-    (await migrate(fixture.sourceUrl, { environment: "local", namespace: "kandamkulathi-local" }))
-      .length,
-    2,
+  const expected = migrationFiles().map(({ id, sha256 }) => ({ id, sha256 }));
+  assert.deepEqual(
+    (
+      await migrate(fixture.sourceUrl, { environment: "local", namespace: "kandamkulathi-local" })
+    ).map(({ id, sha256 }) => ({ id, sha256 })),
+    expected,
+  );
+  assert.deepEqual(
+    (await fixture.source.query("SELECT id,sha256 FROM public.k_platform_migrations ORDER BY id"))
+      .rows,
+    expected,
   );
   const original = (
     await fixture.source.query(

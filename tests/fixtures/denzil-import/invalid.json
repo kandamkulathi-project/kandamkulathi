@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "synthetic": true,
+  "asOf": "2026-10-24",
+  "rows": [
+    { "kind": "clinic", "id": "syn-clinic-a", "label": "Synthetic clinic A" },
+    { "kind": "product", "id": "syn-product-a", "label": "Synthetic catalogue item A" },
+    { "kind": "variant", "id": "syn-variant-a", "productId": "syn-product-a", "pricePaise": -1 },
+    {
+      "kind": "batch",
+      "id": "syn-batch-a",
+      "variantId": "syn-variant-a",
+      "clinicId": "syn-missing",
+      "expiresOn": "2026-10-01",
+      "quantity": 8
+    },
+    { "kind": "product", "id": "syn-product-a", "label": "Duplicate synthetic item" }
+  ],
+  "expected": {
+    "clinics": 1,
+    "products": 1,
+    "variants": 1,
+    "batches": 1,
+    "units": 8,
+    "retailExtensionPaise": 100000
+  }
+}

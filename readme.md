@@ -4,9 +4,17 @@ A trusted Ayurvedic healthcare institution serving generations since 1847, dedic
 
 ## Shared development baseline
 
-This private repository contains the runnable starter and the complete reviewed implementation, member and QA documents. **Business features and all phase acceptance are Pending. This is not a production release.** No live accounts, deployment, charges, messages, AI responses or patient data are enabled.
+The [Phase 1 software candidate](docs/development/PHASE1_INTEGRATION.md) integrates the owner lanes;
+that record distinguishes local verification, hosted checks and final merge status.
+Use the [manual testing handoff](docs/development/PHASE1_MANUAL_TESTING.md) for configured
+synthetic web/native journeys. Software delivery does not establish provider/device
+acceptance or G1; older foundation notes below describe their original delivery scope.
+
+This private repository contains the implemented software candidate and reviewed implementation, member and QA documents. **All phase acceptance remains Pending. This is not a production release.** The default checkout enables no live accounts, deployment, charges, messages, AI responses or patient data.
 
 P1-DEV-001 now adds local platform isolation, safe telemetry, a real PostgreSQL transport/role/transaction foundation, Cron/Queues, encrypted recovery and release rehearsal tooling. Follow [platform setup and handoff](docs/development/PLATFORM_FOUNDATION.md); the local commit gate additionally requires PostgreSQL 17 and its client tools. [Local evidence and pending cloud checks](docs/operations/P1_PLATFORM_FOUNDATION.md) distinguish implementation from company-resource acceptance.
+
+The local Mathew backlog candidate adds tested identity/consent, booking-decision, approved-knowledge and authenticated-channel foundations. These are not enabled business journeys: real identity/database/provider adapters, approved policies/content and independent acceptance remain Pending. See the [implementation handoff and next actions](docs/development/MATHEW_BACKLOG_HANDOFF.md).
 
 P1-DEV-002 adds the [local client foundation](docs/development/CLIENT_FOUNDATION.md): shared client contracts/states, workspace session boundaries, native configuration/secure-storage/media adapters, editable Companion draft shell and bundled EN/ML/TA interface resources. [Native/provider readiness](docs/operations/NATIVE_READINESS.md) records the remaining physical-device, provider, cloud and company acceptance. The reviewed client foundation is inherited from `dev`; this PR adds the separately reviewed platform implementation.
 
@@ -53,6 +61,12 @@ python -m unittest discover -s tests/repository -v
 Feature branch from latest `dev` → reviewed PR into `dev` → broad phase testing → reviewed phase promotion to `main`. Never develop directly on shared branches. The one-time initial starter publication is [recorded separately](docs/architecture/adr/0004-initial-team-baseline.md); it does not count as G1. CI never deploys the app.
 
 ## Required reading
+
+P1-DEV-090 adds [clean-candidate local verification and source/artifact evidence](docs/quality/P1_DEV_090_LOCAL_VERIFICATION.md). G1 remains blocked on reviewed integration, cloud/providers, operational/device proof and company/independent acceptance. Local check success does not approve a phase or production release.
+
+P1-DEV-004 adds the [local knowledge editor, cited Companion and built-client security audit](docs/development/FRONTEND_SECURITY_REVIEW.md), with an explicit dependency on open P1-DEV-003 PR #5. Actual APIs, independent review, device/store proof, cloud setup and phase acceptance remain Pending.
+
+P1-DEV-003 adds [local sensitive-client controls and integration handoffs](docs/development/SENSITIVE_CLIENT_FLOWS.md), incorporating P1-DEV-002's reviewed, merged `dev` foundation. Its [review regression register](docs/quality/P1_DEV_003_REVIEW_REGRESSIONS.md) covers replay identities, logout lifecycle and retryable recording cleanup. PR #6 incorporates PR #5's fixes while retaining its separate page-navigation controls; independent review of both remains required. Actual APIs/providers, private call transport, native-device proof and cloud setup remain Pending.
 
 Start with [AGENTS.md](AGENTS.md), [setup](docs/development/SETUP.md), [starter status and next work](docs/development/STARTER_STATUS.md), [Git workflow](docs/development/GIT_WORKFLOW.md), and [the twelve reviewed plans](docs/implementation/INDEX.md). All [38 company requirements](docs/requirements/COMPANY_REQUIREMENTS.md), six members and [Tinu's full tests](docs/implementation/Kandamkulathi_11_Tinu_Detailed_Phase_Wise_Test_Cases.md) remain unchanged.
 

@@ -1,0 +1,56 @@
+.customer-commerce input {
+  font: inherit;
+  padding: 10px;
+  border: 1px solid #647c70;
+  border-radius: 8px;
+  max-width: 100%;
+  min-height: 44px;
+}
+.customer-commerce select {
+  max-width: 100%;
+  min-width: 0;
+}
+.customer-commerce summary {
+  cursor: pointer;
+  padding: 12px 0;
+  font-weight: 600;
+}
+.commerce-products,
+.commerce-lines {
+  list-style: none;
+  padding: 0;
+}
+.commerce-products > li,
+.commerce-lines > li {
+  border-bottom: 1px solid #c7d2ca;
+  padding: 16px 0;
+}
+.commerce-form {
+  display: grid;
+  gap: 12px;
+  max-width: 42rem;
+  margin: 20px 0;
+}
+.commerce-form label,
+.commerce-field {
+  display: grid;
+  gap: 8px;
+}
+.commerce-form button {
+  justify-self: start;
+}
+.commerce-form fieldset {
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+  border: 1px solid #c7d2ca;
+  padding: 20px;
+}
+.customer-commerce p {
+  max-width: 70ch;
+}
+.customer-commerce img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}

@@ -51,6 +51,19 @@ The transaction helper accepts only a PostgreSQL `COMMIT` command tag before ret
 
 `pnpm db:migrate` requires `APP_ENV`, `DATABASE_MIGRATION_URL` and, remotely, a provisioned manifest plus independent review reference. P1 tooling refuses production changes. For local operations the database must be `k_platform_local` or a random test database on loopback; the manifest marker must agree. Runtime roles cannot migrate. Test-only roles never receive owner, create-role/database, replication or RLS-bypass powers.
 
+Runtime profile groups are cluster-wide; the database-local advisory lock cannot
+serialize their creation across different databases. The runner first commits a
+short role-only transaction. Only duplicate-object/unique-violation errors at each
+`CREATE ROLE` are handled; all three groups must then exist with safe attributes
+and no inherited role memberships. Other errors and unsafe existing groups reject.
+The second transaction retains the database advisory lock and commits domain
+schema, grants and immutable migration ledger together. A failed domain migration
+can leave validated NOLOGIN profile groups but no partial domain migration; do not
+drop shared groups or reset the ledger to recover. Investigate the failure and
+retry the reviewed migration. Existing installed migrations/checksums and restore
+compatibility are unchanged. Real PostgreSQL tests use isolated databases and
+random cloned groups to exercise collisions without altering shared profiles.
+
 `pnpm platform:fixtures seed` creates a synthetic `platform.probe`; `reset-probes` removes only probes/associated receipts/effects and preserves domain obligations. Both require `APP_ENV=local`, the isolated migration URL and `PLATFORM_CONFIRM_SYNTHETIC_NAMESPACE=kandamkulathi-local`. Reset refuses active probe leases. This is not a catalogue, clinical or finance seed; their owners provide approved synthetic fixtures separately.
 
 `pnpm platform:backup export .local-data/backups/NAME.kav` uses `DATABASE_BACKUP_URL`, a separate 32-byte base64 `BACKUP_KEY_B64`, a nonsecret `BACKUP_KEY_ID` and matching client tools. Optional `R2_OBJECT_MANIFEST` names an approved private JSON inventory of content-addressed keys/hash/size. The export uses a consistent PostgreSQL snapshot, restricted backup role and streamed AES-256-GCM. The key is never in the artifact. Store artifacts and keys independently through company recovery access before cloud acceptance.

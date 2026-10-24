@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kandamkulathi-p1-video-technical-proof",
+  "main": "src/private-video-proof-worker.ts",
+  "compatibility_date": "2026-10-19",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [],
+  "observability": { "enabled": false },
+  "durable_objects": {
+    "bindings": [{ "name": "P1_VIDEO_ROOMS", "class_name": "P1VideoProofRoom" }]
+  },
+  "migrations": [{ "tag": "p1-video-proof-v1", "new_sqlite_classes": ["P1VideoProofRoom"] }]
+}

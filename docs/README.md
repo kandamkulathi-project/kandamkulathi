@@ -2,6 +2,12 @@
 
 Start with [AGENTS](../AGENTS.md), [repository README](../readme.md) and [setup](development/SETUP.md). The runnable application starter and reviewed plans are versioned here. Business features, actual provider configuration and all phase acceptance remain Pending. See [starter status](development/STARTER_STATUS.md).
 
+For the bounded Mathew backend candidates, implemented scope and remaining integration/approval work, see the [backlog handoff](development/MATHEW_BACKLOG_HANDOFF.md).
+The [persisted channel ingress candidate](development/CHANNEL_RUNTIME.md) documents durable receipt/processing boundaries and its remaining provider/authorization blockers.
+See [Mathew runtime composition](development/MATHEW_RUNTIME.md) for trusted Worker bindings and identity enablement limits.
+The [identity runtime](development/IDENTITY_RUNTIME.md) and [booking runtime](development/BOOKING_RUNTIME.md) describe persisted authorization and financial transaction seams.
+See the [web AuthKit runtime](development/WEB_AUTH_RUNTIME.md), [approved booking offers](development/BOOKING_OFFERS.md) and [persisted knowledge runtime](development/KNOWLEDGE_RUNTIME.md) for configured software and remaining acceptance limits.
+
 ## Authority
 
 1. Current human decisions and applicable instruction hierarchy; approved company requirements/policies.
@@ -14,6 +20,14 @@ Start with [AGENTS](../AGENTS.md), [repository README](../readme.md) and [setup]
 [Requirements](requirements/COMPANY_REQUIREMENTS.md) and [acceptance register](requirements/ACCEPTANCE_REGISTER.md) mirror the master for navigation/tracking; update them with the master in one reviewed change. [ADRs](architecture/adr/0001-workers-neon.md) record decisions; a proposed ADR cannot silently override an accepted baseline. Historical files in [archive](archive/README.md) never govern execution.
 
 ## Engineering
+
+- [Phase 1 integrated software candidate and remaining boundaries](development/PHASE1_INTEGRATION.md), [manual testing handoff](development/PHASE1_MANUAL_TESTING.md) and [mounted native authentication/privacy](development/NATIVE_AUTH_CLIENT.md).
+
+- [P1-DEV-090 local cumulative evidence, candidate parity and blocked G1 readiness](quality/P1_DEV_090_LOCAL_VERIFICATION.md).
+
+- [P1-DEV-004 frontend security, editor/Companion contracts and Pending peer review](development/FRONTEND_SECURITY_REVIEW.md).
+
+- [P1-DEV-003 sensitive client implementation and remaining handoffs](development/SENSITIVE_CLIENT_FLOWS.md); [independent review retest steps](quality/P1_DEV_003_REVIEW_REGRESSIONS.md); [native/provider proof still Pending](operations/NATIVE_READINESS.md).
 
 - [Setup](development/SETUP.md), [commands/status](development/COMMANDS.md), [coding standards](development/CODING_STANDARDS.md), [API/event contracts](development/API_CONVENTIONS.md), [Git workflow](development/GIT_WORKFLOW.md), [contributing](../CONTRIBUTING.md).
 - [Architecture](architecture/ARCHITECTURE.md), [data model/invariants](architecture/DATA_MODEL.md), [threat model](architecture/THREAT_MODEL.md), [decision record](architecture/adr/0001-workers-neon.md).

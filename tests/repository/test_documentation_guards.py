@@ -14,6 +14,75 @@ SPEC.loader.exec_module(CHECK)
 
 
 class RepositoryGuardTests(unittest.TestCase):
+    def test_readiness_packages_retain_reconciled_requirement_and_output_links(self):
+        # KAN-189: explicit expectations prevent replacing the five blanks with
+        # arbitrary valid IDs. Sources: master §2 and Phase 1/2 §3, not legacy IDs.
+        expected = {
+            'P1-JOS-080': ({'R01', 'R02', 'R05', 'R06', 'R07', 'R09', 'R37', 'R38'},
+                           {'P1-O03', 'P1-O04', 'P1-O09'}),
+            'P1-PAU-080': ({'R25', 'R37', 'R38'}, {'P1-O01', 'P1-O06', 'P1-O09'}),
+            'P2-PAU-080': ({'R25', 'R37', 'R38'}, {'P2-O04', 'P2-O06', 'P2-O07'}),
+            'P1-DEN-080': ({'R08', 'R16', 'R22', 'R25', 'R34', 'R37', 'R38'},
+                           {'P1-O06', 'P1-O07', 'P1-O09'}),
+            'P2-DEN-080': ({'R08', 'R16', 'R22', 'R25', 'R34', 'R37', 'R38'},
+                           {'P2-O01', 'P2-O03', 'P2-O04', 'P2-O05', 'P2-O06', 'P2-O07'}),
+        }
+        for tid, links in expected.items():
+            with self.subTest(package=tid):
+                member = CHECK.member_plan_paths()[tid.split('-')[1]].read_text(encoding='utf-8')
+                section = member.split(f'### {tid} — ', 1)[1].split('\n### ', 1)[0]
+                self.assertEqual(CHECK.check_package_traceability(tid, section, links[1]), links)
+                self.assertIn('**Mapping rationale:**', section)
+                self.assertIn('Phase 3', section)
+                # Reproduce the original empty named-support record for each package.
+                original = section.split('**Traceability:**', 1)[0] + (
+                    '**Traceability:** Named support package; retain parent phase outputs. '
+                    'Requirements: . Outputs: .\n')
+                with self.assertRaisesRegex(ValueError, 'missing/malformed'):
+                    CHECK.check_package_traceability(tid, original, links[1])
+
+    def test_package_traceability_rejects_missing_malformed_and_unknown_links(self):
+        good = '**Traceability:** Named support package. Requirements: R25, R37. Outputs: P2-O04.\n'
+        self.assertEqual(CHECK.check_package_traceability('P2-PAU-080', good, {'P2-O04'}),
+                         ({'R25', 'R37'}, {'P2-O04'}))
+        cases = [
+            ('', 'expected one'),
+            (good + good, 'expected one'),
+            (good.replace('R25, R37', ''), 'missing/malformed'),
+            (good.replace('P2-O04', ''), 'missing/malformed'),
+            (good.replace('R25', 'R99'), 'unknown requirement'),
+            (good.replace('P2-O04', 'P2-O99'), 'unknown or wrong-phase'),
+            (good.replace('P2-O04', 'P3-O04'), 'unknown or wrong-phase'),
+            (good.replace('Named support package.', 'Requirements: . Outputs: .'),
+             'duplicate traceability fields'),
+            (good.replace('Named support package.', 'Requirements: R99. Outputs: P3-O04.'),
+             'duplicate traceability fields'),
+        ]
+        for text, error in cases:
+            with self.subTest(text=text):
+                with self.assertRaisesRegex(ValueError, error):
+                    CHECK.check_package_traceability('P2-PAU-080', text, {'P2-O04'})
+
+    def test_plan_check_rejects_original_readiness_gap_without_changing_capacity(self):
+        self.assertEqual(CHECK.check_plans(), (109, 109))
+        real_read = Path.read_text
+        josin = CHECK.member_plan_paths()['JOS']
+
+        def missing_links(path, *args, **kwargs):
+            text = real_read(path, *args, **kwargs)
+            if path == josin:
+                start, section = text.split('### P1-JOS-080 — ', 1)
+                body, rest = section.split('\n### ', 1)
+                trace = next(line for line in body.splitlines() if line.startswith('**Traceability:**'))
+                body = body.replace(trace, '**Traceability:** Named support package; '
+                                    'retain parent phase outputs. Requirements: . Outputs: .')
+                return start + '### P1-JOS-080 — ' + body + '\n### ' + rest
+            return text
+
+        with patch.object(Path, 'read_text', missing_links):
+            with self.assertRaisesRegex(ValueError, 'P1-JOS-080: missing/malformed'):
+                CHECK.check_plans()
+
     def test_tinu_member_selection_is_independent_of_filesystem_glob_order(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

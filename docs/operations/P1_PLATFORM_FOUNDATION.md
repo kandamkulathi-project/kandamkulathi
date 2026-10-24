@@ -28,6 +28,12 @@ Queue pickup uses database server `clock_timestamp()` for due and claim timestam
 
 Code/test evidence is recorded with the implementation commits. Company-owned resource provisioning, actual Worker-to-Neon transport/role proof, independent security review, restricted secret storage, real alert receipt, encrypted export in independent company storage, R2 byte/hash verification, paid configuration and timed deployed rollback remain Pending until executed on isolated approved resources. Local PostgreSQL proof is not live Neon proof. G1 and all company requirements remain Pending.
 
+### Release source-masking regression — 24 October review
+
+The release preparation path separately trusted ordinary Git status even after P1-DEV-090 hardened verification. A synthetic CLI reproduction successfully prepared frozen artifacts under a committed SHA while tracked source had changed behind `assume-unchanged` or `skip-worktree`. Release capture now shares `sourceSnapshot`/`requireCommitted` with verification, rejecting either flag (including unchanged masked files) and index/tree mismatch before and after building, without clearing flags or altering source. Existing dirty-source and changed-revision refusal remains intact.
+
+`tests/security/platform-release-source.test.mjs` covers capture/post-build checks and the actual `prepare` CLI with deterministic local builder fixtures: clean preparation succeeds; both hidden-source cases fail before either builder runs and produce no artifact. These three regressions failed before the correction; the focused release/evidence pack subsequently passed 26 tests. Fixture builders do not prove Wrangler, deployed rollback or native behavior. Independent sensitive review/retest and fresh exact-candidate verification after the parent integrates current `dev` and PRs #5/#6/#7 remain required. Historical PR #7 evidence does not certify that resulting candidate; no phase or external readiness is accepted here.
+
 ## Local implementation completion matrix — 2026-10-20
 
 The user explicitly selected **finish locally; cloud setup Pending**. The following records implementation boundaries rather than changing the assigned package's acceptance criteria.

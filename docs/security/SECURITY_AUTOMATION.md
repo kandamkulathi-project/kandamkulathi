@@ -17,6 +17,8 @@ Rules are vendored from the exact commit in `.security/sast/vendor-manifest.json
 
 ## Local commit gate
 
+Built client artifacts also pass `pnpm audit:clients`: pinned Gitleaks, backend/private-fixture markers and source-map/private-file guards. Missing builds fail. Printable Hermes strings are checked, not exhaustively proven free of private data. See [frontend scope](../development/FRONTEND_SECURITY_REVIEW.md).
+
 Use the pinned Node/pnpm versions, install dependencies and the pinned Chromium browser, then install hooks:
 
 ```sh

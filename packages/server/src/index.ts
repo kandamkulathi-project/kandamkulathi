@@ -3,13 +3,23 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
+import {
+  browserHeaders,
+  browserMethods,
+  browserOrigins,
+  unsafeBrowserMethod,
+} from "./browser-origins";
 import { environmentSchema, platformConfig } from "./config";
 import { emitEvent, type LogSink, routeCategory } from "./observability";
 
-type Runtime = { Bindings: { APP_ENV?: string }; Variables: { requestId: string } };
+export type ServiceRuntime = {
+  Bindings: { APP_ENV?: string; BROWSER_ALLOWED_ORIGINS?: string };
+  Variables: { requestId: string };
+};
+export type ServiceOptions = { registerRoutes?: (app: Hono<ServiceRuntime>) => void };
 /** Shared HTTP boundary only; no session bypass, provider calls or business success stubs. */
-export function createService(service: Service, sink?: LogSink) {
-  const app = new Hono<Runtime>();
+export function createService(service: Service, sink?: LogSink, options?: ServiceOptions) {
+  const app = new Hono<ServiceRuntime>();
   app.use("*", secureHeaders());
   app.use("*", async (context, next) => {
     const started = performance.now();
@@ -72,20 +82,48 @@ export function createService(service: Service, sink?: LogSink) {
       sink,
     );
   });
-  app.use("*", (context, next) => {
-    const origin = context.req.header("Origin") ?? "";
-    const approved =
-      context.env?.APP_ENV === "local" &&
-      [
-        "http://localhost:4321",
-        "http://127.0.0.1:4321",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-      ].includes(origin);
+  app.use("*", async (context, next) => {
+    const origin = context.req.header("Origin");
+    let origins: readonly string[];
+    try {
+      const environment = environmentSchema.parse(context.env?.APP_ENV);
+      origins = browserOrigins(environment, context.env?.BROWSER_ALLOWED_ORIGINS);
+    } catch {
+      // Liveness remains observable even when deployment configuration is invalid.
+      if (context.req.path === "/health/live") return next();
+      return context.json(
+        {
+          error: {
+            code: "CONFIGURATION_INVALID",
+            message: "Platform configuration is invalid.",
+            requestId: context.get("requestId"),
+          },
+        },
+        503,
+      );
+    }
+    const approved = origin !== undefined && origins.includes(origin);
+    // CORS alone only hides responses. Reject browser-origin mutations before any domain effect.
+    if (
+      origin !== undefined &&
+      !approved &&
+      unsafeBrowserMethod(context.req.method, context.req.header("Access-Control-Request-Method"))
+    )
+      return context.json(
+        {
+          error: {
+            code: "ORIGIN_FORBIDDEN",
+            message: "Browser origin is not permitted.",
+            requestId: context.get("requestId"),
+          },
+        },
+        403,
+      );
     return cors({
       origin: approved ? origin : [],
       credentials: approved,
-      allowMethods: ["GET", "HEAD", "OPTIONS"],
+      allowMethods: browserMethods,
+      allowHeaders: browserHeaders,
       exposeHeaders: ["X-Request-ID"],
     })(context, next);
   });
@@ -135,6 +173,7 @@ export function createService(service: Service, sink?: LogSink) {
       },
     }),
   );
+  options?.registerRoutes?.(app);
   app.all("/v1/*", (context) =>
     context.json(
       {
@@ -173,3 +212,5 @@ export function createService(service: Service, sink?: LogSink) {
   );
   return app;
 }
+
+export type ServiceApp = ReturnType<typeof createService>;

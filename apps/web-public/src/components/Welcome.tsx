@@ -3,8 +3,10 @@ import { LanguageSelect } from "@kandamkulathi/ui";
 import { useEffect, useState } from "react";
 export default function Welcome() {
   const [locale, setLocale] = useState<Locale>("en");
+  const [interactive, setInteractive] = useState(false);
   const text = messages[locale];
   const ui = foundation[locale];
+  useEffect(() => setInteractive(true), []);
   useEffect(() => {
     document.documentElement.lang = locale;
     document.title = text.title;
@@ -13,7 +15,7 @@ export default function Welcome() {
     <main>
       <header>
         <span className="brand">K · 1847</span>
-        <LanguageSelect locale={locale} onChange={setLocale} />
+        <LanguageSelect locale={locale} onChange={setLocale} disabled={!interactive} />
       </header>
       <section className="hero">
         <p className="eyebrow">{ui.preview}</p>

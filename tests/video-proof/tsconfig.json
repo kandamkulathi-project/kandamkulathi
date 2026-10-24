@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM"],
+    "typeRoots": ["../../node_modules/@types", "../../apps/core-api/node_modules/@cloudflare"],
+    "types": ["node", "workers-types"],
+    "paths": {
+      "@kandamkulathi/client/private-video": ["../../packages/client/src/private-video.ts"],
+      "expo/fetch": ["../../apps/mobile/node_modules/expo/fetch"]
+    }
+  },
+  "include": [
+    "*.ts",
+    "../../apps/mobile/src/privateVideo.ts",
+    "../../apps/workspaces/src/privateVideo.ts",
+    "../../apps/core-api/src/private-video-proof*.ts"
+  ]
+}

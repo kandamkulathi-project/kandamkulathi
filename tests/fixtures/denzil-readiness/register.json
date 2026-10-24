@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "fixtureKind": "synthetic-readiness-only",
+  "templates": [
+    {
+      "id": "order-confirmation",
+      "owner": "Mathew",
+      "reviewer": "company-operations",
+      "languages": ["en", "ml", "ta"],
+      "approvedText": null,
+      "approvedVersion": null,
+      "providerReceipt": null,
+      "status": "pending-company-copy"
+    },
+    {
+      "id": "order-dispatch",
+      "owner": "Mathew",
+      "reviewer": "company-operations",
+      "languages": ["en", "ml", "ta"],
+      "approvedText": null,
+      "approvedVersion": null,
+      "providerReceipt": null,
+      "status": "pending-company-copy"
+    },
+    {
+      "id": "order-out-for-delivery",
+      "owner": "Mathew",
+      "reviewer": "company-operations",
+      "languages": ["en", "ml", "ta"],
+      "approvedText": null,
+      "approvedVersion": null,
+      "providerReceipt": null,
+      "status": "pending-company-copy"
+    },
+    {
+      "id": "order-delivered",
+      "owner": "Mathew",
+      "reviewer": "company-operations",
+      "languages": ["en", "ml", "ta"],
+      "approvedText": null,
+      "approvedVersion": null,
+      "providerReceipt": null,
+      "status": "pending-company-copy"
+    },
+    {
+      "id": "invoice-ready",
+      "owner": "Mathew",
+      "reviewer": "company-finance",
+      "languages": ["en", "ml", "ta"],
+      "approvedText": null,
+      "approvedVersion": null,
+      "providerReceipt": null,
+      "status": "pending-company-copy"
+    },
+    {
+      "id": "callback-acknowledgement",
+      "owner": "Mathew",
+      "reviewer": "company-operations",
+      "languages": ["en", "ml", "ta"],
+      "approvedText": null,
+      "approvedVersion": null,
+      "providerReceipt": null,
+      "status": "pending-company-copy"
+    },
+    {
+      "id": "knowledge-unavailable-handoff",
+      "owner": "Mathew",
+      "reviewer": "company-physician",
+      "languages": ["en", "ml", "ta"],
+      "approvedText": null,
+      "approvedVersion": null,
+      "providerReceipt": null,
+      "status": "pending-company-copy"
+    }
+  ],
+  "stores": [
+    {
+      "platform": "android",
+      "owner": "Devadathan",
+      "companyAccountId": null,
+      "applicationId": null,
+      "approvedListingCopy": null,
+      "privacyDisclosureEvidence": null,
+      "signedBuildId": null,
+      "submissionReceipt": null,
+      "publicListingUrl": null,
+      "status": "pending-company-inputs"
+    },
+    {
+      "platform": "ios",
+      "owner": "Devadathan",
+      "companyAccountId": null,
+      "applicationId": null,
+      "approvedListingCopy": null,
+      "privacyDisclosureEvidence": null,
+      "signedBuildId": null,
+      "submissionReceipt": null,
+      "publicListingUrl": null,
+      "status": "pending-company-inputs"
+    }
+  ]
+}

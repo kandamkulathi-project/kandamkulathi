@@ -147,8 +147,20 @@ export async function testDatabase() {
         localProxy,
         namespace,
       );
-    const reset = () =>
-      source.query("TRUNCATE platform.receipts, platform.probe_effects, platform.outbox");
+    const reset = async () => {
+      // Only the randomly created, loopback synthetic database owned by this fixture.
+      const target = new URL(sourceUrl);
+      assert.equal(target.hostname, "127.0.0.1");
+      assert.match(target.pathname, /^\/k_platform_test_[a-f0-9]+$/);
+      assert(databases.includes(target.pathname.slice(1)));
+      assert.equal(
+        (await source.query("SELECT current_database() AS name")).rows[0].name,
+        target.pathname.slice(1),
+      );
+      await source.query(
+        "TRUNCATE core.knowledge_index_bridges, platform.receipts, platform.probe_effects, platform.outbox",
+      );
+    };
     return {
       admin,
       source,
