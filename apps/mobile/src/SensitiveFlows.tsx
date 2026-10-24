@@ -43,7 +43,9 @@ import {
 import { nativeCommerceRecoveryBroker, nativeCredentialLifetime } from "./customer/recovery";
 import { NativeAuthControls } from "./NativeAuthViews";
 import { NativeCompanion } from "./NativeCompanion";
+import type { NativeTranscriptionAccess } from "./NativeTranscriptionControls";
 import { createNativeAuthRuntime } from "./nativeAuthRuntime";
+import { nativeLegacyPaymentRecoveryBroker } from "./nativeLegacyPaymentRecovery";
 import { nativeSessionLifecycle } from "./sessionLifecycle";
 
 const Font = createContext<string | undefined>(undefined);
@@ -61,6 +63,7 @@ export function NativeSensitiveFlows({
   const [attempt, setAttempt] = useState(0);
   const [lifecycle] = useState(nativeSessionLifecycle);
   const [recovery] = useState(nativeCommerceRecoveryBroker);
+  const [legacyPaymentRecovery] = useState(nativeLegacyPaymentRecoveryBroker);
   const [auth, setAuth] = useState<ReturnType<typeof createNativeAuthRuntime>>();
   const [authority, setAuthority] = useState<Resource<ClientSession>["status"]>("loading");
   const [authError, setAuthError] = useState(false);
@@ -69,6 +72,7 @@ export function NativeSensitiveFlows({
     [],
   );
   useEffect(() => () => recovery.clear(), [recovery]);
+  useEffect(() => () => legacyPaymentRecovery.clear(), [legacyPaymentRecovery]);
   const refresh = useCallback(() => setAttempt((value) => value + 1), []);
   const retry = useCallback(() => {
     if (!lifecycle.isBlocked()) recovery.capture();
@@ -108,6 +112,7 @@ export function NativeSensitiveFlows({
           retry={retry}
           lifecycle={lifecycle}
           recovery={recovery}
+          legacyPaymentRecovery={legacyPaymentRecovery}
         />
       )}
     </Font.Provider>
@@ -121,6 +126,7 @@ function NativeSessionControls({
   retry,
   lifecycle,
   recovery,
+  legacyPaymentRecovery,
 }: {
   auth: ReturnType<typeof createNativeAuthRuntime>;
   onAuthority(status: Resource<ClientSession>["status"]): void;
@@ -129,6 +135,7 @@ function NativeSessionControls({
   retry(): void;
   lifecycle: ReturnType<typeof nativeSessionLifecycle>;
   recovery: ReturnType<typeof nativeCommerceRecoveryBroker>;
+  legacyPaymentRecovery: ReturnType<typeof nativeLegacyPaymentRecoveryBroker>;
 }) {
   const text = sensitiveText[locale];
   useSyncExternalStore(
@@ -158,6 +165,7 @@ function NativeSessionControls({
     companion: ReturnType<typeof sensitiveClient>;
     customer: ReturnType<typeof createNativeCustomerRuntime>;
     credentialHash: string;
+    transcription: NativeTranscriptionAccess;
     signOut(): Promise<void>;
   }>();
   useEffect(() => {
@@ -197,6 +205,7 @@ function NativeSessionControls({
       if (!active) return;
       lifecycle.block();
       recovery.clear();
+      legacyPaymentRecovery.clear();
       credentialLifetime.clear();
       generation.current++;
       epoch++;
@@ -233,6 +242,7 @@ function NativeSessionControls({
           clearTimeout(timeout);
           setSession(result);
           if (result.status !== "ready") {
+            if (result.status === "denied") legacyPaymentRecovery.clear();
             if (result.status === "anonymous") invalidate();
             return;
           }
@@ -249,6 +259,11 @@ function NativeSessionControls({
           if (Date.parse(result.data.expiresAt) <= Date.now()) {
             invalidate();
             return;
+          }
+          const recoveredReference = legacyPaymentRecovery.restore(result.data, credentialHash);
+          if (recoveredReference) {
+            setReference(recoveredReference);
+            setNotice("unknown");
           }
           client = sensitiveClient({
             origin,
@@ -297,12 +312,26 @@ function NativeSessionControls({
             companion,
             customer,
             credentialHash,
+            transcription: {
+              origin,
+              local: environment === "local",
+              readCredential,
+              current: () =>
+                live() &&
+                isCurrent() &&
+                epoch === 0 &&
+                !lifecycle.isBlocked() &&
+                !auth.pending() &&
+                AppState.currentState === "active" &&
+                Date.parse(result.data.expiresAt) > Date.now(),
+            },
             async signOut() {
               if (!active || lifecycle.isBlocked()) return;
               // Capture the actual native bearer before any sign-in disposal can clear the vault.
               const revocation = auth.controller.logout();
               lifecycle.block();
               recovery.clear();
+              legacyPaymentRecovery.clear();
               credentialLifetime.clear();
               generation.current++;
               epoch++;
@@ -368,7 +397,7 @@ function NativeSessionControls({
       clearInterval(timer);
       subscription.remove();
     };
-  }, [refresh, lifecycle, locale, recovery, auth]);
+  }, [refresh, lifecycle, locale, recovery, legacyPaymentRecovery, auth]);
   async function run<T>(action: () => Promise<SensitiveResult<T>>, accept: (value: T) => void) {
     if (busy || !runtime || lifecycle.isBlocked() || AppState.currentState !== "active") return;
     const current = generation.current;
@@ -382,6 +411,8 @@ function NativeSessionControls({
       setNotice("current");
       accept(result.data);
     } else {
+      if (result.status === "anonymous" || result.status === "denied")
+        legacyPaymentRecovery.clear();
       setConsent(undefined);
       setPayment(undefined);
       setAppointment(undefined);
@@ -399,6 +430,12 @@ function NativeSessionControls({
     }
   };
   const validReference = referenceSchema.safeParse(reference).success;
+  const acceptPayment = (data: Payment) =>
+    setRecord(data, (value) => {
+      setPayment(value);
+      if (value.status !== "requires_payment" && value.status !== "pending")
+        legacyPaymentRecovery.clear();
+    });
   const refreshAppointment = useEffectEvent(() => {
     if (appointment && runtime)
       void run(
@@ -502,6 +539,7 @@ function NativeSessionControls({
             autoCapitalize="none"
             maxLength={36}
             onChangeText={(value) => {
+              legacyPaymentRecovery.clear();
               setReference(value);
               setPayment(undefined);
               setAppointment(undefined);
@@ -513,12 +551,7 @@ function NativeSessionControls({
             <Button
               title={text.loadPayment}
               disabled={busy || !validReference}
-              onPress={() =>
-                void run(
-                  () => runtime.client.payment(reference),
-                  (data) => setRecord(data, setPayment),
-                )
-              }
+              onPress={() => void run(() => runtime.client.payment(reference), acceptPayment)}
             />
           )}
           <Button
@@ -546,21 +579,24 @@ function NativeSessionControls({
                   Date.parse(payment.expiresAt) <= clock
                 }
                 onPress={() =>
-                  void run(
-                    () => runtime.flow.pay(reference, payment),
-                    (data) => setRecord(data, setPayment),
-                  )
+                  void run(async () => {
+                    if (
+                      !legacyPaymentRecovery.remember(
+                        session.data,
+                        runtime.credentialHash,
+                        reference,
+                        payment,
+                      )
+                    )
+                      return { status: "denied" };
+                    return runtime.flow.pay(reference, payment);
+                  }, acceptPayment)
                 }
               />
               <Button
                 title={text.reconcile}
                 disabled={busy}
-                onPress={() =>
-                  void run(
-                    () => runtime.client.reconcile(reference),
-                    (data) => setRecord(data, setPayment),
-                  )
-                }
+                onPress={() => void run(() => runtime.client.reconcile(reference), acceptPayment)}
               />
               <Text>{text.receiptHint}</Text>
             </View>
@@ -662,10 +698,11 @@ function NativeSessionControls({
         </>
       )}
       <NativeCompanion
-        key={`${session.status === "ready" ? session.data.userId + session.data.expiresAt : session.status}:${locale}`}
+        key={`${session.status === "ready" ? session.data.userId + session.data.expiresAt : session.status}:${runtime?.credentialHash ?? "none"}:${locale}`}
         client={runtime?.companion}
         locale={locale}
         fontFamily={fontFamily}
+        transcription={runtime?.transcription}
       />
     </View>
   );

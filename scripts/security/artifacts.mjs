@@ -42,7 +42,7 @@ export async function auditClientArtifacts(targets = clientRoots) {
         !/\.(map|pem|key|sql)$/i.test(path) && !/(^|[/\\])\.env($|\.)/.test(path),
         "Private/source-map file in client artifacts",
       );
-      if (!/\.(js|mjs|cjs|hbc|html|json|css)$/i.test(path)) return;
+      if (!/\.(js|mjs|cjs|hbc|html|json|css|svg|txt)$/i.test(path)) return;
       assert(metadata.size <= 32 * 1024 * 1024, "Client artifact exceeds bounded audit size");
       const bytes = readFileSync(path);
       for (const marker of forbidden)
@@ -58,6 +58,7 @@ export async function auditClientArtifacts(targets = clientRoots) {
       writeFileSync(join(folder, `client-${scanned++}.txt`), printable);
     };
     for (const target of targets) {
+      const before = scanned;
       const absolute = resolve(root, target);
       const within = relative(root, absolute);
       assert(
@@ -65,6 +66,10 @@ export async function auditClientArtifacts(targets = clientRoots) {
         "Artifact target must stay inside the repository",
       );
       visit(absolute);
+      assert(
+        scanned > before,
+        "No client artifacts scanned in required root; build before auditing",
+      );
     }
     assert(scanned > 0, "No client artifacts scanned; build before auditing");
     await tool("gitleaks");

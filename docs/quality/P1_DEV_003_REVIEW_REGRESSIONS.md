@@ -17,7 +17,7 @@ Requirements: R03/R04/R05/R11/R13/R22/R36; relevant canonical consent, checkout,
 
 1. In a fresh customer session, load current approved consent versions with required account/privacy choices accepted and consultation consent false. Enable a synthetic durable replay store keyed by authenticated session/route/idempotency identity. Reusing a stored key must return its saved response without repeating the state change.
 2. Save false; change consultation consent to true and save; change it back to false and save. Wait for each definitive response before the next action. Inspect the resulting server state as well as the displayed response.
-3. Expected: three distinct operation identities, three actual changes, final server/UI consent false. A cached first withdrawal must not replace the final withdrawal. Optional marketing remains separate.
+3. Expected: three distinct operation identities and three completed save actions, with two consent-value transitions (false → true → false); final server/UI consent false. A cached first withdrawal must not replace the final withdrawal. Optional marketing remains separate.
 4. Load one existing pending payment. Reconcile without a provider receipt and receive pending. Make the synthetic verified provider state paid, then explicitly reconcile the same payment again without a receipt.
 5. Expected: two operation identities and two current-state verifications; the second result is paid. No new order, booking or charge is created by either poll. Only verified server state may establish paid.
 6. Simulate the server committing/storing the first reconciliation result, then dropping its response. Retry the same unresolved operation.

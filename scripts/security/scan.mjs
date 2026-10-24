@@ -11,7 +11,14 @@ export function executionEnvironment(command, cwd, source = process.env) {
   // Scanners discover their repository from cwd, never inherited Git hook selectors.
   // Root Git operations retain the actual candidate's alternate staged index.
   if (command !== "git" || resolve(cwd) !== resolve(root)) {
-    for (const key of ["GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR"])
+    for (const key of [
+      "GIT_DIR",
+      "GIT_WORK_TREE",
+      "GIT_INDEX_FILE",
+      "GIT_COMMON_DIR",
+      "GIT_OBJECT_DIRECTORY",
+      "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+    ])
       delete env[key];
   }
   return env;

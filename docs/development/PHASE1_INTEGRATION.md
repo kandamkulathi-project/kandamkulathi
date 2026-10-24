@@ -35,11 +35,28 @@ and independent acceptance obligations are unchanged.
   restore the broader policy and reopen fabricated reconciliation obligations.
 - QA tooling, synthetic fixtures, candidate-bound evidence and existing browser,
   unit, real PostgreSQL and security campaigns remain integrated.
+- The completion working tree mounts the owner-only, version-confirmed unpaid-order
+  cancellation scaffold (`0028`) and independently routed durable template notice
+  (`0029`). Both require externally approved, unseeded policies/capabilities. Notice
+  uncertainty never resends automatically; disabling approval prevents new sends.
+- Bounded native transcription is mounted behind an explicit nonproduction build
+  flag and complete approved EN/ML/TA notices. Recording, notice acknowledgement,
+  upload, editable review and Send remain separate actions. Server admission (`0030`)
+  enforces approved per-actor lifetime quota/concurrency before provider work; unknown
+  work retains its quota/slot pending controlled reconciliation. Cleanup failures
+  remain visible and retryable after logout or feature rollback.
+- Native/browser WebRTC adapters and an isolated synthetic two-member Durable Object
+  harness provide the technical compatibility path, not clinical grant issuance.
+  Actual default-off development diagnostic controls are mounted through workspace
+  and native app roots, separately from clinical authority. Exact SDK/plugin pins
+  and relay-only transport do not certify signed-device support.
 
 Separate saved-address/account editing, reorder, courier fulfillment and generated
-invoice/return workflows are explicitly unavailable in this slice. Private video,
-voice and push retain their documented unfinished adapters/device proofs; do not
-reclassify missing software as a company approval blocker.
+invoice/return workflows are explicitly unavailable in this slice. Full production
+voice/video/push delivery is later-phase work; bounded Phase 1 proofs still require
+actual approved provider/device evidence. Final combined verification and review
+are being completed; do not reclassify missing integration
+as an external approval blocker.
 
 ## Verification and handoff
 
@@ -51,15 +68,42 @@ the platform owner reported 103/103 platform, 31/31 booking/payments and 15/15
 commerce jobs after the authorization fix. The integrating candidate must execute
 its registered-journal combined checks and receive fresh independent review.
 
+Committed core candidate `dbda202d35b947bd633620fb3ad0aeafd0734016` passed its
+mandatory gate: 1,715 tests/122 files, 17 QA guards, 96 security cases, 195 browser
+cases, 103 platform cases, builds/types, security/mobile checks and 23 documentation
+tests. Its clean `verify:p1-local` failed because the later development browser
+campaign deleted the main browser binding. Output isolation and a reproducing
+actual-CLI regression are fixed in the completion working tree; no clean-candidate
+pass is claimed until rerun. GitHub also exposed the 30-request native-auth test's
+generic 10-second I/O budget; a scoped 20-second budget preserves every rate assertion.
+
+The first completion gate stopped on duplicate registered-transcription fixture setup
+and a cancellation SQL-privilege regression. Both were corrected without changing
+the existing paid-mutation assertions. The second gate passed 1,790 main tests,
+44 video/control tests and 204 E2E cases, but its platform campaign hung in the
+booking financial-callback rollback case and was cancelled by the 600-second
+command budget after 16 passes. It is **not** a passing mandatory gate; no completion
+commit was created. Subsequent bounded platform execution completed without hanging:
+87 cases passed and 17 catalogue cases exposed an explicit reset list missing the
+new cancellation foreign-key table. That fixture list is corrected without CASCADE
+or changed assertions. The stock-release boundary fix now has independent static
+review and 42 passing PostgreSQL/unit cases, including 11 unchanged payment-order
+tests; it is integrated for another complete gate. No hang cause is claimed.
+
 User-directed manual testing is documented in the [manual handoff](PHASE1_MANUAL_TESTING.md).
-No further test implementation expansion is planned; existing required checks are
-not waived. Default local unavailable-state checks cannot prove positive business
+No broad test-scope expansion is planned; minimal feature/review regressions and
+existing required checks are not waived. Default unavailable-state checks cannot prove positive business
 journeys without approved configuration and isolated synthetic data.
 
 Jira `KAN-1` and `KAN-57` record integration progress separately from acceptance.
-PR #10's normal merge was rejected by required approval policy; the author cannot
-self-approve. Earlier PR heads retain their own review/conflict status. No admin
-bypass, promotion to `main`, deployment or G1 approval is authorized by this document.
+PR #10's original normal merge was rejected by required approval policy. The user
+subsequently authorized a PR-only bypass for `mathew1046` and ready PR merges to
+`dev`; this is not self-approval or permission to waive checks/findings. Integration
+is published as [PR #11](https://github.com/kandamkulathi-project/kandamkulathi/pull/11).
+CodeRabbit reviewed the older owner/security PRs; its PR #11 review was **skipped**
+because 535 files exceed the 300-file limit. A green bot status is not review evidence.
+Scoped independent reviews and review corrections remain required. No promotion
+to `main`, deployment or G1 approval is authorized by this document.
 
 Actual company policies/content/opening data, provider/callback configuration and
 receipts, signed supported-device results, hosted operational proofs and independent

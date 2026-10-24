@@ -7,10 +7,15 @@ import type { CurrentAuthority, VerifiedIdentity } from "../../../packages/contr
 import { verifiedIdentitySchema } from "../../../packages/contracts/src/identity";
 import type { DatabaseClient } from "../../../packages/database/src/client";
 import { loadCurrentAuthorityInTransaction } from "../../../packages/database/src/identity";
+import { createTranscriptionProvider } from "../../../packages/providers/src/transcription";
 import { type BookingDependencies, registerBookingRoutes } from "./booking";
 import { loadBookingAuthority } from "./booking-authority";
 import { registerBookingOffersRoutes } from "./booking-offers";
 import { registerCommerceRoutes } from "./commerce";
+import {
+  configuredCommerceCancellationDependencies,
+  registerCommerceCancellationRoutes,
+} from "./commerce-cancellation";
 import { registerCommerceCheckoutRoutes } from "./commerce-checkout";
 import {
   configuredCommerceCheckoutDependencies,
@@ -22,6 +27,7 @@ import { createIdentityRuntime, registerIdentityRuntimeRoutes } from "./identity
 import { registerKnowledgeIndexRoutes } from "./knowledge-index";
 import { knowledgeSearchRuntimeFromBindings } from "./knowledge-runtime";
 import { createNativeAuthRuntime, registerNativeAuthRoutes } from "./native-auth";
+import { registerTranscriptionRoutes } from "./transcription";
 import { createWebAuthRuntime, registerWebAuthRoutes } from "./web-auth";
 import { registerWebAuthAdmission } from "./web-auth-maintenance";
 import { createConfiguredWebMaintenance } from "./web-maintenance-runtime";
@@ -304,6 +310,11 @@ export function createConfiguredCoreApi(bindings: Record<string, unknown>, reque
       registerKnowledgeIndexRoutes(app, knowledgeSearchRuntimeFromBindings);
       const commerce = configuredCommerceDependencies(bindings, configuredIdentity, request);
       registerCommerceRoutes(app, commerce);
+      registerCommerceCancellationRoutes(
+        app,
+        configuredCommerceCancellationDependencies(bindings, configuredIdentity, request, commerce),
+      );
+      registerTranscriptionRoutes(app, configuredIdentity, createTranscriptionProvider(bindings));
       registerCommerceCheckoutRoutes(
         app,
         configuredCommerceCheckoutDependencies(bindings, configuredIdentity, request, commerce),

@@ -63,7 +63,7 @@ export default class CandidateReporter {
     }
     if (this.invalid) {
       console.error(
-        "Candidate evidence failed: source/build changed, missing artifacts or evidence unavailable.",
+        "Candidate evidence failed: source/build changed, missing artifacts, masked tracked files (assume-unchanged/skip-worktree) or evidence unavailable.",
       );
       return { status: "failed" };
     }

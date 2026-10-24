@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, realpathSync, statSync } from "node:fs";
-import { isAbsolute, join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 
 export const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 export const fingerprintAdvisory = (advisory) =>
@@ -18,6 +18,7 @@ export const fingerprintAdvisory = (advisory) =>
     }),
   );
 
+/** Inspect installed identities, including aliases; callers supply any required read boundary. */
 export function collectPackages(tree, names, read = readFileSync) {
   assert(Array.isArray(tree) && tree.length > 0, "Installed dependency tree is missing");
   const found = new Map();
@@ -31,6 +32,10 @@ export function collectPackages(tree, names, read = readFileSync) {
   for (const project of tree) walk(project);
   // Inspect real package identities, including aliases; a display name is not proof.
   return [...found.values()].flatMap((entry) => {
+    assert(
+      isAbsolute(entry.path) && !entry.path.split(/[/\\]/).includes(".."),
+      "Unexpected dependency location",
+    );
     let identity;
     try {
       identity = JSON.parse(read(join(entry.path, "package.json"), "utf8"));
@@ -55,6 +60,7 @@ export function collectPackages(tree, names, read = readFileSync) {
   });
 }
 
+/** Verify installed patch evidence, confining metadata reads before inspecting package identities. */
 export function verifyInstalledPatches(root, manifest, tree, read = readFileSync) {
   assert.equal(manifest.schemaVersion, 1, "Unknown remediation manifest format");
   assert(
@@ -65,16 +71,49 @@ export function verifyInstalledPatches(root, manifest, tree, read = readFileSync
   // Only that exact real root is trusted, never an unrelated virtual store or sibling.
   const installedRoot = realpathSync(join(root, "node_modules"));
   assert(statSync(installedRoot).isDirectory(), "Installed dependency root must be a directory");
-  const installed = collectPackages(
-    tree,
-    manifest.remediations.map((entry) => entry.package),
-    read,
-  );
-  const verified = new Map();
   const inside = (base, target) => {
     const difference = relative(resolve(base), resolve(target));
     return difference !== "" && !difference.startsWith("..") && !isAbsolute(difference);
   };
+  const repositoryRoot = realpathSync(root);
+  const lexicalInstalledRoot = join(resolve(root), "node_modules");
+  const workspacePath = (base, path) => /^(apps|packages)[/\\][^/\\]+$/.test(relative(base, path));
+  const readIdentity = (path, encoding) => {
+    const packagePath = dirname(path);
+    assert(
+      isAbsolute(packagePath) && !packagePath.split(/[/\\]/).includes(".."),
+      "Unexpected dependency location",
+    );
+    let packageRoot;
+    try {
+      packageRoot = realpathSync(packagePath);
+    } catch (error) {
+      // pnpm lists absent cross-platform binaries. Only trusted installation paths may be absent.
+      assert(
+        inside(installedRoot, packagePath) || inside(lexicalInstalledRoot, packagePath),
+        "Unexpected dependency location",
+      );
+      throw error;
+    }
+    // Workspace metadata is repository-owned, not installed patch evidence. Both paths must
+    // identify an immediate apps/* or packages/* member; installed symlink escapes do not qualify.
+    assert(
+      inside(installedRoot, packageRoot) ||
+        ((workspacePath(resolve(root), resolve(packagePath)) ||
+          workspacePath(repositoryRoot, resolve(packagePath))) &&
+          workspacePath(repositoryRoot, packageRoot)),
+      "Unexpected dependency location",
+    );
+    const identityPath = realpathSync(join(packageRoot, "package.json"));
+    assert(inside(packageRoot, identityPath), "Package identity must remain in its package");
+    return read(identityPath, encoding);
+  };
+  const installed = collectPackages(
+    tree,
+    manifest.remediations.map((entry) => entry.package),
+    readIdentity,
+  );
+  const verified = new Map();
   for (const entry of manifest.remediations) {
     assert(!verified.has(entry.advisory), "Duplicate remediation ID");
     assert.match(entry.patchSha256, /^[a-f0-9]{64}$/);

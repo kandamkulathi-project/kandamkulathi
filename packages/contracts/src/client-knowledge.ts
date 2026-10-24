@@ -22,6 +22,7 @@ export function publicSourceUrl(value: string): string | null {
       url.search ||
       url.hash ||
       url.port ||
+      url.hostname.endsWith(".") ||
       !url.hostname.includes(".") ||
       /(^|\.)(localhost|local|internal|invalid|test|example)$/.test(url.hostname) ||
       /^[\d.]+$/.test(url.hostname) ||

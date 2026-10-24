@@ -1,5 +1,13 @@
 import assert from "node:assert/strict";
-import { cpSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
@@ -33,14 +41,118 @@ function fixture(context) {
       },
     ],
   };
-  const verify = (path = packageRoot) =>
-    verifyInstalledPatches(root, manifest, [
-      { dependencies: { example: { from: "example", path } } },
-    ]);
-  return { base, root, installedRoot, packageRoot, verify };
+  const verify = (path = packageRoot, read = readFileSync, from = "example") =>
+    verifyInstalledPatches(root, manifest, [{ dependencies: { example: { from, path } } }], read);
+  return { base, root, installedRoot, packageRoot, manifest, verify };
 }
 
 describe("installed dependency real-root containment", () => {
+  it("never reads external metadata, including unrelated and aliased package identities", (context) => {
+    const { base, installedRoot, packageRoot, verify } = fixture(context);
+    const outside = join(base, "outside");
+    cpSync(packageRoot, outside, { recursive: true });
+    const escaped = join(installedRoot, "escaped");
+    symlinkSync(outside, escaped, "junction");
+    for (const path of [outside, escaped]) {
+      for (const from of ["example", "npm:example@1.0.0", "unrelated"]) {
+        const reads = [];
+        assert.throws(
+          () =>
+            verify(
+              path,
+              (file, encoding) => {
+                reads.push(file);
+                return readFileSync(file, encoding);
+              },
+              from,
+            ),
+          /Unexpected dependency location/,
+        );
+        assert.deepEqual(reads, []);
+      }
+    }
+  });
+
+  it("never reads an escaped identity even when the package directory is installed", (context) => {
+    const { base, packageRoot, verify } = fixture(context);
+    const outside = join(base, "identity.json");
+    cpSync(join(packageRoot, "package.json"), outside);
+    rmSync(join(packageRoot, "package.json"));
+    symlinkSync(outside, join(packageRoot, "package.json"));
+    const reads = [];
+    assert.throws(
+      () =>
+        verify(packageRoot, (file, encoding) => {
+          reads.push(file);
+          return readFileSync(file, encoding);
+        }),
+      /Package identity/,
+    );
+    assert.deepEqual(reads, []);
+  });
+
+  it("allows repository workspace metadata without treating it as installed patch evidence", (context) => {
+    const { root, packageRoot, manifest } = fixture(context);
+    const workspace = join(root, "packages", "local");
+    mkdirSync(workspace, { recursive: true });
+    writeFileSync(
+      join(workspace, "package.json"),
+      JSON.stringify({ name: "local", version: "1.0.0" }),
+    );
+    const tree = [
+      {
+        dependencies: {
+          local: { from: "local", path: workspace },
+          example: { from: "example", path: packageRoot },
+        },
+      },
+    ];
+    assert.equal(verifyInstalledPatches(root, manifest, tree).size, 1);
+    writeFileSync(
+      join(workspace, "package.json"),
+      JSON.stringify({ name: "example", version: "1.0.0" }),
+    );
+    assert.throws(
+      () => verifyInstalledPatches(root, manifest, tree),
+      /Unexpected dependency location/,
+    );
+  });
+
+  it("rejects workspace package and identity escapes before reading them", (context) => {
+    const { base, root, packageRoot, verify } = fixture(context);
+    const outside = join(base, "outside");
+    cpSync(packageRoot, outside, { recursive: true });
+    mkdirSync(join(root, "packages"));
+    const workspace = join(root, "packages", "local");
+    symlinkSync(outside, workspace, "junction");
+    const reads = [];
+    const read = (file, encoding) => {
+      reads.push(file);
+      return readFileSync(file, encoding);
+    };
+    assert.throws(() => verify(workspace, read, "local"), /Unexpected dependency location/);
+    rmSync(workspace);
+    mkdirSync(workspace);
+    symlinkSync(join(outside, "package.json"), join(workspace, "package.json"));
+    assert.throws(() => verify(workspace, read, "local"), /Package identity/);
+    assert.deepEqual(reads, []);
+  });
+
+  it("does not skip invalid absent paths as optional binaries", (context) => {
+    const { base, packageRoot, verify } = fixture(context);
+    for (const path of [join(base, "absent"), `${packageRoot}/../absent`, "relative/absent"]) {
+      const reads = [];
+      assert.throws(
+        () =>
+          verify(path, (file) => {
+            reads.push(file);
+          }),
+        /Unexpected dependency location/,
+      );
+      assert.deepEqual(reads, []);
+    }
+  });
+
   it("accepts only the checkout's relocated node_modules root, using real or lexical package paths", (context) => {
     const { root, packageRoot, verify } = fixture(context);
     assert.equal(verify(packageRoot).size, 1);

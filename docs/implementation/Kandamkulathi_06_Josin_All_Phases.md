@@ -287,7 +287,7 @@ Merge necessary test-code changes before freeze; run results belong in the evide
 
 **Actions and boundaries**
 
-1. Prepare commerce readiness and final finance/warehouse training; obtain signed rules/opening balances and minimal authorized live payment/refund/mandate/courier acceptance. Hand over reconciliation and financial incident ownership.
+1. Prepare commerce readiness, finance/warehouse training inputs and reconciliation/financial incident ownership. Obtain signed rules/opening balances and document dependencies for authorized live payment/refund/mandate/courier acceptance; final training and live acceptance remain Phase 3 duties.
 
 **Deliver and verify:** Execution/evidence register, issue/PR/candidate links and independent review; actual results, not planned passes.
 

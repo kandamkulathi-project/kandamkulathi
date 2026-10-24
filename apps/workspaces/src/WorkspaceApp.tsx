@@ -21,6 +21,7 @@ import { createBookingRuntimeOptions } from "./customer/booking";
 import { CustomerRuntimeViews } from "./customer/CustomerRuntimeViews";
 import { workspaceRoute } from "./routing";
 import { SensitiveFlows } from "./SensitiveFlows";
+import { WebVideoProof } from "./WebVideoProof";
 
 const origin = import.meta.env.VITE_CORE_API_ORIGIN ?? "http://127.0.0.1:8787";
 const local = import.meta.env.DEV || location.hostname === "127.0.0.1";
@@ -311,6 +312,12 @@ export default function App() {
               onDraft={setDraft}
             />
           </>
+        )}
+        {import.meta.env.DEV && import.meta.env.VITE_P1_VIDEO_PROOF_ENABLED === "1" && (
+          <WebVideoProof
+            key={`p1-video-proof:${sessionEpoch}`}
+            endpoint={import.meta.env.VITE_P1_VIDEO_PROOF_ENDPOINT}
+          />
         )}
         <footer>{text.footer}</footer>
       </main>

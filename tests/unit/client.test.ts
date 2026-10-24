@@ -7,6 +7,7 @@ import {
   notificationTarget,
   parseNotificationLink,
   returnGuard,
+  watchSessionExpiry,
   workspaceAccess,
 } from "../../packages/client/src/index";
 import { mediaProbe } from "../../packages/client/src/media";
@@ -17,6 +18,41 @@ const id = "dbdfb43b-cde1-4102-95ce-ab0654d1b6cc";
 const session = { userId: id, expiresAt: "2099-01-01T00:00:00Z", workspaces: ["customer"] };
 afterEach(() => vi.useRealTimers());
 describe("session and navigation boundary", () => {
+  it("fences a known session exactly at expiry without waiting for a network result", () => {
+    vi.useFakeTimers();
+    const start = Date.parse("2030-01-01T00:00:00Z");
+    vi.setSystemTime(start);
+    const expired = vi.fn();
+    const stop = watchSessionExpiry(new Date(start + 2000).toISOString(), expired);
+    vi.advanceTimersByTime(1999);
+    expect(expired).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(expired).toHaveBeenCalledOnce();
+    vi.advanceTimersByTime(7000);
+    expect(expired).toHaveBeenCalledOnce();
+    stop();
+  });
+  it("cancels stale deadlines, handles already expired values and rechecks timer-clamped deadlines", () => {
+    vi.useFakeTimers();
+    const start = Date.parse("2030-01-01T00:00:00Z");
+    vi.setSystemTime(start);
+    const expired = vi.fn();
+    watchSessionExpiry(new Date(start).toISOString(), expired)();
+    expect(expired).toHaveBeenCalledOnce();
+    expired.mockClear();
+    const cancelled = watchSessionExpiry(new Date(start + 100).toISOString(), expired);
+    cancelled();
+    vi.advanceTimersByTime(100);
+    expect(expired).not.toHaveBeenCalled();
+    const deadline = Date.now() + 2147483647 + 100;
+    const stop = watchSessionExpiry(new Date(deadline).toISOString(), expired);
+    vi.advanceTimersByTime(2147483647);
+    expect(expired).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(100);
+    expect(expired).toHaveBeenCalledOnce();
+    stop();
+    expect(() => watchSessionExpiry("not-a-deadline", expired)).toThrow("Invalid session deadline");
+  });
   it.each([
     [401, "anonymous"],
     [403, "denied"],

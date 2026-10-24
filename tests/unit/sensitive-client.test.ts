@@ -469,6 +469,49 @@ describe("authoritative payment reconciliation", () => {
 });
 
 describe("booking and consultation membership", () => {
+  it.each(["unavailable", "unknown"] as const)(
+    "retains one exact grant retry identity after >64 %s results without starving other mutations",
+    async (status) => {
+      const keys: string[] = [];
+      const { client } = setup((url, init) => {
+        keys.push(new Headers(init?.headers).get("Idempotency-Key") ?? "");
+        if (url.endsWith("video-grants")) return json({}, status === "unavailable" ? 503 : 500);
+        return json(url.endsWith("/consents") ? { ...consents, ...choices } : payment);
+      });
+      for (let attempt = 0; attempt < 70; attempt++)
+        expect(await client.videoGrant(reference, appointment.revision)).toEqual({ status });
+      expect(new Set(keys).size).toBe(1);
+      expect((await client.saveConsents(choices)).status).toBe("ready");
+      expect((await client.reconcile(reference)).status).toBe("ready");
+      expect(new Set(keys).size).toBe(3);
+      client.dispose();
+    },
+  );
+  it("separates grant intents by appointment/revision and retires definitive results", async () => {
+    const keys: string[] = [];
+    let status = 503;
+    const { client } = setup((_url, init) => {
+      keys.push(new Headers(init?.headers).get("Idempotency-Key") ?? "");
+      return json(grant, status);
+    });
+    expect((await client.videoGrant(reference, appointment.revision)).status).toBe("unavailable");
+    expect((await client.videoGrant(otherReference, appointment.revision)).status).toBe(
+      "unavailable",
+    );
+    expect((await client.videoGrant(reference, "next-revision")).status).toBe("unavailable");
+    expect(new Set(keys).size).toBe(3);
+    expect((await client.videoGrant(reference, appointment.revision)).status).toBe("unavailable");
+    expect(keys[3]).toBe(keys[0]);
+    status = 403;
+    expect((await client.videoGrant(reference, appointment.revision)).status).toBe("denied");
+    expect(keys[4]).toBe(keys[0]);
+    status = 200;
+    expect((await client.videoGrant(reference, appointment.revision)).status).toBe("ready");
+    expect(keys[5]).not.toBe(keys[0]);
+    expect((await client.videoGrant(reference, appointment.revision)).status).toBe("ready");
+    expect(keys[6]).not.toBe(keys[5]);
+    client.dispose();
+  });
   it("expires holds and denies staff, missing identity/consent/intake and out-of-window joins", () => {
     expect(
       bookingExpired({ ...appointment, status: "held", holdExpiresAt: "2020-01-01T00:00:00Z" }),

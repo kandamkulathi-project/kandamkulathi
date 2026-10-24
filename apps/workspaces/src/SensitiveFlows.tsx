@@ -20,6 +20,7 @@ import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react"
 import { browserCheckout } from "./checkout";
 
 type Runtime = {
+  resume: number;
   client: ReturnType<typeof sensitiveClient>;
   checkout: ReturnType<typeof browserCheckout>;
   flow: ReturnType<typeof paymentFlow>;
@@ -38,6 +39,7 @@ export function SensitiveFlows({
 }) {
   const text = sensitiveText[locale];
   const [runtime, setRuntime] = useState<Runtime>();
+  const [resume, setResume] = useState(0);
   const lifetime = useRef<Runtime | undefined>(undefined);
   const running = useRef(false);
   const [notice, setNotice] = useState<keyof typeof text>("pending");
@@ -75,7 +77,7 @@ export function SensitiveFlows({
     });
     const checkout = browserCheckout(import.meta.env.DEV || location.hostname === "127.0.0.1");
     const flow = paymentFlow(client, checkout.open);
-    const owned = { client, checkout, flow };
+    const owned = { client, checkout, flow, resume };
     lifetime.current = owned;
     running.current = false;
     setBusy(false);
@@ -93,15 +95,27 @@ export function SensitiveFlows({
     const suspend = () => {
       dispose();
       clear();
+      running.current = false;
+      setBusy(false);
     };
-    document.addEventListener("visibilitychange", suspend);
+    const resumeAnonymous = () => {
+      // Restart only explicit anonymous actions, never session reads or the logout fence.
+      if (session === null && !document.hidden) setResume((value) => value + 1);
+    };
+    const visibility = () => {
+      suspend();
+      resumeAnonymous();
+    };
+    document.addEventListener("visibilitychange", visibility);
     window.addEventListener("pagehide", suspend);
+    window.addEventListener("pageshow", resumeAnonymous);
     return () => {
       dispose();
-      document.removeEventListener("visibilitychange", suspend);
+      document.removeEventListener("visibilitychange", visibility);
       window.removeEventListener("pagehide", suspend);
+      window.removeEventListener("pageshow", resumeAnonymous);
     };
-  }, [session, onRevoked, clear]);
+  }, [session, onRevoked, clear, resume]);
   async function run<T>(action: () => Promise<SensitiveResult<T>>, accept: (data: T) => void) {
     if (running.current || !runtime || lifetime.current !== runtime) return;
     running.current = true;

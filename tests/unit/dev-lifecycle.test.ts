@@ -1,7 +1,14 @@
 import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import developmentConfig from "../../playwright.dev.config";
 
 describe("supervised development server contract", () => {
+  it("isolates development output from the main campaign's candidate binding", () => {
+    const binding = resolve("test-results/p1-candidate-binding.json");
+    expect(developmentConfig.outputDir).toBe("./test-results/dev-lifecycle");
+    expect(resolve(developmentConfig.outputDir ?? "test-results")).not.toBe(dirname(binding));
+  });
   it.each(["dev", "preview"])(
     "keeps Astro %s in the foreground when an agent is detected",
     (mode) => {

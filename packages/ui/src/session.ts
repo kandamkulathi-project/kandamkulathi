@@ -1,4 +1,4 @@
-import { loadSession, type Resource } from "@kandamkulathi/client";
+import { loadSession, type Resource, watchSessionExpiry } from "@kandamkulathi/client";
 import type { ClientSession } from "@kandamkulathi/contracts/client";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -33,7 +33,7 @@ export function useSession(origin: string, local: boolean) {
     if (blocked) return () => controller.abort();
     setResult({ status: "loading" });
     if (document.hidden) return () => controller.abort();
-    let expiry: ReturnType<typeof setTimeout> | undefined;
+    let stopExpiry: (() => void) | undefined;
     const timeout = setTimeout(() => {
       if (blockedRef.current || latestAttempt.current !== attempt) return;
       controller.abort();
@@ -50,19 +50,16 @@ export function useSession(origin: string, local: boolean) {
       clearTimeout(timeout);
       setResult(value);
       if (value.status === "ready")
-        expiry = setTimeout(
-          () => {
-            if (latestAttempt.current === attempt) revalidate();
-          },
-          Math.min(2147483647, Math.max(0, Date.parse(value.data.expiresAt) - Date.now())),
-        );
+        stopExpiry = watchSessionExpiry(value.data.expiresAt, () => {
+          if (latestAttempt.current === attempt) invalidate();
+        });
     });
     return () => {
       controller.abort();
       clearTimeout(timeout);
-      clearTimeout(expiry);
+      stopExpiry?.();
     };
-  }, [origin, local, attempt, revalidate, blocked]);
+  }, [origin, local, attempt, invalidate, blocked]);
   useEffect(() => {
     const suspend = () => {
       // Fence same-turn responses synchronously, before React cleans up the old effect.

@@ -40,6 +40,11 @@ describe("knowledge links and versioned documents", () => {
     "https://[::1]/a",
     "https://api.localhost/a",
     "https://api.internal/a",
+    "https://localhost./a",
+    "https://api.localhost./a",
+    "https://api.internal./a",
+    "https://api.internal../a",
+    "https://example.org./a",
     "https://example.org\\evil",
     "https://example.org/\na",
   ])("rejects unsafe/private source link %s", (url) => expect(publicSourceUrl(url)).toBeNull());

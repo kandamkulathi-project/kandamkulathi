@@ -76,7 +76,6 @@ export function sensitiveClient(options: {
   let disposed = false;
   let generation = 0;
   let mutating = false;
-  let videoAttempt = 0;
   const controllers = new Set<AbortController>();
   const operationIds = new Map<string, string>();
   const valid = () =>
@@ -349,7 +348,8 @@ export function sensitiveClient(options: {
         `/v1/appointments/${id}/video-grants`,
         videoGrantSchema,
         { revision },
-        `video:${id}:${++videoAttempt}`,
+        // Same unresolved membership intent retries its identity; a definitive response retires it.
+        `video:${id}:${revision}`,
       );
       if (
         result.status === "ready" &&

@@ -17,6 +17,40 @@ import {
 } from "./knowledge.fixtures";
 
 describe("synthetic knowledge lifecycle and provenance (not clinical approval)", () => {
+  it("normalizes ingestion UUID keys and rejects conflicting aliases without consulting authority", async () => {
+    const fixture = await knowledgeFixture();
+    const sourceId = "abcdef01-2345-4678-8abc-abcdef123456";
+    const source = fixture.monograph.content.sources[0];
+    if (!source) throw new Error("Synthetic source fixture is missing");
+    const originalId = source.sourceId;
+    const content = JSON.parse(
+      JSON.stringify(fixture.monograph.content).replaceAll(originalId, sourceId),
+    );
+    for (const sources of [
+      new Map([[sourceId.toUpperCase(), syntheticSourceBytes]]),
+      new Map([
+        [sourceId.toUpperCase(), syntheticSourceBytes],
+        [sourceId, syntheticSourceBytes.slice()],
+      ]),
+    ]) {
+      expect((await draftKnowledge(content, null, sources, fixture.authority)).status).toBe(
+        "candidate",
+      );
+    }
+    fixture.authority.currentActor = vi.fn();
+    expect(
+      await draftKnowledge(
+        content,
+        null,
+        new Map([
+          [sourceId.toUpperCase(), syntheticSourceBytes],
+          [sourceId, new TextEncoder().encode("conflicting synthetic source")],
+        ]),
+        fixture.authority,
+      ),
+    ).toEqual({ status: "blocked", reason: "INVALID_PROVENANCE" });
+    expect(fixture.authority.currentActor).not.toHaveBeenCalled();
+  });
   it("seals source bytes, separates editor from approver and binds immutable CAS expectations", async () => {
     const fixture = await knowledgeFixture();
     const sources = new Map([[knowledgeId(5), syntheticSourceBytes]]);

@@ -23,6 +23,18 @@ test("pnpm dev keeps all four services alive under agent detection", async ({ pa
   }
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Kandamkulathi", exact: true })).toBeVisible();
+  await expect
+    .poll(
+      async () => {
+        try {
+          return (await request.get("http://127.0.0.1:5173/customer", { timeout: 3000 })).status();
+        } catch {
+          return null;
+        }
+      },
+      { timeout: 90000 },
+    )
+    .toBe(200);
   await page.goto("http://127.0.0.1:5173/customer");
   await expect(page.locator("[data-session-state]")).toHaveAttribute(
     "data-session-state",

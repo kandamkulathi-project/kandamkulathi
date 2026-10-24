@@ -235,7 +235,7 @@ Merge necessary test-code changes before freeze; run results belong in the evide
 
 **Actions and boundaries**
 
-1. Collect secret-free device/screenshots/store inputs and customer/front-desk guide evidence. Support actual public app installation checks, approved walkthrough recording and safe customer smoke under the release manager.
+1. Collect secret-free device/screenshots/store inputs and draft customer/front-desk guide evidence. Support development-candidate device smoke; document prerequisites for public app installation checks and approved walkthrough recording, which remain Phase 3 duties under the release manager.
 
 **Deliver and verify:** Execution/evidence register, issue/PR/candidate links and independent review; actual results, not planned passes.
 
@@ -427,7 +427,7 @@ Merge necessary test-code changes before freeze; run results belong in the evide
 
 **Actions and boundaries**
 
-1. Collect secret-free device/screenshots/store inputs and customer/front-desk guide evidence. Support actual public app installation checks, approved walkthrough recording and safe customer smoke under the release manager.
+1. Collect secret-free device/screenshots/store inputs and draft customer/front-desk guide evidence. Support integrated-candidate device smoke; document prerequisites for public app installation checks and approved walkthrough recording, which remain Phase 3 duties under the release manager.
 
 **Deliver and verify:** Execution/evidence register, issue/PR/candidate links and independent review; actual results, not planned passes.
 

@@ -1,3 +1,4 @@
+import { canonicalUuidSchema } from "@kandamkulathi/contracts/identifiers";
 import {
   type KnowledgeContent,
   type KnowledgeRecord,
@@ -62,8 +63,21 @@ export async function draftKnowledge(
       : content.revision !== 1
   )
     return { status: "blocked", reason: "INVALID_TRANSITION" };
+  const normalizedSources = new Map<string, Uint8Array>();
+  for (const [sourceId, bytes] of sourceBytes) {
+    const id = canonicalUuidSchema.safeParse(sourceId);
+    if (!id.success) return { status: "blocked", reason: "INVALID_PROVENANCE" };
+    const previousBytes = normalizedSources.get(id.data);
+    if (
+      previousBytes &&
+      (previousBytes.length !== bytes.length ||
+        previousBytes.some((byte, index) => byte !== bytes[index]))
+    )
+      return { status: "blocked", reason: "INVALID_PROVENANCE" };
+    normalizedSources.set(id.data, bytes);
+  }
   for (const source of content.sources) {
-    const bytes = sourceBytes.get(source.sourceId);
+    const bytes = normalizedSources.get(source.sourceId);
     if (!bytes || (await sha256(bytes)) !== source.sha256)
       return { status: "blocked", reason: "INVALID_PROVENANCE" };
   }

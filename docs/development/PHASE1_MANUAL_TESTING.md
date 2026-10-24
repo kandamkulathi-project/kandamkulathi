@@ -95,7 +95,39 @@ Video, voice, push, signing and provider acceptance retain their explicit device
 and service prerequisites in the native readiness register; JavaScript exports or
 local diagnostics do not replace those proofs.
 
-## 5. Record and report
+## 5. Bounded completion proofs
+
+Use only approved synthetic data and controlled policy provisioning; migrations
+seed no approvals. Missing approval/configuration is **Blocked**, not a successful
+business outcome.
+
+- **Unpaid cancellation:** follow [cancellation setup](COMMERCE_CANCELLATION.md).
+  Reserve an order without any payment intent; explicitly confirm its current
+  version and cancel. Verify one cancellation/audit/outbox record, released batch
+  reservations and unchanged financial ledger. Repeat the same request, use another
+  owner, change the version, disable policy, and try an order with any payment
+  intent. None may duplicate release or authorize a paid cancellation.
+- **Native transcription:** follow [processing and build configuration](TRANSCRIPTION_PROOF.md)
+  and [server admission](TRANSCRIPTION_ADMISSION_PROOF.md). Record a short approved
+  synthetic clip; recording/Stop must not upload. Read the exact notice, acknowledge
+  it and explicitly upload. Review/edit the returned text; Send is separate. Test
+  denied microphone, oversize audio, stale notice, exhausted quota, concurrent
+  uploads, background/logout, stop/discard failure and feature rollback. Cleanup
+  failures must stay visible/retryable; late text must not repopulate the draft.
+- **Initial durable notice:** follow [notice capability setup](CHANNEL_NOTICES.md).
+  Exercise an authenticated provider event from the explicitly approved synthetic
+  sender and record the actual provider receipt. Repeat the event; there must be
+  one send. Disable approval, exhaust quota and send audio/status/non-approved
+  events: human routing must remain available without an unapproved notice.
+  Simulate lost provider response: unknown must not automatically resend.
+- **Private video compatibility:** follow the isolated
+  [SDK/TURN proof](P1_VIDEO_SDK_PROOF.md). Use short-lived synthetic participant
+  grants, never a clinical booking or patient data. Prove actual web ↔ signed
+  Android/iPhone media through TURN, permission denial, leave, expiry, background,
+  revocation and restart failure. Mocked SDP, SDK-port tests and JS exports are not
+  device compatibility evidence.
+
+## 6. Record and report
 
 For every run record the commit, environment, role, synthetic record IDs, device/OS
 or browser, steps, expected/actual outcome and screenshots. Mark missing prerequisites
