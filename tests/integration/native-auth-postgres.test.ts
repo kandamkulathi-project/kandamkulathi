@@ -588,73 +588,77 @@ describe("native HTTP protocol on real PostgreSQL/non-owner RLS", () => {
     ).toBe(403);
   });
 
-  it("requires current identity for live handles, but an actually expired handle can only revoke its bound session and reconcile the same operation", async () => {
-    const credential = await signIn();
-    const headers = { Authorization: `Bearer ${credential}`, "Idempotency-Key": "k".repeat(32) };
-    const before = transport.mock.calls.length;
-    expect((await post("logout", {}, { ...headers, Cookie: "browser=ambiguous" })).status).toBe(
-      403,
-    );
-    expect(
-      (await post("logout", {}, { ...headers, Authorization: `Bearer n1_${"z".repeat(43)}` }))
-        .status,
-    ).toBe(401);
-    expect(transport.mock.calls.length).toBe(before);
-    fixture.revoke();
-    expect((await post("logout", {}, headers)).status).toBe(401);
-    expect(
-      (await db.source.query("SELECT revoked_at FROM core.identity_native_sessions")).rows[0]
-        .revoked_at,
-    ).toBeNull();
-    const count = transport.mock.calls.length;
-    clock += 301000;
-    expect(
-      await runtime.dependencies.verifySession(new Request(nativeOptions.apiOrigin, { headers })),
-    ).toEqual({ status: "unauthenticated" });
-    expect(transport.mock.calls.length).toBe(count);
-    expect(
-      transport.mock.calls.filter(([, init]) =>
-        String(init?.body).includes('"grant_type":"refresh_token"'),
-      ),
-    ).toHaveLength(0);
-    // Real DB expiry, not only the injected JS clock: access ciphertext may already be purged.
-    await db.source.query(
-      "UPDATE core.identity_native_sessions SET expires_at=clock_timestamp()-interval '1 second',access_ciphertext='purged'",
-    );
-    expect(
-      await runtime.verifyMutationRequest(new Request(nativeOptions.apiOrigin, { headers }), {
-        actorId: actor,
-        sessionId: (await db.source.query("SELECT session_id FROM core.identity_native_sessions"))
-          .rows[0].session_id,
-      }),
-    ).toBe("denied");
-    const expiredLogout = await post("logout", {}, headers);
-    expect(expiredLogout.status).toBe(200);
-    expect(await expiredLogout.json()).toEqual({ revoked: true }); // actual provider list is inactive
-    expect(
-      (await post("logout", {}, { ...headers, "Idempotency-Key": "wrong".repeat(8) })).status,
-    ).toBe(401);
-    expect((await post("logout", {}, headers)).status).toBe(200);
-    expect(
-      await runtime.dependencies.verifySession(new Request(nativeOptions.apiOrigin, { headers })),
-    ).toEqual({ status: "unauthenticated" });
-    expect(
-      transport.mock.calls.filter(([url]) => String(url).endsWith("/sessions/revoke")),
-    ).toHaveLength(0);
-    const persisted = (await db.source.query("SELECT * FROM core.identity_native_sessions"))
-      .rows[0];
-    expect(persisted.revoked_at).not.toBeNull();
-    expect(persisted.pending).toBe(false);
-  });
-  describe("expired-handle logout with a real authenticated session fixture", () => {
+  describe("already-authenticated session logout and guards", () => {
     let credential: string;
     let identity: Awaited<ReturnType<typeof authenticated>>;
     beforeEach(async () => {
-      // Session creation/current verification are fixture setup, not part of the
-      // logout/reconciliation journey's 10s budget. Both still use real HTTP/PG.
+      // These journeys start signed in: arrange a fresh session through real
+      // HTTP/PG and verify current identity before each logout/guard test. Keep
+      // creation/exchange behavior in its dedicated tests above. Setup retains
+      // its default hook budget; journey budgets are independent of setup.
       credential = await signIn();
       identity = await authenticated(credential);
     });
+    // Six HTTP logout requests plus identity/expiry/mutation checks open fresh PG
+    // connections. Shared CI exhausted the generic 10s aggregate test budget;
+    // allow 20s for this I/O journey, not a response SLA or a production deadline.
+    it("requires current identity for live handles, but an actually expired handle can only revoke its bound session and reconcile the same operation", async () => {
+      const headers = { Authorization: `Bearer ${credential}`, "Idempotency-Key": "k".repeat(32) };
+      const before = transport.mock.calls.length;
+      expect((await post("logout", {}, { ...headers, Cookie: "browser=ambiguous" })).status).toBe(
+        403,
+      );
+      expect(
+        (await post("logout", {}, { ...headers, Authorization: `Bearer n1_${"z".repeat(43)}` }))
+          .status,
+      ).toBe(401);
+      expect(transport.mock.calls.length).toBe(before);
+      fixture.revoke();
+      expect((await post("logout", {}, headers)).status).toBe(401);
+      expect(
+        (await db.source.query("SELECT revoked_at FROM core.identity_native_sessions")).rows[0]
+          .revoked_at,
+      ).toBeNull();
+      const count = transport.mock.calls.length;
+      clock += 301000;
+      expect(
+        await runtime.dependencies.verifySession(new Request(nativeOptions.apiOrigin, { headers })),
+      ).toEqual({ status: "unauthenticated" });
+      expect(transport.mock.calls.length).toBe(count);
+      expect(
+        transport.mock.calls.filter(([, init]) =>
+          String(init?.body).includes('"grant_type":"refresh_token"'),
+        ),
+      ).toHaveLength(0);
+      // Real DB expiry, not only the injected JS clock: access ciphertext may already be purged.
+      await db.source.query(
+        "UPDATE core.identity_native_sessions SET expires_at=clock_timestamp()-interval '1 second',access_ciphertext='purged'",
+      );
+      expect(
+        await runtime.verifyMutationRequest(new Request(nativeOptions.apiOrigin, { headers }), {
+          actorId: actor,
+          sessionId: (await db.source.query("SELECT session_id FROM core.identity_native_sessions"))
+            .rows[0].session_id,
+        }),
+      ).toBe("denied");
+      const expiredLogout = await post("logout", {}, headers);
+      expect(expiredLogout.status).toBe(200);
+      expect(await expiredLogout.json()).toEqual({ revoked: true }); // actual provider list is inactive
+      expect(
+        (await post("logout", {}, { ...headers, "Idempotency-Key": "wrong".repeat(8) })).status,
+      ).toBe(401);
+      expect((await post("logout", {}, headers)).status).toBe(200);
+      expect(
+        await runtime.dependencies.verifySession(new Request(nativeOptions.apiOrigin, { headers })),
+      ).toEqual({ status: "unauthenticated" });
+      expect(
+        transport.mock.calls.filter(([url]) => String(url).endsWith("/sessions/revoke")),
+      ).toHaveLength(0);
+      const persisted = (await db.source.query("SELECT * FROM core.identity_native_sessions"))
+        .rows[0];
+      expect(persisted.revoked_at).not.toBeNull();
+      expect(persisted.pending).toBe(false);
+    }, 20000);
     it("commits local identity revocation before provider I/O; unknown result stays pending and same-key retry reconciles without duplicate revoke", async () => {
       // Expire the actual stored opaque handle while WorkOS remains active. A wrong
       // actor/session/provider binding must fail before any provider effect.
@@ -724,149 +728,149 @@ describe("native HTTP protocol on real PostgreSQL/non-owner RLS", () => {
       ).toHaveLength(1);
       expect((await post("logout", {}, headers)).status).toBe(200);
     });
-  });
-  it("does not report logout success if WorkOS still lists an active session", async () => {
-    const credential = await signIn();
-    actuallyRevoke = false;
-    expect(
-      (
-        await post(
-          "logout",
-          {},
-          { Authorization: `Bearer ${credential}`, "Idempotency-Key": "k".repeat(32) },
-        )
-      ).status,
-    ).toBe(503);
-    expect(
-      (await db.source.query("SELECT pending FROM core.identity_native_sessions")).rows[0].pending,
-    ).toBe(true);
-  });
-  it("leases pending work once, fences stale CAS and retains pending obligations beyond credential expiry", async () => {
-    const credential = await signIn();
-    await runtime.localLogout(
-      new Request(nativeOptions.apiOrigin, { headers: { Authorization: `Bearer ${credential}` } }),
-      "k".repeat(32),
-    );
-    const hash = await digest(credential);
-    const claims = await Promise.all([
-      worker((client) => claimNativeLogout(client, hash)),
-      worker((client) => claimNativeLogout(client, hash)),
-    ]);
-    expect(claims.filter(Boolean)).toHaveLength(1);
-    const claim = claims.find((value) => value !== null);
-    if (!claim) throw new Error("Claim required");
-    await db.source.query(
-      "UPDATE core.identity_native_sessions SET lease_until=clock_timestamp()-interval '1 second',expires_at=clock_timestamp()-interval '48 hours'",
-    );
-    expect(await worker((client) => finishNativeLogout(client, claim, true))).toBe(false);
-    await worker(cleanupNativeAuth);
-    expect(
-      (await db.source.query("SELECT pending FROM core.identity_native_sessions")).rows[0].pending,
-    ).toBe(true);
-    await jobs.run();
-    expect(
-      (await db.source.query("SELECT count(*)::int n FROM core.identity_native_sessions")).rows[0]
-        .n,
-    ).toBe(0);
-  });
-  it("guards mutations within the same transaction and fences concurrent logout through commit, then rejects stale identity", async () => {
-    const credential = await signIn();
-    const identity = await authenticated(credential);
-    const hash = await digest(credential);
-    expect(
-      await runtime.verifyMutationRequest(
+    it("does not report logout success if WorkOS still lists an active session", async () => {
+      actuallyRevoke = false;
+      expect(
+        (
+          await post(
+            "logout",
+            {},
+            { Authorization: `Bearer ${credential}`, "Idempotency-Key": "k".repeat(32) },
+          )
+        ).status,
+      ).toBe(503);
+      expect(
+        (await db.source.query("SELECT pending FROM core.identity_native_sessions")).rows[0]
+          .pending,
+      ).toBe(true);
+    });
+    it("leases pending work once, fences stale CAS and retains pending obligations beyond credential expiry", async () => {
+      await runtime.localLogout(
         new Request(nativeOptions.apiOrigin, {
           headers: { Authorization: `Bearer ${credential}` },
         }),
-        identity,
-      ),
-    ).toBe("allowed");
-    expect(
-      await runtime.verifyMutationRequest(
-        new Request(nativeOptions.apiOrigin, {
-          headers: { Authorization: `Bearer ${credential}` },
-        }),
-        { ...identity, actorId: "10000000-0000-4000-8000-000000000099" },
-      ),
-    ).toBe("denied");
-    let release!: () => void;
-    let locked!: () => void;
-    const ready = new Promise<void>((resolve) => {
-      locked = resolve;
+        "k".repeat(32),
+      );
+      const hash = await digest(credential);
+      const claims = await Promise.all([
+        worker((client) => claimNativeLogout(client, hash)),
+        worker((client) => claimNativeLogout(client, hash)),
+      ]);
+      expect(claims.filter(Boolean)).toHaveLength(1);
+      const claim = claims.find((value) => value !== null);
+      if (!claim) throw new Error("Claim required");
+      await db.source.query(
+        "UPDATE core.identity_native_sessions SET lease_until=clock_timestamp()-interval '1 second',expires_at=clock_timestamp()-interval '48 hours'",
+      );
+      expect(await worker((client) => finishNativeLogout(client, claim, true))).toBe(false);
+      await worker(cleanupNativeAuth);
+      expect(
+        (await db.source.query("SELECT pending FROM core.identity_native_sessions")).rows[0]
+          .pending,
+      ).toBe(true);
+      await jobs.run();
+      expect(
+        (await db.source.query("SELECT count(*)::int n FROM core.identity_native_sessions")).rows[0]
+          .n,
+      ).toBe(0);
     });
-    const hold = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    const effect = core((client) =>
-      transaction(client, () =>
-        runtime.withNativeSessionInTransaction(
-          client,
+    it("guards mutations within the same transaction and fences concurrent logout through commit, then rejects stale identity", async () => {
+      const hash = await digest(credential);
+      expect(
+        await runtime.verifyMutationRequest(
           new Request(nativeOptions.apiOrigin, {
             headers: { Authorization: `Bearer ${credential}` },
           }),
           identity,
-          async () => {
-            locked();
-            await hold;
-          },
         ),
-      ),
-    );
-    await ready;
-    const keyHash = await digest("k".repeat(32));
-    try {
-      // Real concurrent logout times out on the guard's actor lock; no JS sleep oracle.
+      ).toBe("allowed");
+      expect(
+        await runtime.verifyMutationRequest(
+          new Request(nativeOptions.apiOrigin, {
+            headers: { Authorization: `Bearer ${credential}` },
+          }),
+          { ...identity, actorId: "10000000-0000-4000-8000-000000000099" },
+        ),
+      ).toBe("denied");
+      let release!: () => void;
+      let locked!: () => void;
+      const ready = new Promise<void>((resolve) => {
+        locked = resolve;
+      });
+      const hold = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      const effect = core((client) =>
+        transaction(client, () =>
+          runtime.withNativeSessionInTransaction(
+            client,
+            new Request(nativeOptions.apiOrigin, {
+              headers: { Authorization: `Bearer ${credential}` },
+            }),
+            identity,
+            async () => {
+              locked();
+              await hold;
+            },
+          ),
+        ),
+      );
+      await ready;
+      const keyHash = await digest("k".repeat(32));
+      try {
+        // Real concurrent logout times out on the guard's actor lock; no JS sleep oracle.
+        await expect(
+          core((client) =>
+            transaction(client, async () => {
+              await client.query("SET LOCAL lock_timeout='100ms'");
+              await client.query("SELECT core.native_auth_revoke($1,$2,$3,$4)", [
+                hash,
+                identity.actorId,
+                identity.sessionId,
+                keyHash,
+              ]);
+            }),
+          ),
+        ).rejects.toThrow("lock timeout");
+        expect(
+          (await db.source.query("SELECT revoked_at FROM core.identity_native_sessions")).rows[0]
+            .revoked_at,
+        ).toBeNull();
+      } finally {
+        release();
+      }
+      await effect;
+      await core((client) =>
+        transaction(client, () =>
+          client.query("SELECT core.native_auth_revoke($1,$2,$3,$4)", [
+            hash,
+            identity.actorId,
+            identity.sessionId,
+            keyHash,
+          ]),
+        ),
+      );
+      await expect(
+        core((client) =>
+          transaction(client, () => guardNativeSession(client, hash, identity, clock)),
+        ),
+      ).rejects.toThrow("inactive");
+      // Transaction-local context never leaks on reuse/rollback.
+      const wrongHash = await digest("n1_wrong");
+      expect(
+        await core((client) => transaction(client, () => readNativeSession(client, wrongHash))),
+      ).toBeNull();
       await expect(
         core((client) =>
           transaction(client, async () => {
-            await client.query("SET LOCAL lock_timeout='100ms'");
-            await client.query("SELECT core.native_auth_revoke($1,$2,$3,$4)", [
-              hash,
-              identity.actorId,
-              identity.sessionId,
-              keyHash,
-            ]);
+            await nativeContext(client, "handle", hash);
+            throw new Error("rollback");
           }),
         ),
-      ).rejects.toThrow("lock timeout");
+      ).rejects.toThrow("rollback");
       expect(
-        (await db.source.query("SELECT revoked_at FROM core.identity_native_sessions")).rows[0]
-          .revoked_at,
-      ).toBeNull();
-    } finally {
-      release();
-    }
-    await effect;
-    await core((client) =>
-      transaction(client, () =>
-        client.query("SELECT core.native_auth_revoke($1,$2,$3,$4)", [
-          hash,
-          identity.actorId,
-          identity.sessionId,
-          keyHash,
-        ]),
-      ),
-    );
-    await expect(
-      core((client) =>
-        transaction(client, () => guardNativeSession(client, hash, identity, clock)),
-      ),
-    ).rejects.toThrow("inactive");
-    // Transaction-local context never leaks on reuse/rollback.
-    const wrongHash = await digest("n1_wrong");
-    expect(
-      await core((client) => transaction(client, () => readNativeSession(client, wrongHash))),
-    ).toBeNull();
-    await expect(
-      core((client) =>
-        transaction(client, async () => {
-          await nativeContext(client, "handle", hash);
-          throw new Error("rollback");
-        }),
-      ),
-    ).rejects.toThrow("rollback");
-    expect(
-      (await core((client) => client.query("SELECT * FROM core.identity_native_sessions"))).rows,
-    ).toEqual([]);
+        (await core((client) => client.query("SELECT * FROM core.identity_native_sessions"))).rows,
+      ).toEqual([]);
+    });
   });
 });
