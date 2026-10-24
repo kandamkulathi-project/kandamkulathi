@@ -87,10 +87,13 @@ describe("security proof negative controls", () => {
     );
   });
   it("does not permit an additional unpatched copy", () => {
-    const extra = [
-      { dependencies: { example: { from: "example", path: join(root, "node_modules", "other") } } },
-      ...tree,
-    ];
+    const other = join(root, "node_modules", "other");
+    mkdirSync(other);
+    writeFileSync(
+      join(other, "package.json"),
+      JSON.stringify({ name: "example", version: "1.0.0" }),
+    );
+    const extra = [{ dependencies: { example: { from: "example", path: other } } }, ...tree];
     assert.throws(() => verifyInstalledPatches(root, manifest, extra, read), /Unexpected read/);
   });
   it("does not treat a known advisory ID alone as remediation", () => {
@@ -108,19 +111,13 @@ describe("security proof negative controls", () => {
       return read(path);
     };
     assert.equal(verifyInstalledPatches(root, manifest, extra, optionalRead).size, 1);
+    const installed = join(root, "node_modules", "unreadable");
+    mkdirSync(installed);
     const unreadable = [
-      { dependencies: { bad: { from: "unreadable", path: process.cwd() } } },
+      { dependencies: { bad: { from: "unreadable", path: installed } } },
       ...tree,
     ];
-    assert.throws(
-      () =>
-        verifyInstalledPatches(root, manifest, unreadable, (path) => {
-          if (path === join(process.cwd(), "package.json"))
-            throw Object.assign(new Error("Missing manifest"), { code: "ENOENT" });
-          return read(path);
-        }),
-      /Missing manifest/,
-    );
+    assert.throws(() => verifyInstalledPatches(root, manifest, unreadable, read), /ENOENT/);
   });
   it("also inspects aliased packages using their real installed identity", () => {
     const aliasPath = join(root, "node_modules", "alias");
