@@ -7,7 +7,7 @@
 - Restrict the real WhatsApp sender to permitted production live mode; keep terminal notice receipts immutable and process definitive rejection without resend or fabricated acceptance.
 - Release transcription concurrency for explicitly allowlisted provider rejections while retaining lifetime usage and unknown-outcome fences.
 - Distinguish private-video setup failure from normal post-setup closure without weakening media cleanup or late-callback guards. Correct integrated setup and verification handoffs.
-- Stabilize native-auth PostgreSQL fixtures around the real rate-limit minute, explicitly verify legitimate rollover, and assert committed revocation at provider entry. Production limits and the logout journey's timeout/assertions remain unchanged.
+- Stabilize native/web auth PostgreSQL fixtures around the real rate-limit minute, explicitly verify legitimate rollover, and assert committed revocation at provider entry. Share real authenticated-session setup; give only the six-request expiry/logout aggregate a documented 20-second I/O budget. Production limits, provider deadlines and security assertions remain unchanged.
 
 ### Phase 1 bounded completion and review corrections — 2026-10-24 (combined verification Pending)
 

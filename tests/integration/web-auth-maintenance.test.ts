@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createWebAuthRuntime } from "../../apps/core-api/src/web-auth";
 import {
   createWebAuthMaintenance,
@@ -154,151 +154,206 @@ describe("web auth maintenance actual PostgreSQL 17", () => {
     db.source.query(
       "UPDATE core.identity_web_sessions SET logout_next_attempt_at=clock_timestamp()-interval '1 second'",
     );
-  it("enforces distributed atomic per-IP start caps under real concurrent connections and emits safe HTTP429", async () => {
-    const maintenance = factory();
-    const results = await Promise.all(
-      Array.from({ length: 20 }, () =>
-        maintenance.forRequest(new Request("https://core.example/v1/auth/start")).admit("start"),
-      ),
-    );
-    expect(results.filter((value) => value === "allowed")).toHaveLength(10);
-    expect(results.filter((value) => value === "denied")).toHaveLength(10);
-    const anotherProcess = factory();
-    expect(
-      await anotherProcess
-        .forRequest(
-          new Request("https://core.example/v1/auth/start", {
-            headers: { "x-forwarded-for": "192.0.2.99", "x-actor-id": "forged" },
-          }),
-        )
-        .admit("start"),
-    ).toBe("denied");
-    let entered = 0;
-    const app = createService("core-api", undefined, {
-      registerRoutes: (app) => {
-        registerWebAuthAdmission(app, maintenance);
-        app.get("/v1/auth/start", (context) => {
-          entered++;
-          return context.json({ unsafe: true });
-        });
-      },
+  // These cases exhaust a fixed-minute budget. Align the fixture, not the production clock:
+  // leave more than the longest (unchanged) 30s case deadline in its authoritative DB minute.
+  const inOneRateWindow = (name: string, run: () => Promise<void>, timeout = 10000) => {
+    describe(name, () => {
+      let windowStart: Date;
+      const clock = () =>
+        db.source.query(
+          `WITH t AS MATERIALIZED (SELECT clock_timestamp() AS stamp)
+        SELECT date_trunc('minute',stamp) AS window_start,
+          extract(epoch FROM (date_trunc('minute',stamp)+interval '1 minute'-stamp))*1000 AS remaining_ms
+        FROM t`,
+        );
+      beforeEach(async () => {
+        let reading = (await clock()).rows[0];
+        const remaining = Number(reading.remaining_ms);
+        if (remaining < 35000) {
+          // At most 35.05s, in a separate fixture hook rather than the test's deadline.
+          await db.source.query("SELECT pg_sleep($1::double precision)", [remaining / 1000 + 0.05]);
+          reading = (await clock()).rows[0];
+        }
+        expect(Number(reading.remaining_ms)).toBeGreaterThanOrEqual(35000);
+        windowStart = reading.window_start;
+      }, 40000);
+      afterEach(async () => {
+        const rows = await db.source.query(
+          `SELECT window_start=$1::timestamptz AS same_window,
+            date_trunc('minute',clock_timestamp())=$1::timestamptz AS still_current
+          FROM core.identity_web_rate_windows`,
+          [windowStart],
+        );
+        expect(rows.rows.length).toBeGreaterThan(0);
+        expect(rows.rows.every((row) => row.same_window && row.still_current)).toBe(true);
+      });
+      it("preserves the budget assertions in one authoritative window", run, timeout);
     });
-    const response = await app.request("https://core.example/v1/auth/start", undefined, {
-      APP_ENV: "local",
-    });
-    expect(response.status).toBe(429);
-    expect(response.headers.get("retry-after")).toBe("60");
-    expect(entered).toBe(0);
-    const rows = await db.source.query("SELECT * FROM core.identity_web_rate_windows");
-    expect(JSON.stringify(rows.rows)).not.toContain("192.0.2.");
-    expect(JSON.stringify(rows.rows)).not.toContain(options.rateKey);
-    expect(
-      rows.rows.every(
-        (row) =>
-          new Date(row.expires_at).getTime() - new Date(row.window_start).getTime() === 120000,
-      ),
-    ).toBe(true);
-  }, 30000);
-  it("applies a global admission cap before creating new pseudonymous IP rows", async () => {
-    expect(
-      await factory().forRequest(new Request("https://core.example/v1/auth/start")).admit("start"),
-    ).toBe("allowed");
-    await db.source.query(
-      "UPDATE core.identity_web_rate_windows SET hits=600 WHERE lane='auth-global'",
-    );
-    for (let index = 10; index < 20; index++)
+  };
+  inOneRateWindow(
+    "enforces distributed atomic per-IP start caps under real concurrent connections and emits safe HTTP429",
+    async () => {
+      const maintenance = factory();
+      const results = await Promise.all(
+        Array.from({ length: 20 }, () =>
+          maintenance.forRequest(new Request("https://core.example/v1/auth/start")).admit("start"),
+        ),
+      );
+      expect(results.filter((value) => value === "allowed")).toHaveLength(10);
+      expect(results.filter((value) => value === "denied")).toHaveLength(10);
+      const anotherProcess = factory();
       expect(
-        await factory(`192.0.2.${index}`)
-          .forRequest(new Request("https://core.example/v1/auth/start"))
+        await anotherProcess
+          .forRequest(
+            new Request("https://core.example/v1/auth/start", {
+              headers: { "x-forwarded-for": "192.0.2.99", "x-actor-id": "forged" },
+            }),
+          )
           .admit("start"),
       ).toBe("denied");
-    expect(
-      (
-        await db.source.query(
-          "SELECT count(*)::integer AS total FROM core.identity_web_rate_windows WHERE lane='auth-ip'",
-        )
-      ).rows[0]?.total,
-    ).toBe(1);
-  });
-  it("caps actual provider calls per request, denies unapproved URLs and never calls before admission", async () => {
-    const transport = vi.fn<TestFetch>(async () => new Response("{}"));
-    const request = factory("192.0.2.8", transport).forRequest(
-      new Request("https://core.example/v1/session"),
-    );
-    await expect(request.transport("https://api.workos.com/sso/jwks/client_test")).rejects.toThrow(
-      "admission_unavailable",
-    );
-    expect(await request.admit("session")).toBe("allowed");
-    await expect(request.transport("https://evil.example/steal")).rejects.toThrow(
-      "admission_denied",
-    );
-    for (let index = 0; index < 24; index++)
-      await request.transport("https://api.workos.com/sso/jwks/client_test");
-    await expect(request.transport("https://api.workos.com/sso/jwks/client_test")).rejects.toThrow(
-      "admission_denied",
-    );
-    expect(transport).toHaveBeenCalledTimes(24);
-  }, 30000);
-  it("wires the minimal authoritative actor-cap hook before any provider work", async () => {
-    const fixture = await workosFixture();
-    const token = await fixture.token();
-    const handle = encode64(new Uint8Array(32).fill(54));
-    const hash = await digest(handle);
-    const cookieKey = encode64(new Uint8Array(32).fill(71));
-    const secrets = createWebSecrets(cookieKey, options.apiOrigin);
-    await db.source.query(
-      "INSERT INTO core.identity_web_sessions(handle_hash,actor_id,session_id,access_token_ciphertext,expires_at) VALUES ($1,$2,$3,$4,'2100-01-01')",
-      [hash, actor, session, await secrets.seal(token, `provider-token|${hash}`)],
-    );
-    const cookie = `__Host-k_session=${await secrets.seal(handle, "session-cookie")}`;
-    const maintenance = factory("192.0.2.8", fixture.transport);
-    const first = maintenance.forRequest(new Request("https://core.example/v1/session"));
-    expect(await first.admit("session")).toBe("allowed");
-    expect(await first.admitActor(actor)).toBe("allowed");
-    await db.source.query(
-      "UPDATE core.identity_web_rate_windows SET hits=120 WHERE lane='provider-actor'",
-    );
-    const req = new Request("https://core.example/v1/session", { headers: { cookie } });
-    const gate = maintenance.forRequest(req);
-    expect(await gate.admit("session")).toBe("allowed");
-    const admitActor = vi.fn((id: string) => gate.admitActor(id));
-    const web = createWebAuthRuntime(
-      {
-        ...workosOptions,
-        apiOrigin: options.apiOrigin,
-        callbackUrl: `${options.apiOrigin}/v1/auth/callback`,
-        returnUrl: "https://app.example/return",
-        allowedReturnUrls: ["https://app.example/return"],
-        cookieKey,
-        attemptTtlSeconds: 120,
-        sessionTtlSeconds: 300,
-      },
-      (callback) => db.runtime("core", ({ client }) => callback(client)),
-      { approvedBrowserOrigin: () => false, admitActor },
-      gate.transport,
-      () => instant,
-    );
-    expect(await web.dependencies.verifySession(req)).toEqual({ status: "unavailable" });
-    expect(admitActor).toHaveBeenCalledWith(actor);
-    expect(fixture.transport).not.toHaveBeenCalled();
-  });
-  it("charges each provider call to the known actor budget and cannot rebind the request", async () => {
-    const transport = vi.fn<TestFetch>(async () => new Response("{}"));
-    const scope = factory("192.0.2.8", transport).forRequest(
-      new Request("https://core.example/v1/session"),
-    );
-    expect(await scope.admit("session")).toBe("allowed");
-    expect(await scope.admitActor(actor)).toBe("allowed");
-    expect(await scope.admitActor("10000000-0000-4000-8000-000000000002")).toBe("denied");
-    await db.source.query(
-      "UPDATE core.identity_web_rate_windows SET hits=119 WHERE lane='provider-actor'",
-    );
-    await scope.transport("https://api.workos.com/sso/jwks/client_test");
-    await expect(scope.transport("https://api.workos.com/sso/jwks/client_test")).rejects.toThrow(
-      "admission_denied",
-    );
-    expect(transport).toHaveBeenCalledTimes(1);
-  });
+      let entered = 0;
+      const app = createService("core-api", undefined, {
+        registerRoutes: (app) => {
+          registerWebAuthAdmission(app, maintenance);
+          app.get("/v1/auth/start", (context) => {
+            entered++;
+            return context.json({ unsafe: true });
+          });
+        },
+      });
+      const response = await app.request("https://core.example/v1/auth/start", undefined, {
+        APP_ENV: "local",
+      });
+      expect(response.status).toBe(429);
+      expect(response.headers.get("retry-after")).toBe("60");
+      expect(entered).toBe(0);
+      const rows = await db.source.query("SELECT * FROM core.identity_web_rate_windows");
+      expect(JSON.stringify(rows.rows)).not.toContain("192.0.2.");
+      expect(JSON.stringify(rows.rows)).not.toContain(options.rateKey);
+      expect(
+        rows.rows.every(
+          (row) =>
+            new Date(row.expires_at).getTime() - new Date(row.window_start).getTime() === 120000,
+        ),
+      ).toBe(true);
+    },
+    30000,
+  );
+  inOneRateWindow(
+    "applies a global admission cap before creating new pseudonymous IP rows",
+    async () => {
+      expect(
+        await factory()
+          .forRequest(new Request("https://core.example/v1/auth/start"))
+          .admit("start"),
+      ).toBe("allowed");
+      await db.source.query(
+        "UPDATE core.identity_web_rate_windows SET hits=600 WHERE lane='auth-global'",
+      );
+      for (let index = 10; index < 20; index++)
+        expect(
+          await factory(`192.0.2.${index}`)
+            .forRequest(new Request("https://core.example/v1/auth/start"))
+            .admit("start"),
+        ).toBe("denied");
+      expect(
+        (
+          await db.source.query(
+            "SELECT count(*)::integer AS total FROM core.identity_web_rate_windows WHERE lane='auth-ip'",
+          )
+        ).rows[0]?.total,
+      ).toBe(1);
+    },
+  );
+  inOneRateWindow(
+    "caps actual provider calls per request, denies unapproved URLs and never calls before admission",
+    async () => {
+      const transport = vi.fn<TestFetch>(async () => new Response("{}"));
+      const request = factory("192.0.2.8", transport).forRequest(
+        new Request("https://core.example/v1/session"),
+      );
+      await expect(
+        request.transport("https://api.workos.com/sso/jwks/client_test"),
+      ).rejects.toThrow("admission_unavailable");
+      expect(await request.admit("session")).toBe("allowed");
+      await expect(request.transport("https://evil.example/steal")).rejects.toThrow(
+        "admission_denied",
+      );
+      for (let index = 0; index < 24; index++)
+        await request.transport("https://api.workos.com/sso/jwks/client_test");
+      await expect(
+        request.transport("https://api.workos.com/sso/jwks/client_test"),
+      ).rejects.toThrow("admission_denied");
+      expect(transport).toHaveBeenCalledTimes(24);
+    },
+    30000,
+  );
+  inOneRateWindow(
+    "wires the minimal authoritative actor-cap hook before any provider work",
+    async () => {
+      const fixture = await workosFixture();
+      const token = await fixture.token();
+      const handle = encode64(new Uint8Array(32).fill(54));
+      const hash = await digest(handle);
+      const cookieKey = encode64(new Uint8Array(32).fill(71));
+      const secrets = createWebSecrets(cookieKey, options.apiOrigin);
+      await db.source.query(
+        "INSERT INTO core.identity_web_sessions(handle_hash,actor_id,session_id,access_token_ciphertext,expires_at) VALUES ($1,$2,$3,$4,'2100-01-01')",
+        [hash, actor, session, await secrets.seal(token, `provider-token|${hash}`)],
+      );
+      const cookie = `__Host-k_session=${await secrets.seal(handle, "session-cookie")}`;
+      const maintenance = factory("192.0.2.8", fixture.transport);
+      const first = maintenance.forRequest(new Request("https://core.example/v1/session"));
+      expect(await first.admit("session")).toBe("allowed");
+      expect(await first.admitActor(actor)).toBe("allowed");
+      await db.source.query(
+        "UPDATE core.identity_web_rate_windows SET hits=120 WHERE lane='provider-actor'",
+      );
+      const req = new Request("https://core.example/v1/session", { headers: { cookie } });
+      const gate = maintenance.forRequest(req);
+      expect(await gate.admit("session")).toBe("allowed");
+      const admitActor = vi.fn((id: string) => gate.admitActor(id));
+      const web = createWebAuthRuntime(
+        {
+          ...workosOptions,
+          apiOrigin: options.apiOrigin,
+          callbackUrl: `${options.apiOrigin}/v1/auth/callback`,
+          returnUrl: "https://app.example/return",
+          allowedReturnUrls: ["https://app.example/return"],
+          cookieKey,
+          attemptTtlSeconds: 120,
+          sessionTtlSeconds: 300,
+        },
+        (callback) => db.runtime("core", ({ client }) => callback(client)),
+        { approvedBrowserOrigin: () => false, admitActor },
+        gate.transport,
+        () => instant,
+      );
+      expect(await web.dependencies.verifySession(req)).toEqual({ status: "unavailable" });
+      expect(admitActor).toHaveBeenCalledWith(actor);
+      expect(fixture.transport).not.toHaveBeenCalled();
+    },
+  );
+  inOneRateWindow(
+    "charges each provider call to the known actor budget and cannot rebind the request",
+    async () => {
+      const transport = vi.fn<TestFetch>(async () => new Response("{}"));
+      const scope = factory("192.0.2.8", transport).forRequest(
+        new Request("https://core.example/v1/session"),
+      );
+      expect(await scope.admit("session")).toBe("allowed");
+      expect(await scope.admitActor(actor)).toBe("allowed");
+      expect(await scope.admitActor("10000000-0000-4000-8000-000000000002")).toBe("denied");
+      await db.source.query(
+        "UPDATE core.identity_web_rate_windows SET hits=119 WHERE lane='provider-actor'",
+      );
+      await scope.transport("https://api.workos.com/sso/jwks/client_test");
+      await expect(scope.transport("https://api.workos.com/sso/jwks/client_test")).rejects.toThrow(
+        "admission_denied",
+      );
+      expect(transport).toHaveBeenCalledTimes(1);
+    },
+  );
   it("leases pending logouts exclusively and fences stale completion after expiry/reclaim", async () => {
     await pending();
     const claims = await Promise.all([
