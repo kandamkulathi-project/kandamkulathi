@@ -1,6 +1,15 @@
 import { expect, type Page, type Route, test } from "@playwright/test";
 import { knowledgeDraft } from "../fixtures/knowledge";
-import { consents, context, payment, receipt, reference, session } from "../fixtures/sensitive";
+import {
+  appointment,
+  choices,
+  consents,
+  context,
+  payment,
+  receipt,
+  reference,
+  session,
+} from "../fixtures/sensitive";
 
 const web = "http://127.0.0.1:15374";
 const api = "http://127.0.0.1:8787";
@@ -18,6 +27,105 @@ async function fixtures(page: Page, staff = false) {
 async function harness(page: Page) {
   await page.goto(`${web}/__strict-lifecycle`);
 }
+
+for (const interrupted of [false, true]) {
+  test(`blocked logout keeps passive access denied but foreground restarts anonymous sign-in (interrupted=${interrupted})`, async ({
+    page,
+  }) => {
+    await fixtures(page);
+    let sessionReads = 0;
+    let starts = 0;
+    let release: (() => void) | undefined;
+    await page.route(`${api}/v1/session`, (route) => {
+      sessionReads++;
+      return json(route, session);
+    });
+    await page.route(`${api}/v1/session/logout`, (route) => json(route, {}, 503));
+    await page.route(`${api}/v1/auth/start`, async (route) => {
+      starts++;
+      if (interrupted && starts === 1) {
+        await new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        await json(route, { redirectPath: "/v1/auth/authorize" }).catch(() => {});
+      } else await json(route, {}, 503);
+    });
+    await page.goto(`${web}/customer`);
+    await expect(page.locator('[data-session-state="ready"]')).toBeVisible();
+    await page.getByRole("button", { name: "Sign out", exact: true }).click();
+    await expect(page.locator('[data-session-state="anonymous"]')).toBeVisible();
+    const readsAfterLogout = sessionReads;
+    const signIn = page.getByRole("button", { name: "Sign in securely", exact: true });
+    if (interrupted) {
+      await signIn.click();
+      await expect.poll(() => starts).toBe(1);
+      await expect(signIn).toBeDisabled();
+      await page.evaluate(() => window.dispatchEvent(new Event("pagehide")));
+      await page.evaluate(() => window.dispatchEvent(new Event("pageshow")));
+    } else {
+      await page.evaluate(() => {
+        Object.defineProperty(document, "hidden", { configurable: true, value: true });
+        document.dispatchEvent(new Event("visibilitychange"));
+      });
+      await page.evaluate(() => {
+        Object.defineProperty(document, "hidden", { configurable: true, value: false });
+        document.dispatchEvent(new Event("visibilitychange"));
+      });
+    }
+    await expect(signIn).toBeEnabled();
+    await expect(page.locator('[data-session-state="anonymous"]')).toBeVisible();
+    expect(sessionReads).toBe(readsAfterLogout);
+    await signIn.click();
+    await expect.poll(() => starts).toBe(interrupted ? 2 : 1);
+    await expect(page.locator("[data-sensitive-state]")).toHaveAttribute(
+      "data-sensitive-state",
+      "unavailable",
+    );
+    release?.();
+    await expect(page).toHaveURL(`${web}/customer`);
+    await expect(signIn).toBeEnabled();
+    expect(sessionReads).toBe(readsAfterLogout);
+  });
+}
+
+test("more than 64 unavailable membership attempts preserve one retry key and leave consent mutations usable", async ({
+  page,
+}) => {
+  test.setTimeout(120000);
+  await fixtures(page);
+  const keys: string[] = [];
+  let writes = 0;
+  await page.route(`${api}/v1/appointments/${reference}`, (route) => json(route, appointment));
+  await page.route(`${api}/v1/appointments/${reference}/video-grants`, (route) => {
+    keys.push(route.request().headers()["idempotency-key"] ?? "");
+    return json(route, {}, 503);
+  });
+  await page.route(`${api}/v1/consents/current`, (route) =>
+    json(route, { ...consents, ...choices }),
+  );
+  await page.route(`${api}/v1/consents`, (route) => {
+    writes++;
+    expect(route.request().headers()["idempotency-key"]).not.toBe(keys[0]);
+    return json(route, { ...consents, ...choices });
+  });
+  await harness(page);
+  const sensitive = page.locator("[data-sensitive-state]");
+  await sensitive.getByLabel("Private record reference", { exact: true }).fill(reference);
+  for (let attempt = 0; attempt < 65; attempt++) {
+    await sensitive.getByRole("button", { name: "Load appointment", exact: true }).click();
+    await sensitive
+      .getByRole("button", { name: "Check private consultation membership", exact: true })
+      .click();
+    await expect(sensitive).toHaveAttribute("data-sensitive-state", "unavailable");
+  }
+  expect(keys).toHaveLength(65);
+  expect(new Set(keys).size).toBe(1);
+  expect(keys[0]).toMatch(/^[a-f0-9-]{36}$/);
+  await sensitive.getByRole("button", { name: "Load current consent versions" }).click();
+  await sensitive.getByRole("button", { name: "Save consent choices" }).click();
+  await expect(sensitive).toHaveAttribute("data-sensitive-state", "current");
+  expect(writes).toBe(1);
+});
 
 test("actual Vite DEV StrictMode application sends consent requests after replay", async ({
   page,

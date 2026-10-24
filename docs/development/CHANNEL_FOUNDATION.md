@@ -8,12 +8,11 @@ Devadathan/security review and company/provider/privacy/clinical approvals remai
 ## Implemented boundary
 
 - Companion registers `GET/POST /v1/channels/whatsapp/webhook` before the shared `/v1/*` fallback.
-
-The default entry point uses `apps/companion/src/service.ts` to register both channel and public-knowledge routes behind one shared HTTP boundary. Trusted dependency ports are separate: absent channel storage does not authorize a receipt or block otherwise authorized public knowledge. Isolated service factories remain available for synthetic contract tests. Neither factory nor the combined default supplies an in-memory production store or authority fixture. `tests/integration/companion-composition.test.ts` verifies routing, shared headers and exact signed bytes with explicitly synthetic ports; real workerd coverage checks the combined unavailable boundary only.
   Shared security headers, request IDs, private-cache prevention, body limit and readiness remain.
   `createService` adds an optional third route-registration options argument; the second argument
   is reserved for the separately owned platform logging interface. No unreviewed platform code
   or queue/outbox dispatcher is copied.
+- The default entry point uses `apps/companion/src/service.ts` to register both channel and public-knowledge routes behind one shared HTTP boundary. Trusted dependency ports are separate: absent channel storage does not authorize a receipt or block otherwise authorized public knowledge. Isolated service factories remain available for synthetic contract tests. Neither factory nor the combined default supplies an in-memory production store or authority fixture. `tests/integration/companion-composition.test.ts` verifies routing, shared headers and exact signed bytes with explicitly synthetic ports; real workerd coverage checks the combined boundary only in its unavailable configuration, not a real-provider journey.
 - GET requires configured `hub.mode=subscribe`, verification token and a bounded numeric challenge.
   Duplicate/unknown query fields, wrong tokens and reflective nonnumeric challenges are denied.
   Challenge success proves configuration only, not durable receipt or application readiness.

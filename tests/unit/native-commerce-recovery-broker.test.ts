@@ -8,12 +8,14 @@ import {
   createNativeCustomerRuntime,
   nativeCustomerApiTransport,
 } from "../../apps/mobile/src/customer/runtime";
+import { nativeLegacyPaymentRecoveryBroker } from "../../apps/mobile/src/nativeLegacyPaymentRecovery";
 import {
   nativeCustomerCart,
   nativeCustomerCatalogue,
   nativeCustomerQuote,
   nativeCustomerSession,
 } from "../fixtures/native-customer";
+import { otherReference, payment, reference, session } from "../fixtures/sensitive";
 
 const credentialHash = "a".repeat(64);
 async function pendingCheckout() {
@@ -181,5 +183,73 @@ describe("volatile native checkout revalidation handoff", () => {
     expect(broker.take(nativeCustomerSession, credentialHash)).toBeNull();
     controller.dispose();
     runtime.dispose();
+  });
+});
+
+describe("legacy native payment reference-only recovery", () => {
+  it("retains only a reference across repeated background/remounts, never a checkout or paid view", () => {
+    const broker = nativeLegacyPaymentRecoveryBroker();
+    expect(broker.remember(session, credentialHash, reference, payment)).toBe(true);
+    expect(broker.restore({ ...session }, credentialHash)).toBe(reference);
+    expect(broker.restore({ ...session }, credentialHash)).toBe(reference);
+    // A second authorized attempt replaces the first; mutating the source DTO cannot
+    // alter the saved reference or retain provider metadata/receipts through that DTO.
+    const next = { ...payment, id: otherReference };
+    expect(broker.remember(session, credentialHash, otherReference, next)).toBe(true);
+    next.id = reference;
+    expect(broker.restore(session, credentialHash)).toBe(otherReference);
+    broker.clear(); // Explicit reference edit, logout or revocation.
+    expect(broker.restore(session, credentialHash)).toBeNull();
+  });
+
+  it("rejects another owner, session lifetime, credential or role and clears the old reference", () => {
+    for (const [authority, digest] of [
+      [{ ...session, userId: otherReference }, credentialHash],
+      [{ ...session, expiresAt: "2098-01-01T00:00:00Z" }, credentialHash],
+      [session, "b".repeat(64)],
+      [session, "raw-native-bearer-is-not-a-digest"],
+      [{ ...session, workspaces: ["staff"] }, credentialHash],
+      [{ ...session, expiresAt: "2020-01-01T00:00:00Z" }, credentialHash],
+    ] as const) {
+      const broker = nativeLegacyPaymentRecoveryBroker();
+      broker.remember(session, credentialHash, reference, payment);
+      expect(
+        broker.restore({ ...authority, workspaces: [...authority.workspaces] }, digest),
+      ).toBeNull();
+      expect(broker.restore(session, credentialHash)).toBeNull();
+    }
+  });
+
+  it("rejects mismatched, terminal, expired or unpayable views before retaining a new reference", () => {
+    const broker = nativeLegacyPaymentRecoveryBroker();
+    for (const view of [
+      { ...payment, id: otherReference },
+      { ...payment, status: "paid" as const },
+      { ...payment, status: "pending" as const },
+      { ...payment, expiresAt: "2020-01-01T00:00:00Z" },
+      { ...payment, expiresAt: "invalid" },
+      { ...payment, checkout: null },
+    ]) {
+      broker.remember(session, credentialHash, reference, payment);
+      expect(broker.remember(session, credentialHash, reference, view)).toBe(false);
+      expect(broker.restore(session, credentialHash)).toBeNull();
+    }
+    expect(broker.remember(session, credentialHash, "invalid", payment)).toBe(false);
+  });
+
+  it("erases at exact session expiry without a foreground restore", async () => {
+    vi.useFakeTimers();
+    try {
+      const expiresAt = Date.parse(session.expiresAt);
+      vi.setSystemTime(expiresAt - 100);
+      const broker = nativeLegacyPaymentRecoveryBroker();
+      expect(broker.remember(session, credentialHash, reference, payment)).toBe(true);
+      await vi.advanceTimersByTimeAsync(100);
+      vi.setSystemTime(expiresAt - 50);
+      expect(broker.restore(session, credentialHash)).toBeNull();
+      broker.clear();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

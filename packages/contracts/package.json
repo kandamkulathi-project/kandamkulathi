@@ -19,6 +19,7 @@
     "./commerce-access": "./src/commerce-access.ts",
     "./commerce-clinics": "./src/commerce-clinics.ts",
     "./identity": "./src/identity.ts",
+    "./identifiers": "./src/identifiers.ts",
     "./consent": "./src/consent.ts",
     "./booking": "./src/booking.ts",
     "./booking-offers": "./src/booking-offers.ts",

@@ -177,6 +177,13 @@ for (const flag of ["none", "--assume-unchanged", "--skip-worktree"]) {
         join(folder, "probe.spec.mjs"),
         "import { test, expect } from '@playwright/test'; test('synthetic Node assertion; no browser', () => { expect(1 + 1).toBe(2); });\n",
       );
+      const developmentConfig = fileURLToPath(
+        new URL("../../playwright.dev.config.ts", import.meta.url),
+      );
+      writeFileSync(
+        join(folder, "secondary.config.ts"),
+        `import development from ${JSON.stringify(developmentConfig)}; export default { ...development, testDir: '.', testMatch: 'probe.spec.mjs', webServer: undefined, reporter: 'list' };`,
+      );
       runGit(["add", "."]);
       runGit(["commit", "--quiet", "-m", "Synthetic Node reporter campaign"]);
       if (flag !== "none") {
@@ -209,7 +216,32 @@ for (const flag of ["none", "--assume-unchanged", "--skip-worktree"]) {
       assert.equal(report.attempts.passed, 1);
       assert.equal(report.bindingStatus, flag === "none" ? "passed" : "failed");
       assert.equal(runGit(["ls-files", "-v", "-z"]), flags);
-      if (flag === "none") validateBinding(report, snapshot(folder), report.runId);
+      if (flag === "none") {
+        validateBinding(report, snapshot(folder), report.runId);
+        const secondary = spawnSync(
+          process.execPath,
+          [
+            fileURLToPath(import.meta.resolve("@playwright/test/cli")),
+            "test",
+            "--config",
+            join(folder, "secondary.config.ts"),
+          ],
+          {
+            cwd: folder,
+            encoding: "utf8",
+            timeout: 30000,
+            maxBuffer: 1024 * 1024,
+            env: { ...process.env, CI: "true" },
+          },
+        );
+        assert.ifError(secondary.error);
+        assert.equal(secondary.status, 0, secondary.stdout + secondary.stderr);
+        const retained = JSON.parse(
+          readFileSync(join(folder, "test-results/p1-candidate-binding.json"), "utf8"),
+        );
+        assert.deepEqual(retained, report);
+        validateBinding(retained, snapshot(folder), report.runId);
+      }
     }));
 }
 test("stale run IDs and a changed artifact set cannot reuse a passing browser result", () =>
@@ -250,4 +282,18 @@ test("zero-test runs and unsupported command/approval overrides are rejected", (
     assert.deepEqual(await reporter.onEnd({ status: "passed" }), { status: "failed" });
     for (const args of [["--approve"], ["--skip-security"], ["echo", "pass"]])
       assert.throws(() => verifyLocal(args), /No flags/);
+  }));
+test("reporter failure hint identifies masking flags without disclosing source", (context) =>
+  fixture(async ({ folder, runGit }) => {
+    const messages = [];
+    context.mock.method(console, "error", (message) => messages.push(message));
+    runGit(["update-index", "--assume-unchanged", "source.txt"]);
+    const reporter = new CandidateReporter({ repositoryRoot: folder });
+    reporter.onBegin({}, { allTests: () => [{}] });
+    reporter.onTestEnd({}, { status: "passed" });
+    assert.deepEqual(await reporter.onEnd({ status: "passed" }), { status: "failed" });
+    assert.equal(messages.length, 1);
+    assert.match(messages[0], /assume-unchanged/);
+    assert.match(messages[0], /skip-worktree/);
+    assert(!messages[0].includes("synthetic source"));
   }));

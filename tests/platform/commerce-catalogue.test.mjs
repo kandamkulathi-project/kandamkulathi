@@ -96,7 +96,7 @@ after(async () => fixture?.close());
 beforeEach(async () => {
   await fixture.reset();
   await fixture.source.query(
-    "TRUNCATE core.commerce_reservation_expirations,core.commerce_order_addresses,core.commerce_staff_grants,core.commerce_clinic_locations,core.commerce_reservations,core.commerce_order_lines,core.commerce_orders,core.commerce_batches,core.commerce_skus,core.commerce_imports,core.commerce_import_grants,core.commerce_tax_policies,core.commerce_locations,core.commerce_checkout_policies",
+    "TRUNCATE core.commerce_order_cancellations,core.commerce_reservation_expirations,core.commerce_order_addresses,core.commerce_staff_grants,core.commerce_clinic_locations,core.commerce_reservations,core.commerce_order_lines,core.commerce_orders,core.commerce_batches,core.commerce_skus,core.commerce_imports,core.commerce_import_grants,core.commerce_tax_policies,core.commerce_locations,core.commerce_checkout_policies",
   );
   await fixture.source.query(
     "INSERT INTO core.commerce_checkout_policies VALUES(true,600,$1,'synthetic-approved-hold-v1',true)",

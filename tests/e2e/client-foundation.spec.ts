@@ -110,6 +110,47 @@ test("session expiry removes access without retaining private state", async ({ p
     { timeout: 7000 },
   );
 });
+test("known expiry fences access before an unresolved session revalidation and blocks passive restoration", async ({
+  page,
+}) => {
+  const start = Date.parse("2030-01-01T00:00:00Z");
+  const expiresAt = new Date(start + 2000).toISOString();
+  await page.clock.install({ time: new Date(start) });
+  let reads = 0;
+  await page.route("http://127.0.0.1:8787/v1/session", async (route) => {
+    reads++;
+    if (reads > 1) return; // A subsequent server read cannot establish whether the old session expired.
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers,
+      body: JSON.stringify({
+        userId: "dbdfb43b-cde1-4102-95ce-ab0654d1b6cc",
+        expiresAt,
+        workspaces: ["customer"],
+      }),
+    });
+  });
+  await page.goto(`${origin}/customer`);
+  await expect(page.locator("[data-session-state]")).toHaveAttribute("data-session-state", "ready");
+  await page.clock.runFor(2001);
+  await expect(page.locator("[data-session-state]")).toHaveAttribute(
+    "data-session-state",
+    "anonymous",
+    { timeout: 7000 },
+  );
+  expect(reads).toBe(1);
+  await page.evaluate(() => {
+    document.dispatchEvent(new Event("visibilitychange"));
+    window.dispatchEvent(new Event("pageshow"));
+  });
+  await expect(page.locator("[data-session-state]")).toHaveAttribute(
+    "data-session-state",
+    "anonymous",
+  );
+  expect(reads).toBe(1);
+  await expect(page.getByRole("button", { name: "Sign out", exact: true })).toHaveCount(0);
+});
 test("backgrounding invalidates a session and clears an editable draft", async ({ page }) => {
   await session(page, 200);
   await page.goto(origin);

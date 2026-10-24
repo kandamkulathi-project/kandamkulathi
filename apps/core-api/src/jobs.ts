@@ -18,6 +18,7 @@ import { platformConfig } from "@kandamkulathi/server/config";
 import { emitEvent } from "@kandamkulathi/server/observability";
 import { expireCommerceReservations } from "../../../packages/database/src/commerce-reservations";
 import { bridgeKnowledgeIndexObligations } from "../../../packages/database/src/knowledge-index";
+import { configuredChannelNoticeHandler } from "./channel-notice-runtime";
 import { executeCommerceReconcile } from "./commerce-jobs";
 import { createKnowledgeIndexHandler } from "./knowledge-index";
 import { configuredKnowledgeIndexProviderOptions } from "./knowledge-runtime";
@@ -139,16 +140,24 @@ export async function consumeJobs(
           const result =
             claim.kind === "commerce.reconcile"
               ? await executeCommerceReconcile(context, claim, env)
-              : claim.kind === "knowledge.index"
-                ? await executeExternalClaim(
-                    context,
-                    claim,
-                    createKnowledgeIndexHandler(configuredKnowledgeIndexProviderOptions(env)),
-                  )
-                : await executeClaim(context, claim, {
-                    ...probeHandlers,
-                    "engagement.notify": channelIngressHandler,
-                  });
+              : claim.kind === "engagement.notify" &&
+                  (
+                    await context.client.query(
+                      "SELECT inbox_id FROM engagement.mathew_channel_processing WHERE inbox_id=$1 AND operation_id=$2",
+                      [claim.subjectId, claim.operationId],
+                    )
+                  ).rowCount === 1
+                ? await executeExternalClaim(context, claim, configuredChannelNoticeHandler(env))
+                : claim.kind === "knowledge.index"
+                  ? await executeExternalClaim(
+                      context,
+                      claim,
+                      createKnowledgeIndexHandler(configuredKnowledgeIndexProviderOptions(env)),
+                    )
+                  : await executeClaim(context, claim, {
+                      ...probeHandlers,
+                      "engagement.notify": channelIngressHandler,
+                    });
           if (result === "stale") {
             message.retry({ delaySeconds: 30 });
             continue;

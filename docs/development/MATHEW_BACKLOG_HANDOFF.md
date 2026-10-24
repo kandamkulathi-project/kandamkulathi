@@ -1,6 +1,11 @@
 # Mathew backlog implementation handoff
 
-## Delivery boundary
+## Historical foundation delivery boundary
+
+This document records the original foundation handoff. PR #9 was subsequently published;
+the current integration is [PR #11](https://github.com/kandamkulathi-project/kandamkulathi/pull/11).
+Use the [integration register](PHASE1_INTEGRATION.md) for current implementation and evidence;
+the historical adapter and publication instructions below do not supersede that register.
 
 These are reviewed-in-session **local implementation candidates**, not completed
 business journeys, company approvals or phase acceptance. Default Workers expose
@@ -19,8 +24,9 @@ review does not replace the named independent human reviews.
 
 ## Next actions, in order
 
-1. **Publish and obtain review.** Local branches/commits are not remotely available
-   until publication is authorized. Devadathan reviews identity/platform/security;
+1. **Obtain review on the published candidate.** At the original handoff publication
+   was pending; PR #9 and the subsequent integration PR #11 are now published.
+   Devadathan reviews identity/platform/security;
    Josin reviews payment/booking contracts; physicians/privacy owners approve
    relevant clinical/content/consent policy. Do not self-approve or bypass checks.
 2. **Verify the integrated platform predecessor.** Reviewed P1-DEV-001 / PR #3 is

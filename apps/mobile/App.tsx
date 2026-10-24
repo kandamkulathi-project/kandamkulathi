@@ -7,6 +7,7 @@ import { AppState, Button, ScrollView, StatusBar, StyleSheet, Text, View } from 
 import { LocalDeviceCheck } from "./src/LocalDeviceCheck";
 import { receivedLink } from "./src/native";
 import { NativeSensitiveFlows } from "./src/SensitiveFlows";
+import { SyntheticDiagnostics } from "./src/SyntheticDiagnostics";
 
 export default function App() {
   const [locale, setLocale] = useState<Locale>("en");
@@ -68,6 +69,7 @@ export default function App() {
         {linkPending && <Text accessibilityLiveRegion="polite">{text.anonymous}</Text>}
         <NativeSensitiveFlows locale={locale} fontFamily={fontFamily} />
         <LocalDeviceCheck locale={locale} />
+        <SyntheticDiagnostics fontFamily={fontFamily} />
       </ScrollView>
     </View>
   );

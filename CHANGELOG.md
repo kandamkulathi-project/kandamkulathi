@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+### GitHub CodeRabbit completion review corrections — 2026-10-24
+
+- Restrict the real WhatsApp sender to permitted production live mode; keep terminal notice receipts immutable and process definitive rejection without resend or fabricated acceptance.
+- Release transcription concurrency for explicitly allowlisted provider rejections while retaining lifetime usage and unknown-outcome fences.
+- Distinguish private-video setup failure from normal post-setup closure without weakening media cleanup or late-callback guards. Correct integrated setup and verification handoffs.
+
+### Phase 1 bounded completion and review corrections — 2026-10-24 (combined verification Pending)
+
+- Mount explicitly confirmed unpaid cancellation (0028), independently routed durable notice (0029), and native transcription with approved notices, review-only draft insertion, retained cleanup obligations and server-enforced quota/concurrency admission (0030). No policies or approvals are seeded.
+- Add exact native WebRTC/plugin dependencies, relay-only browser/native adapters and isolated synthetic DO signaling; actual signed-device/TURN/provider evidence remains Pending.
+- Correct CodeRabbit findings in blocked-anonymous browser action lifetimes, bounded grant retries, native reference-only checkout recovery, per-root/text-asset audit coverage, citation host validation, foreign Git environment isolation and historical phase-scope documentation.
+- Preserve main browser evidence across subsequent campaigns and verify retention with the actual Playwright CLI. Give the 30-request real-PostgreSQL rate-cap case an explicit I/O budget without changing its assertions. No skipped or failing gate is treated as passed.
+- Fence known browser session expiry locally as anonymous without awaiting network revalidation; retain passive-restoration denial and explicit sign-in recovery. Cover unresolved revalidation and timer-clamped deadlines without weakening the original expiry assertion.
+
+### PR #5/#6 client history consolidation — 2026-10-24
+
+- Preserve P1-DEV-003's uncertain-save correction: retire mutation identities after validated results or definitive rejection, retain the same identity after an ambiguous response, and correlate consent/payment recovery with authoritative reads.
+- Preserve P1-DEV-003's native logout and capture corrections: sticky private-access fencing survives failed remote logout/navigation, and interrupted recording cleanup remains retryable. These historical deliveries did not establish native-device or provider acceptance.
+- Preserve P1-DEV-004's source-backed editor/cited Companion and built-client security-audit history, including stale-save correlation, source/artifact checks and explicit chat/handoff identities. Integrated effect-owned lifetimes correct the original StrictMode defects; completed intentional actions retire identities while uncertain retries retain them.
+- Consolidate the 2026-10-23 PR #6 dependency/conflict alignment and frontend-security corrections without treating the original heads as approved. Earlier independent review, actual APIs/providers and device/G1 acceptance were Pending at delivery; current exact-candidate evidence supersedes historical verification claims.
+
 ### Phase 1 parallel backlog integration — 2026-10-24 (verification and independent review Pending)
 
 - Preserve existing owner implementation candidates and the incumbent interface while integrating separately authored Phase 1 changes. Company/provider/device acceptance and G1 remain Pending.

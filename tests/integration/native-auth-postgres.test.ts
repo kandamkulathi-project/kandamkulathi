@@ -396,6 +396,9 @@ describe("native HTTP protocol on real PostgreSQL/non-owner RLS", () => {
     ).toBe(400);
     expect(transport).not.toHaveBeenCalled();
   });
+  // This aggregate correctness check makes 30 sequential HTTP starts, each opening
+  // two real PostgreSQL connections through the WebSocket proxy, before testing
+  // denial. Budget that I/O on shared CI; the default 10s is not a response SLA.
   it("uses fixed-cardinality durable rate caps, including every provider HTTPS call", async () => {
     for (let index = 0; index < 30; index++)
       expect((await post("start", await proof(String(index).padStart(43, "s")))).status).toBe(200);
@@ -418,7 +421,7 @@ describe("native HTTP protocol on real PostgreSQL/non-owner RLS", () => {
     expect(
       (await db.source.query("SELECT count(*)::int n FROM core.identity_native_rates")).rows[0].n,
     ).toBeLessThanOrEqual(5);
-  });
+  }, 20000);
   it("does not resurrect an expired authoritative session on a second exchange and cannot reset expiry via the runtime role", async () => {
     const credential = await signIn();
     await db.source.query(

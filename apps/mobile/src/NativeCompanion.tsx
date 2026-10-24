@@ -11,15 +11,21 @@ import * as Crypto from "expo-crypto";
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { AppState, Button, Linking, Text, TextInput, View } from "react-native";
 import { nativeCompanionOperations } from "./companionOperations";
+import {
+  type NativeTranscriptionAccess,
+  NativeTranscriptionControls,
+} from "./NativeTranscriptionControls";
 
 export function NativeCompanion({
   client,
   locale,
   fontFamily,
+  transcription,
 }: {
   client: SensitiveClient | undefined;
   locale: Locale;
   fontFamily: string | undefined;
+  transcription?: NativeTranscriptionAccess | undefined;
 }) {
   const text = knowledgeText[locale];
   const basic = foundation[locale];
@@ -28,6 +34,10 @@ export function NativeCompanion({
   const [reply, setReply] = useState<KnowledgeReply>();
   const [state, setState] = useState("pending");
   const busy = useRef(false);
+  const transcriptionBusy = useRef(false);
+  const [voiceBusy, setVoiceBusy] = useState(false);
+  const [draftRevision, setDraftRevision] = useState(0);
+  const draftFence = useRef(0);
   const epoch = useRef(0);
   const operations = useMemo(
     () => (client ? nativeCompanionOperations(client, () => Crypto.randomUUID()) : undefined),
@@ -126,18 +136,40 @@ export function NativeCompanion({
         value={draft}
         onChangeText={(value) => {
           epoch.current++;
+          draftFence.current++;
+          setDraftRevision(draftFence.current);
           setDraft(value);
           setEntries([]);
           setReply(undefined);
           setState("pending");
         }}
       />
-      <Text style={{ fontFamily }}>{text.voice}</Text>
+      <NativeTranscriptionControls
+        access={transcription}
+        locale={locale}
+        fontFamily={fontFamily}
+        revision={draftRevision}
+        draftFence={draftFence}
+        disabled={state === "loading"}
+        onBusy={(value) => {
+          transcriptionBusy.current = value;
+          setVoiceBusy(value);
+        }}
+        onReview={(value) => {
+          if (!transcription?.current() || busy.current || AppState.currentState !== "active")
+            return;
+          epoch.current++;
+          setDraft(value);
+          setEntries([]);
+          setReply(undefined);
+          setState("pending");
+        }}
+      />
       <Button
         title={client ? text.send : basic.sendPending}
-        disabled={!client || !draft.trim() || state === "loading"}
+        disabled={!client || !draft.trim() || state === "loading" || voiceBusy}
         onPress={async () => {
-          if (!operations || busy.current) return;
+          if (!operations || busy.current || transcriptionBusy.current) return;
           busy.current = true;
           const attempt = ++epoch.current;
           setState("loading");
@@ -158,9 +190,9 @@ export function NativeCompanion({
       {client && (
         <Button
           title={text.handoff}
-          disabled={state === "loading"}
+          disabled={state === "loading" || voiceBusy}
           onPress={async () => {
-            if (!operations || busy.current) return;
+            if (!operations || busy.current || transcriptionBusy.current) return;
             busy.current = true;
             const attempt = ++epoch.current;
             setState("loading");
