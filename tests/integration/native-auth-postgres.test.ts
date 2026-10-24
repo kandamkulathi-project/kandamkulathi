@@ -396,32 +396,71 @@ describe("native HTTP protocol on real PostgreSQL/non-owner RLS", () => {
     ).toBe(400);
     expect(transport).not.toHaveBeenCalled();
   });
-  // This aggregate correctness check makes 30 sequential HTTP starts, each opening
-  // two real PostgreSQL connections through the WebSocket proxy, before testing
-  // denial. Budget that I/O on shared CI; the default 10s is not a response SLA.
-  it("uses fixed-cardinality durable rate caps, including every provider HTTPS call", async () => {
-    for (let index = 0; index < 30; index++)
-      expect((await post("start", await proof(String(index).padStart(43, "s")))).status).toBe(200);
-    expect((await post("start", await proof("x".repeat(43)))).status).toBe(429);
-    await db.source.query(
-      "INSERT INTO core.identity_native_rates VALUES('provider',date_trunc('minute',clock_timestamp()),240)",
-    );
-    const input = await proof("0".padStart(43, "s"));
-    expect(
-      (
-        await post("exchange", {
-          state: input.state,
-          redirectUri: input.redirectUri,
-          code: "code",
-          codeVerifier: verifier,
-        })
-      ).status,
-    ).toBe(429);
-    expect(transport).not.toHaveBeenCalled();
-    expect(
-      (await db.source.query("SELECT count(*)::int n FROM core.identity_native_rates")).rows[0].n,
-    ).toBeLessThanOrEqual(5);
-  }, 20000);
+  describe("rate caps within one authoritative PostgreSQL minute", () => {
+    let windowStart: Date;
+    beforeEach(async () => {
+      // The production cap intentionally resets at the DB's minute boundary.
+      // Arrange at least 25s of the real bucket for the 20s aggregate test; never
+      // replace the DB clock or make a cross-window denial assertion.
+      const result = await db.source.query(
+        "SELECT (60-extract(second FROM clock_timestamp()))::float8 remaining",
+      );
+      const remaining = result.rows[0].remaining as number;
+      if (remaining < 25) await db.source.query("SELECT pg_sleep($1)", [remaining + 0.1]);
+      windowStart = (await db.source.query("SELECT date_trunc('minute',clock_timestamp()) bucket"))
+        .rows[0].bucket as Date;
+    }, 30000);
+    // This aggregate correctness check makes 30 sequential HTTP starts, each opening
+    // two real PostgreSQL connections through the WebSocket proxy, before testing
+    // denial. Budget that I/O on shared CI; the default 10s is not a response SLA.
+    it("uses fixed-cardinality durable rate caps, including every provider HTTPS call", async () => {
+      // A saturated *previous* bucket must admit in the current minute. This is
+      // legitimate rollover, not a bypass of the current-window provider cap below.
+      await db.source.query(
+        "INSERT INTO core.identity_native_rates VALUES('provider',$1::timestamptz-interval '1 minute',240)",
+        [windowStart],
+      );
+      expect(
+        (await core((client) => client.query("SELECT core.native_auth_admit('provider') allowed")))
+          .rows[0].allowed,
+      ).toBe(true);
+      expect(
+        (await db.source.query("SELECT window_start,hits FROM core.identity_native_rates")).rows,
+      ).toEqual([{ window_start: windowStart, hits: 1 }]);
+      await db.source.query("DELETE FROM core.identity_native_rates");
+      for (let index = 0; index < 30; index++)
+        expect((await post("start", await proof(String(index).padStart(43, "s")))).status).toBe(
+          200,
+        );
+      expect((await post("start", await proof("x".repeat(43)))).status).toBe(429);
+      await db.source.query(
+        "INSERT INTO core.identity_native_rates VALUES('provider',date_trunc('minute',clock_timestamp()),240)",
+      );
+      const input = await proof("0".padStart(43, "s"));
+      expect(
+        (
+          await post("exchange", {
+            state: input.state,
+            redirectUri: input.redirectUri,
+            code: "code",
+            codeVerifier: verifier,
+          })
+        ).status,
+      ).toBe(429);
+      expect(transport).not.toHaveBeenCalled();
+      expect(
+        (await db.source.query("SELECT count(*)::int n FROM core.identity_native_rates")).rows[0].n,
+      ).toBeLessThanOrEqual(5);
+      expect(
+        (
+          await db.source.query(
+            "SELECT bool_and(window_start=$1) same_window FROM core.identity_native_rates",
+            [windowStart],
+          )
+        ).rows[0].same_window,
+      ).toBe(true);
+    }, 20000);
+  });
   it("does not resurrect an expired authoritative session on a second exchange and cannot reset expiry via the runtime role", async () => {
     const credential = await signIn();
     await db.source.query(
@@ -607,59 +646,84 @@ describe("native HTTP protocol on real PostgreSQL/non-owner RLS", () => {
     expect(persisted.revoked_at).not.toBeNull();
     expect(persisted.pending).toBe(false);
   });
-  it("commits local identity revocation before provider I/O; unknown result stays pending and same-key retry reconciles without duplicate revoke", async () => {
-    const credential = await signIn();
-    const identity = await authenticated(credential);
-    // Expire the actual stored opaque handle while WorkOS remains active. A wrong
-    // actor/session/provider binding must fail before any provider effect.
-    await db.source.query(
-      "UPDATE core.identity_native_sessions SET expires_at=least(to_timestamp($1/1000.0),clock_timestamp())-interval '1 second'",
-      [clock],
-    );
-    const originalHash = await digest(credential);
-    await core(async (client) => {
-      const denied = await client.query(
-        "SELECT core.native_auth_revoke_expired($1,$2,$3,$4) revoked",
-        [
-          originalHash,
-          "10000000-0000-4000-8000-000000000099",
-          identity.sessionId,
-          await digest("k".repeat(32)),
-        ],
-      );
-      expect(denied.rows[0]?.revoked).toBe(false);
+  describe("expired-handle logout with a real authenticated session fixture", () => {
+    let credential: string;
+    let identity: Awaited<ReturnType<typeof authenticated>>;
+    beforeEach(async () => {
+      // Session creation/current verification are fixture setup, not part of the
+      // logout/reconciliation journey's 10s budget. Both still use real HTTP/PG.
+      credential = await signIn();
+      identity = await authenticated(credential);
     });
-    lostRevoke = true;
-    const headers = { Authorization: `Bearer ${credential}`, "Idempotency-Key": "k".repeat(32) };
-    const response = await post("logout", {}, headers);
-    expect(response.status).toBe(503);
-    expect(await response.json()).toMatchObject({ error: { code: "LOGOUT_PENDING" } });
-    const persisted = (await db.source.query("SELECT * FROM core.identity_native_sessions"))
-      .rows[0];
-    expect(persisted.revoked_at).not.toBeNull();
-    expect(persisted.pending).toBe(true);
-    expect(persisted.access_ciphertext).toBe("purged");
-    expect(
-      (
-        await db.source.query("SELECT revoked_at FROM core.identity_sessions WHERE id=$1", [
-          identity.sessionId,
-        ])
-      ).rows[0].revoked_at,
-    ).not.toBeNull();
-    expect(
-      await runtime.dependencies.verifySession(new Request(nativeOptions.apiOrigin, { headers })),
-    ).toEqual({ status: "unauthenticated" });
-    expect(
-      (await post("logout", {}, { ...headers, "Idempotency-Key": "wrong".repeat(8) })).status,
-    ).toBe(401);
-    await db.source.query(
-      "UPDATE core.identity_native_sessions SET next_attempt_at=clock_timestamp()-interval '1 second'",
-    );
-    expect((await post("logout", {}, headers)).status).toBe(200);
-    expect(
-      transport.mock.calls.filter(([url]) => String(url).endsWith("/sessions/revoke")),
-    ).toHaveLength(1);
-    expect((await post("logout", {}, headers)).status).toBe(200);
+    it("commits local identity revocation before provider I/O; unknown result stays pending and same-key retry reconciles without duplicate revoke", async () => {
+      // Expire the actual stored opaque handle while WorkOS remains active. A wrong
+      // actor/session/provider binding must fail before any provider effect.
+      await db.source.query(
+        "UPDATE core.identity_native_sessions SET expires_at=least(to_timestamp($1/1000.0),clock_timestamp())-interval '1 second'",
+        [clock],
+      );
+      const originalHash = await digest(credential);
+      await core(async (client) => {
+        const denied = await client.query(
+          "SELECT core.native_auth_revoke_expired($1,$2,$3,$4) revoked",
+          [
+            originalHash,
+            "10000000-0000-4000-8000-000000000099",
+            identity.sessionId,
+            await digest("k".repeat(32)),
+          ],
+        );
+        expect(denied.rows[0]?.revoked).toBe(false);
+      });
+      const originalTransport = transport.getMockImplementation();
+      if (!originalTransport) throw new Error("Synthetic transport required");
+      let revocationAtProviderEntry: Record<string, unknown> | undefined;
+      transport.mockImplementation(async (url, init) => {
+        if (String(url).endsWith("/sessions/revoke"))
+          revocationAtProviderEntry = (
+            await db.source.query(`SELECT n.revoked_at IS NOT NULL native_revoked,
+              s.revoked_at IS NOT NULL identity_revoked,n.pending
+              FROM core.identity_native_sessions n JOIN core.identity_sessions s ON s.id=n.session_id`)
+          ).rows[0];
+        return originalTransport(url, init);
+      });
+      lostRevoke = true;
+      const headers = { Authorization: `Bearer ${credential}`, "Idempotency-Key": "k".repeat(32) };
+      const response = await post("logout", {}, headers);
+      expect(response.status).toBe(503);
+      expect(await response.json()).toMatchObject({ error: { code: "LOGOUT_PENDING" } });
+      expect(revocationAtProviderEntry).toEqual({
+        native_revoked: true,
+        identity_revoked: true,
+        pending: true,
+      });
+      const persisted = (await db.source.query("SELECT * FROM core.identity_native_sessions"))
+        .rows[0];
+      expect(persisted.revoked_at).not.toBeNull();
+      expect(persisted.pending).toBe(true);
+      expect(persisted.access_ciphertext).toBe("purged");
+      expect(
+        (
+          await db.source.query("SELECT revoked_at FROM core.identity_sessions WHERE id=$1", [
+            identity.sessionId,
+          ])
+        ).rows[0].revoked_at,
+      ).not.toBeNull();
+      expect(
+        await runtime.dependencies.verifySession(new Request(nativeOptions.apiOrigin, { headers })),
+      ).toEqual({ status: "unauthenticated" });
+      expect(
+        (await post("logout", {}, { ...headers, "Idempotency-Key": "wrong".repeat(8) })).status,
+      ).toBe(401);
+      await db.source.query(
+        "UPDATE core.identity_native_sessions SET next_attempt_at=clock_timestamp()-interval '1 second'",
+      );
+      expect((await post("logout", {}, headers)).status).toBe(200);
+      expect(
+        transport.mock.calls.filter(([url]) => String(url).endsWith("/sessions/revoke")),
+      ).toHaveLength(1);
+      expect((await post("logout", {}, headers)).status).toBe(200);
+    });
   });
   it("does not report logout success if WorkOS still lists an active session", async () => {
     const credential = await signIn();
