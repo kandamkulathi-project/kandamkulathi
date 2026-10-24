@@ -54,9 +54,10 @@ and independent acceptance obligations are unchanged.
 Separate saved-address/account editing, reorder, courier fulfillment and generated
 invoice/return workflows are explicitly unavailable in this slice. Full production
 voice/video/push delivery is later-phase work; bounded Phase 1 proofs still require
-actual approved provider/device evidence. Final combined verification and review
-are being completed; do not reclassify missing integration
-as an external approval blocker.
+actual approved provider/device evidence. The combined software candidate has passed
+local verification and scoped review; final hosted integration checks and the `dev`
+merge remain pending. Do not reclassify a failing software check as an external
+approval blocker.
 
 ## Verification and handoff
 
@@ -71,11 +72,10 @@ its registered-journal combined checks and receive fresh independent review.
 Committed core candidate `dbda202d35b947bd633620fb3ad0aeafd0734016` passed its
 mandatory gate: 1,715 tests/122 files, 17 QA guards, 96 security cases, 195 browser
 cases, 103 platform cases, builds/types, security/mobile checks and 23 documentation
-tests. Its clean `verify:p1-local` failed because the later development browser
+tests. Its first clean `verify:p1-local` failed because the later development browser
 campaign deleted the main browser binding. Output isolation and a reproducing
-actual-CLI regression are fixed in the completion working tree; no clean-candidate
-pass is claimed until rerun. GitHub also exposed the 30-request native-auth test's
-generic 10-second I/O budget; a scoped 20-second budget preserves every rate assertion.
+actual-CLI regression corrected this; the subsequent completion results below
+supersede that failed attempt, without erasing it.
 
 The first completion gate stopped on duplicate registered-transcription fixture setup
 and a cancellation SQL-privilege regression. Both were corrected without changing
@@ -90,6 +90,35 @@ or changed assertions. The stock-release boundary fix now has independent static
 review and 42 passing PostgreSQL/unit cases, including 11 unchanged payment-order
 tests; it is integrated for another complete gate. No hang cause is claimed.
 
+Completion correction `098bea215c841cdca10d2c2b82eaff3b504bae7a` passed both the
+mandatory gate and clean committed verification: 1,829 main tests, 34 video tests,
+16 controls, 4 config cases, 205 E2E, 104 platform, 108 security, 17 QA, 6 scanner
+and 23 repository cases, plus required build/type/mobile/security/artifact checks.
+GitHub CodeRabbit actually reviewed PR #12's 136-file completion delta and its
+incremental corrections. PR #12 merged into integration at `65a8a8c`.
+
+Hosted CI subsequently exposed real-minute rate-window fixture boundaries and
+multi-request fixture budgets, not permission to change production rate limits.
+PRs #13 and #14 preserved real PostgreSQL clocks and all security assertions;
+they received independent review and actual GitHub CodeRabbit reviews. The final
+test-only correction `c1f7b90e91f6179ebf3b8c3b42e1230ad2f6d173` passed the full
+mandatory gate with the counts above, but is not a new clean-verification claim.
+PR #14 merged at `b41e1a892d407b31a8583300522e906ef305bed4`, tree
+`aa6ab7f1e73354e3d5ad16d6836b06a3815b3e6d`.
+
+Fresh hosted run [40106763933](https://github.com/kandamkulathi-project/kandamkulathi/actions/runs/40106763933)
+passed both auth suites but failed database setup: concurrent isolated databases
+attempted to create the cluster-wide `k_core_runtime` role (PostgreSQL 23505).
+It reported 1,814 passes and 15 cases skipped after setup failure, **not** a passing
+application check. The focused correction now handles only role-creation collision
+errors, revalidates all profiles and commits a short role-only transaction before
+the unchanged atomic domain migration. A real cross-database regression reproduced
+the original collision; corrected focused checks passed 20 platform database,
+15 commerce-jobs and 10 security/unit cases. The new correction still requires
+its full gate, independent review and final exact-head hosted checks before the
+consolidated `dev` merge; no failed-check waiver has occurred. See the
+[administrative rollback boundary](PLATFORM_FOUNDATION.md#local-administrative-tools).
+
 User-directed manual testing is documented in the [manual handoff](PHASE1_MANUAL_TESTING.md).
 No broad test-scope expansion is planned; minimal feature/review regressions and
 existing required checks are not waived. Default unavailable-state checks cannot prove positive business
@@ -102,7 +131,10 @@ subsequently authorized a PR-only bypass for `mathew1046` and ready PR merges to
 is published as [PR #11](https://github.com/kandamkulathi-project/kandamkulathi/pull/11).
 CodeRabbit reviewed the older owner/security PRs; its PR #11 review was **skipped**
 because 535 files exceed the 300-file limit. A green bot status is not review evidence.
-Scoped independent reviews and review corrections remain required. No promotion
+The actual scoped reviews above cover the completion and fixture deltas; a skipped
+large-diff review is never counted as approval. All 22 verified legacy review
+threads were resolved with links to integrated fixes, not approvals of obsolete
+heads. Any new correction still requires independent and GitHub review. No promotion
 to `main`, deployment or G1 approval is authorized by this document.
 
 Actual company policies/content/opening data, provider/callback configuration and

@@ -4,6 +4,12 @@ This checklist exercises the integrated software; it does not grant G1, clinical
 financial, provider or release approval. Use synthetic records and provider test mode
 only. Never use real patients, live charges or production credentials.
 
+Check the [candidate and verification record](PHASE1_INTEGRATION.md) before testing.
+Use the exact reviewed commit supplied in the delivery handoff and record
+`git rev-parse HEAD`; do not assume an older open PR or a passing local run is the
+final merged candidate. Hosted software failures remain blockers independently
+of missing company/provider/device approvals.
+
 ## 1. Start the application
 
 Use Node **24.22.1**, pnpm **10.34.7** and PostgreSQL **17**. Preserve local changes

@@ -4,12 +4,13 @@ A trusted Ayurvedic healthcare institution serving generations since 1847, dedic
 
 ## Shared development baseline
 
-The current feature branch integrates the [Phase 1 software candidate](docs/development/PHASE1_INTEGRATION.md).
+The [Phase 1 software candidate](docs/development/PHASE1_INTEGRATION.md) integrates the owner lanes;
+that record distinguishes local verification, hosted checks and final merge status.
 Use the [manual testing handoff](docs/development/PHASE1_MANUAL_TESTING.md) for configured
-synthetic web/native journeys. This does not claim merged software, provider/device
+synthetic web/native journeys. Software delivery does not establish provider/device
 acceptance or G1; older foundation notes below describe their original delivery scope.
 
-This private repository contains the runnable starter and the complete reviewed implementation, member and QA documents. **Business features and all phase acceptance are Pending. This is not a production release.** No live accounts, deployment, charges, messages, AI responses or patient data are enabled.
+This private repository contains the implemented software candidate and reviewed implementation, member and QA documents. **All phase acceptance remains Pending. This is not a production release.** The default checkout enables no live accounts, deployment, charges, messages, AI responses or patient data.
 
 P1-DEV-001 now adds local platform isolation, safe telemetry, a real PostgreSQL transport/role/transaction foundation, Cron/Queues, encrypted recovery and release rehearsal tooling. Follow [platform setup and handoff](docs/development/PLATFORM_FOUNDATION.md); the local commit gate additionally requires PostgreSQL 17 and its client tools. [Local evidence and pending cloud checks](docs/operations/P1_PLATFORM_FOUNDATION.md) distinguish implementation from company-resource acceptance.
 
