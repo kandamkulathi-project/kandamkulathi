@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
-import { join, resolve } from "node:path";
-import { describe, it } from "node:test";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { after, describe, it } from "node:test";
 import {
   assessAudit,
   fingerprintAdvisory,
@@ -8,7 +10,8 @@ import {
   verifyInstalledPatches,
 } from "../../scripts/security/policy.mjs";
 
-const root = resolve("test-fixture-root");
+const root = mkdtempSync(join(tmpdir(), "dependency-policy-"));
+after(() => rmSync(root, { recursive: true, force: true }));
 const pkgPath = join(root, "node_modules", ".pnpm", "example", "node_modules", "example");
 const entry = {
   advisory: "GHSA-test",
@@ -25,6 +28,10 @@ const files = new Map([
   [join(pkgPath, "package.json"), JSON.stringify({ name: "example", version: "1.0.0" })],
   [join(pkgPath, "lib/verify.js"), "fixed source"],
 ]);
+for (const [path, content] of files) {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, content);
+}
 const read = (path) => {
   assert(files.has(path), "Unexpected read");
   return files.get(path);
@@ -117,6 +124,13 @@ describe("security proof negative controls", () => {
   });
   it("also inspects aliased packages using their real installed identity", () => {
     const aliasPath = join(root, "node_modules", "alias");
+    mkdirSync(aliasPath);
+    mkdirSync(join(aliasPath, "lib"));
+    writeFileSync(
+      join(aliasPath, "package.json"),
+      JSON.stringify({ name: "example", version: "1.0.0" }),
+    );
+    writeFileSync(join(aliasPath, "lib/verify.js"), "unpatched alias source");
     const extraTree = [
       { dependencies: { alias: { from: "npm:example@1.0.0", path: aliasPath } } },
       ...tree,

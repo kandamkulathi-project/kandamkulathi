@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { isAbsolute, join, relative, resolve } from "node:path";
 
 export const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
@@ -61,6 +61,10 @@ export function verifyInstalledPatches(root, manifest, tree, read = readFileSync
     Array.isArray(manifest.remediations) && manifest.remediations.length > 0,
     "Remediation manifest must not be empty",
   );
+  // A checkout may relocate its entire generated node_modules through one symlink.
+  // Only that exact real root is trusted, never an unrelated virtual store or sibling.
+  const installedRoot = realpathSync(join(root, "node_modules"));
+  assert(statSync(installedRoot).isDirectory(), "Installed dependency root must be a directory");
   const installed = collectPackages(
     tree,
     manifest.remediations.map((entry) => entry.package),
@@ -79,15 +83,24 @@ export function verifyInstalledPatches(root, manifest, tree, read = readFileSync
     const copies = installed.filter((item) => item.from === entry.package);
     assert(copies.length > 0, `No installed copies found for ${entry.package}`);
     for (const copy of copies) {
-      assert(inside(join(root, "node_modules"), copy.path), "Unexpected dependency location");
-      const pkg = JSON.parse(read(join(copy.path, "package.json"), "utf8"));
+      assert(
+        isAbsolute(copy.path) && !copy.path.split(/[\\/]/).includes(".."),
+        "Unexpected dependency location",
+      );
+      const packageRoot = realpathSync(copy.path);
+      assert(inside(installedRoot, packageRoot), "Unexpected dependency location");
+      const identityPath = realpathSync(join(packageRoot, "package.json"));
+      assert(inside(packageRoot, identityPath), "Package identity must remain in its package");
+      const pkg = JSON.parse(read(identityPath, "utf8"));
       assert.equal(pkg.name, entry.package, "Dependency identity differs");
       assert.equal(pkg.version, entry.version, "Unverified dependency version");
       for (const [file, expected] of Object.entries(entry.files)) {
         assert(inside(copy.path, join(copy.path, file)), "Source must remain in its package");
+        const sourcePath = realpathSync(join(packageRoot, file));
+        assert(inside(packageRoot, sourcePath), "Source must remain in its package");
         assert.match(expected, /^[a-f0-9]{64}$/);
         assert.equal(
-          sha256(read(join(copy.path, file))),
+          sha256(read(sourcePath)),
           expected,
           `Unpatched/changed ${entry.package}/${file}`,
         );
