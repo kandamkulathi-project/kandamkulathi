@@ -4,6 +4,16 @@ This checklist exercises the integrated software; it does not grant G1, clinical
 financial, provider or release approval. Use synthetic records and provider test mode
 only. Never use real patients, live charges or production credentials.
 
+Check the [candidate and verification record](PHASE1_INTEGRATION.md) before testing.
+Use the exact reviewed commit supplied in the delivery handoff. Require a clean
+working tree: `git status --porcelain=v1 --untracked-files=all` must print nothing.
+If it lists changes, stop and preserve them; use a separate clean checkout rather
+than discarding work. Record both `git rev-parse HEAD` and
+`git rev-parse 'HEAD^{tree}'`. Repeat these checks after the run; changed source
+invalidates its candidate binding. Do not assume an older open PR or a passing
+local run is the final merged candidate. Hosted software failures remain blockers
+independently of missing company/provider/device approvals.
+
 ## 1. Start the application
 
 Use Node **24.22.1**, pnpm **10.34.7** and PostgreSQL **17**. Preserve local changes
@@ -129,8 +139,11 @@ business outcome.
 
 ## 6. Record and report
 
-For every run record the commit, environment, role, synthetic record IDs, device/OS
-or browser, steps, expected/actual outcome and screenshots. Mark missing prerequisites
+For every run record the commit and tree hashes, clean-check results before/after,
+approved environment/configuration reference, role, synthetic record IDs, device/OS
+or browser, steps, expected/actual outcome and screenshots. Git cleanliness does
+not verify ignored configuration, installed native binaries or provider setup;
+record those separately without exposing secret values. Mark missing prerequisites
 **Blocked**, not Passed. Do not include tokens, cookies, secrets or private records.
 Use the [defect template](../quality/DEFECT_TEMPLATE.md) and
 [canonical Phase 1 cases](../implementation/Kandamkulathi_11_Tinu_Detailed_Phase_Wise_Test_Cases.md).

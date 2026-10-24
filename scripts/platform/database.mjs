@@ -109,12 +109,24 @@ export async function migrate(value, { environment, namespace, manifest } = {}) 
       17,
       "PostgreSQL 17 required",
     );
+    // Cluster-global profiles must commit before the longer, database-local migration
+    // transaction. A failed migration may leave only validated NOLOGIN groups;
+    // domain schema, grants and ledger still commit or roll back together below.
+    await client.query("BEGIN");
+    try {
+      await client.query("SET LOCAL lock_timeout = '5s'");
+      await client.query("SET LOCAL statement_timeout = '30s'");
+      await client.query(readFileSync(new URL("operations/roles.sql", base), "utf8"));
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    }
     await client.query("BEGIN");
     try {
       await client.query("SET LOCAL lock_timeout = '5s'");
       await client.query("SET LOCAL statement_timeout = '30s'");
       await client.query("SELECT pg_advisory_xact_lock(871295, 1)");
-      await client.query(readFileSync(new URL("operations/roles.sql", base), "utf8"));
       // Tracking lives outside domain namespaces and contains only migration identifiers/digests.
       await client.query(`CREATE TABLE IF NOT EXISTS public.k_platform_migrations (
         id text PRIMARY KEY, sha256 text NOT NULL, applied_at timestamptz NOT NULL DEFAULT clock_timestamp())`);

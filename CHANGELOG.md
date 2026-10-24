@@ -4,12 +4,13 @@
 
 ### GitHub CodeRabbit completion review corrections — 2026-10-24
 
+- Make cluster-wide runtime-role bootstrap safe across concurrent isolated databases; validate every profile after narrowly handled creation collisions and commit the role-only transaction before atomic schema/grant/ledger migration. Add real PostgreSQL collision/unsafe-role regressions and document rollback boundaries.
 - Restrict the real WhatsApp sender to permitted production live mode; keep terminal notice receipts immutable and process definitive rejection without resend or fabricated acceptance.
 - Release transcription concurrency for explicitly allowlisted provider rejections while retaining lifetime usage and unknown-outcome fences.
 - Distinguish private-video setup failure from normal post-setup closure without weakening media cleanup or late-callback guards. Correct integrated setup and verification handoffs.
 - Stabilize native/web auth PostgreSQL fixtures around the real rate-limit minute, explicitly verify legitimate rollover, and assert committed revocation at provider entry. Share real authenticated-session setup; give only the six-request expiry/logout aggregate a documented 20-second I/O budget. Production limits, provider deadlines and security assertions remain unchanged.
 
-### Phase 1 bounded completion and review corrections — 2026-10-24 (combined verification Pending)
+### Phase 1 bounded completion and review corrections — 2026-10-24 (acceptance Pending)
 
 - Mount explicitly confirmed unpaid cancellation (0028), independently routed durable notice (0029), and native transcription with approved notices, review-only draft insertion, retained cleanup obligations and server-enforced quota/concurrency admission (0030). No policies or approvals are seeded.
 - Add exact native WebRTC/plugin dependencies, relay-only browser/native adapters and isolated synthetic DO signaling; actual signed-device/TURN/provider evidence remains Pending.
