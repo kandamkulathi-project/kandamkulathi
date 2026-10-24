@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { after, describe, it } from "node:test";
@@ -10,7 +10,7 @@ import {
   verifyInstalledPatches,
 } from "../../scripts/security/policy.mjs";
 
-const root = mkdtempSync(join(tmpdir(), "dependency-policy-"));
+const root = realpathSync(mkdtempSync(join(tmpdir(), "dependency-policy-")));
 after(() => rmSync(root, { recursive: true, force: true }));
 const pkgPath = join(root, "node_modules", ".pnpm", "example", "node_modules", "example");
 const entry = {

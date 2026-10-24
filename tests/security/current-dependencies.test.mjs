@@ -194,7 +194,10 @@ describe("current registry fixes through actual parent-resolved dependencies", (
       });
       server.listen(0, '127.0.0.1', async () => {
         try {
-          await assert.rejects(fetch('http://127.0.0.1:' + server.address().port));
+          await assert.rejects(fetch('http://127.0.0.1:' + server.address().port), error => {
+            assert.equal(error.cause?.message, 'too many content-encodings in response: 6, maximum allowed is 5');
+            return true;
+          });
           await new Promise(resolve => setTimeout(resolve, 100));
         } catch (error) { console.error(error); process.exitCode = 1; }
         finally { server.closeAllConnections(); server.close(); }
