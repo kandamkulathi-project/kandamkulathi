@@ -52,9 +52,24 @@ importers:
 
   apps/companion:
     dependencies:
+      '@kandamkulathi/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@kandamkulathi/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@kandamkulathi/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@kandamkulathi/providers':
+        specifier: workspace:*
+        version: link:../../packages/providers
       '@kandamkulathi/server':
         specifier: workspace:*
         version: link:../../packages/server
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@cloudflare/workers-types':
         specifier: 5.20261019.1
@@ -65,12 +80,24 @@ importers:
 
   apps/core-api:
     dependencies:
+      '@kandamkulathi/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@kandamkulathi/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@kandamkulathi/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      '@kandamkulathi/providers':
+        specifier: workspace:*
+        version: link:../../packages/providers
       '@kandamkulathi/server':
         specifier: workspace:*
         version: link:../../packages/server
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@cloudflare/workers-types':
         specifier: 5.20261019.1
@@ -81,9 +108,15 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@config-plugins/react-native-webrtc':
+        specifier: 15.0.2
+        version: 15.0.2(expo@58.0.19)
       '@kandamkulathi/client':
         specifier: workspace:*
         version: link:../../packages/client
+      '@kandamkulathi/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@kandamkulathi/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
@@ -129,6 +162,12 @@ importers:
       react-native:
         specifier: 0.88.0
         version: 0.88.0(@babel/core@7.29.7)(@types/react@19.3.0)(react@19.3.0)
+      react-native-razorpay:
+        specifier: 3.0.0
+        version: 3.0.0(react-native@0.88.0(@babel/core@7.29.7)(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      react-native-webrtc:
+        specifier: 155.0.1
+        version: 155.0.1(react-native@0.88.0(@babel/core@7.29.7)(@types/react@19.3.0)(react@19.3.0))
     devDependencies:
       '@types/react':
         specifier: 19.3.0
@@ -213,6 +252,12 @@ importers:
 
   packages/database:
     dependencies:
+      '@kandamkulathi/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@kandamkulathi/domain':
+        specifier: workspace:*
+        version: link:../domain
       '@kandamkulathi/server':
         specifier: workspace:*
         version: link:../server
@@ -238,7 +283,14 @@ importers:
 
   packages/i18n: {}
 
-  packages/providers: {}
+  packages/providers:
+    dependencies:
+      '@kandamkulathi/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
 
   packages/server:
     dependencies:
@@ -917,6 +969,11 @@ packages:
 
   '@cloudflare/workers-types@5.20261019.1':
     resolution: {integrity: sha512-llvvy7WBVhK+OfykyBkG9A7OgsGvgwHSNyU40XGVkiy/xVFy0t/xflyhEBHT+U59yQECZQbmcZsJtqCNnLpIRg==}
+
+  '@config-plugins/react-native-webrtc@15.0.2':
+    resolution: {integrity: sha512-sH4T7Z4P2RowV91k9CEwEr0unn+396NBexxCNZwRXuJXwguDU1qZWpE6fcwN0730B8uiS83F7+CLTyhpC7qRHQ==}
+    peerDependencies:
+      expo: '>=56'
 
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
@@ -2491,6 +2548,15 @@ packages:
       supports-color:
         optional: true
 
+  debug@4.3.4:
+    resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
+    engines: {node: '>=6.0'}
+    peerDependencies:
+      supports-color: '*'
+    peerDependenciesMeta:
+      supports-color:
+        optional: true
+
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
     engines: {node: '>=6.0'}
@@ -3456,6 +3522,9 @@ packages:
   ms@2.0.0:
     resolution: {integrity: sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A==}
 
+  ms@2.1.2:
+    resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
+
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
 
@@ -3746,6 +3815,17 @@ packages:
 
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
+
+  react-native-razorpay@3.0.0:
+    resolution: {integrity: sha512-p7bcEJd8P3/FuNuV/kDvJAhF2QCHXaOwkMA7hkZV3XnmU2IJRap3dF8BYuSBAb+OEvzAm5RQbRHlZAnkr/+h+g==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-native: '>=0.66.0'
+
+  react-native-webrtc@155.0.1:
+    resolution: {integrity: sha512-xQ71L3l1yE9o7H0VWupktdib08OXt5hnGspQYTSW1S3sYqXQHkYx8ZY9HNjw8o1FfBZuoFJ/ypGTUzky6YHnsQ==}
+    peerDependencies:
+      react-native: '>=0.60.0'
 
   react-native@0.88.0:
     resolution: {integrity: sha512-v/wee0nYWcammMYBnSat/e3WY/5iaf9YQOMcBrfKT/wPApPPlHp94hgZovBtwhMuthR01yc/8cGn0FpFTE/C4A==}
@@ -5366,6 +5446,10 @@ snapshots:
 
   '@cloudflare/workers-types@5.20261019.1': {}
 
+  '@config-plugins/react-native-webrtc@15.0.2(expo@58.0.19)':
+    dependencies:
+      expo: 58.0.19(@babel/core@7.29.7)(@expo/dom-webview@58.0.2)(react-dom@19.3.0(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(typescript@6.0.3)
+
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
@@ -6978,6 +7062,10 @@ snapshots:
     dependencies:
       ms: 2.1.3
 
+  debug@4.3.4:
+    dependencies:
+      ms: 2.1.2
+
   debug@4.4.3:
     dependencies:
       ms: 2.1.3
@@ -7963,6 +8051,8 @@ snapshots:
 
   ms@2.0.0: {}
 
+  ms@2.1.2: {}
+
   ms@2.1.3: {}
 
   muggle-string@0.4.1: {}
@@ -8225,6 +8315,19 @@ snapshots:
       scheduler: 0.28.0
 
   react-is@18.3.1: {}
+
+  react-native-razorpay@3.0.0(react-native@0.88.0(@babel/core@7.29.7)(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+    dependencies:
+      react: 19.3.0
+      react-native: 0.88.0(@babel/core@7.29.7)(@types/react@19.3.0)(react@19.3.0)
+
+  react-native-webrtc@155.0.1(react-native@0.88.0(@babel/core@7.29.7)(@types/react@19.3.0)(react@19.3.0)):
+    dependencies:
+      base64-js: 1.5.1
+      debug: 4.3.4
+      react-native: 0.88.0(@babel/core@7.29.7)(@types/react@19.3.0)(react@19.3.0)
+    transitivePeerDependencies:
+      - supports-color
 
   react-native@0.88.0(@babel/core@7.29.7)(@types/react@19.3.0)(react@19.3.0):
     dependencies:

@@ -63,6 +63,7 @@ try {
   );
   for (const command of [
     "verify",
+    "audit:clients",
     "test:security:scanners",
     "security:sast",
     "security:secrets:staged",

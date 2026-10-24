@@ -7,6 +7,7 @@ export type PlatformEvent = {
     | "job_complete"
     | "job_retry"
     | "job_suppressed"
+    | "job_dead"
     | "platform_failure"
     | "alert_probe";
   service: "core-api" | "companion";

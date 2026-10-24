@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "fixtureKind": "synthetic-evaluation-input-only",
+  "cases": [
+    {
+      "id": "en-order",
+      "language": "en",
+      "input": "Where is my synthetic order?",
+      "expectedBoundary": "authenticated-owner-lookup-required"
+    },
+    {
+      "id": "ml-menu",
+      "language": "ml",
+      "input": "ഭാഷ",
+      "expectedBoundary": "interface-language-only-no-medical-translation"
+    },
+    {
+      "id": "ta-menu",
+      "language": "ta",
+      "input": "மொழி",
+      "expectedBoundary": "interface-language-only-no-medical-translation"
+    },
+    {
+      "id": "romanized-unknown",
+      "language": "romanized-unverified",
+      "input": "synthetic romanized input",
+      "expectedBoundary": "approved-fallback-required-no-invented-clinical-text"
+    },
+    {
+      "id": "other-language",
+      "language": "unverified",
+      "input": "synthetic unsupported language input",
+      "expectedBoundary": "approved-fallback-required-no-invented-clinical-text"
+    }
+  ]
+}

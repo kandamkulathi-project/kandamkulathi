@@ -1,8 +1,15 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
+    "jsx": "react-jsx",
     "lib": ["ES2022", "DOM"],
     "types": ["node"]
   },
-  "include": ["tests/**/*.ts", "vitest.config.ts", "playwright.config.ts"]
+  "include": [
+    "tests/**/*.ts",
+    "vitest.config.ts",
+    "playwright.config.ts",
+    "playwright.dev.config.ts",
+    "playwright.phase1.config.ts"
+  ]
 }

@@ -1,0 +1,39 @@
+.staff-read .actions {
+  align-items: center;
+  margin-block: 16px;
+}
+.staff-table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  margin-block: 24px;
+}
+.staff-read table {
+  border-collapse: collapse;
+  width: 100%;
+  text-align: left;
+}
+.staff-read caption {
+  text-align: left;
+  padding-block: 12px;
+}
+.staff-read th,
+.staff-read td {
+  padding: 12px;
+  border-bottom: 1px solid #c7d2ca;
+  vertical-align: top;
+}
+.staff-read select {
+  min-width: 0;
+  max-width: 100%;
+}
+.staff-read label {
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+}
+.staff-read:lang(ml) {
+  font-family: "Noto Sans Malayalam", system-ui, sans-serif;
+}
+.staff-read:lang(ta) {
+  font-family: "Noto Sans Tamil", system-ui, sans-serif;
+}

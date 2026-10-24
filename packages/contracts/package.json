@@ -8,7 +8,27 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./client": "./src/client.ts"
+    "./client": "./src/client.ts",
+    "./client-knowledge": "./src/client-knowledge.ts",
+    "./sensitive": "./src/sensitive.ts",
+    "./commerce-address": "./src/commerce-address.ts",
+    "./commerce-catalogue": "./src/commerce-catalogue.ts",
+    "./commerce-http": "./src/commerce-http.ts",
+    "./commerce-orders": "./src/commerce-orders.ts",
+    "./commerce-payments": "./src/commerce-payments.ts",
+    "./commerce-access": "./src/commerce-access.ts",
+    "./commerce-clinics": "./src/commerce-clinics.ts",
+    "./identity": "./src/identity.ts",
+    "./identifiers": "./src/identifiers.ts",
+    "./consent": "./src/consent.ts",
+    "./booking": "./src/booking.ts",
+    "./booking-offers": "./src/booking-offers.ts",
+    "./knowledge": "./src/knowledge.ts",
+    "./knowledge-authoring": "./src/knowledge-authoring.ts",
+    "./native-auth": "./src/native-auth.ts",
+    "./consent-bootstrap": "./src/consent-bootstrap.ts",
+    "./commerce-checkout": "./src/commerce-checkout.ts",
+    "./channels": "./src/channels.ts"
   },
   "dependencies": {
     "zod": "4.6.7"

@@ -8,6 +8,10 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./sensitive": "./src/sensitive.ts",
+    "./knowledge": "./src/knowledge.ts",
+    "./staff-content": "./src/staff-content.ts",
+    "./staff-read": "./src/staff-read.ts",
     "./fonts.css": "./fonts/fonts.css"
   }
 }

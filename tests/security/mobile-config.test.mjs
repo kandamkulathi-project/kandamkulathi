@@ -8,7 +8,36 @@ test("local native configuration is isolated and declares actual permission/secu
   assert.equal(config.ios.bundleIdentifier, "com.example.kandamkulathi.local");
   assert.equal(config.android.allowBackup, false);
   assert.equal(config.extra.releaseApproved, false);
+  assert.equal(config.extra.transcriptionProofApproved, undefined);
   assert(config.plugins.some((plugin) => plugin[0] === "expo-secure-store"));
+});
+test("transcription proof exports only a complete explicitly approved notice and rejects invalid configuration", () => {
+  const policy = {
+    version: "synthetic-policy-v1",
+    notices: { en: "Synthetic EN", ml: "Synthetic ML", ta: "Synthetic TA" },
+  };
+  const input = {
+    MOBILE_TRANSCRIPTION_PROOF_APPROVED: "true",
+    MOBILE_TRANSCRIPTION_PROCESSING_POLICY: JSON.stringify(policy),
+  };
+  const config = mobileConfig({}, input);
+  assert.equal(config.extra.transcriptionProofApproved, true);
+  assert.deepEqual(config.extra.transcriptionProcessingPolicy, policy);
+  assert.equal(
+    mobileConfig({}, { ...input, MOBILE_TRANSCRIPTION_PROOF_APPROVED: "false" }).extra
+      .transcriptionProofApproved,
+    undefined,
+  );
+  for (const invalid of [
+    undefined,
+    "bad json",
+    JSON.stringify({ ...policy, secret: "not-allowed" }),
+    JSON.stringify({ ...policy, notices: { en: "incomplete" } }),
+  ])
+    assert.throws(
+      () => mobileConfig({}, { ...input, MOBILE_TRANSCRIPTION_PROCESSING_POLICY: invalid }),
+      /notice configuration/,
+    );
 });
 test("nonlocal builds refuse missing company identifiers, insecure URLs and public secrets", () => {
   for (const env of [
@@ -18,6 +47,10 @@ test("nonlocal builds refuse missing company identifiers, insecure URLs and publ
     { EXPO_PUBLIC_API_KEY: "synthetic" },
     { EXPO_PUBLIC_DATABASE_URL: "synthetic-credential" },
     { EXPO_PUBLIC_CORE_API_ORIGIN: "https://user:password@example.com" },
+    { EXPO_PUBLIC_COMPANION_API_ORIGIN: "http://api.example.com" },
+    { EXPO_PUBLIC_COMPANION_API_ORIGIN: "https://api.example.com/v1" },
+    { EXPO_PUBLIC_COMPANION_API_ORIGIN: "https://api.example.com?token=private" },
+    { EXPO_PUBLIC_COMPANION_API_ORIGIN: "https://user:password@api.example.com" },
   ])
     assert.throws(() => mobileConfig({}, env));
 });
@@ -27,6 +60,7 @@ test("company development build uses only selected public fields and explicit id
     {
       EXPO_PUBLIC_APP_ENV: "dev",
       EXPO_PUBLIC_CORE_API_ORIGIN: "https://dev-api.example.com",
+      EXPO_PUBLIC_COMPANION_API_ORIGIN: "https://dev-companion.example.com",
       MOBILE_IOS_BUNDLE_ID: "com.examplecompany.kandamkulathi.dev",
       MOBILE_ANDROID_APPLICATION_ID: "com.examplecompany.kandamkulathi.dev",
       MOBILE_EXPO_OWNER: "synthetic-company",
@@ -36,5 +70,6 @@ test("company development build uses only selected public fields and explicit id
   );
   assert.equal(config.scheme, "kandamkulathi-dev");
   assert.equal(config.extra.coreApiOrigin, "https://dev-api.example.com");
+  assert.equal(config.extra.companionApiOrigin, "https://dev-companion.example.com");
   assert(!JSON.stringify(config).includes("private-not-exported"));
 });

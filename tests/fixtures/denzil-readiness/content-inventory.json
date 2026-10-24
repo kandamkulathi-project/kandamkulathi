@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "fixtureKind": "pending-content-source-register",
+  "owner": "Mathew",
+  "reviewer": "company-physician",
+  "inventoryStatus": "pending-complete-current-published-inventory",
+  "requiredLanguages": ["en", "ml", "ta"],
+  "requiredProductKinds": ["monograph", "dosage", "contraindication", "safety"],
+  "requiredInstitutionKinds": [
+    "physician-profile",
+    "department",
+    "treatment",
+    "faq",
+    "policy",
+    "reference"
+  ],
+  "publishedProductCount": null,
+  "expectedProductLanguageKindSlots": null,
+  "coveredSlots": null,
+  "gapSlots": null,
+  "approvedSample": null,
+  "inventorySourceRevision": null,
+  "companyFreshnessDeadline": null,
+  "measuredEditFreshness": null,
+  "measuredWithdrawalFreshness": null
+}

@@ -1,0 +1,2 @@
+// Test resolution only.
+export {};

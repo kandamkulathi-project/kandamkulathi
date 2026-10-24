@@ -9,7 +9,12 @@
     "build": "wrangler deploy --dry-run --outdir dist"
   },
   "dependencies": {
-    "@kandamkulathi/server": "workspace:*"
+    "@kandamkulathi/database": "workspace:*",
+    "@kandamkulathi/contracts": "workspace:*",
+    "@kandamkulathi/domain": "workspace:*",
+    "@kandamkulathi/providers": "workspace:*",
+    "@kandamkulathi/server": "workspace:*",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "wrangler": "4.151.2",

@@ -9,7 +9,13 @@
   "exports": {
     ".": "./src/index.ts",
     "./media": "./src/media.ts",
-    "./capture": "./src/capture.ts"
+    "./capture": "./src/capture.ts",
+    "./sensitive": "./src/sensitive.ts",
+    "./consultation": "./src/consultation.ts",
+    "./knowledge": "./src/knowledge.ts",
+    "./public-knowledge": "./src/public-knowledge.ts",
+    "./private-video": "./src/private-video.ts",
+    "./private-video-http": "./src/private-video-http.ts"
   },
   "dependencies": {
     "@kandamkulathi/contracts": "workspace:*"

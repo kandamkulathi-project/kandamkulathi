@@ -2,11 +2,54 @@
 
 ## Unreleased
 
+### GitHub CodeRabbit completion review corrections — 2026-10-24
+
+- Restrict the real WhatsApp sender to permitted production live mode; keep terminal notice receipts immutable and process definitive rejection without resend or fabricated acceptance.
+- Release transcription concurrency for explicitly allowlisted provider rejections while retaining lifetime usage and unknown-outcome fences.
+- Distinguish private-video setup failure from normal post-setup closure without weakening media cleanup or late-callback guards. Correct integrated setup and verification handoffs.
+- Stabilize native/web auth PostgreSQL fixtures around the real rate-limit minute, explicitly verify legitimate rollover, and assert committed revocation at provider entry. Share real authenticated-session setup; give only the six-request expiry/logout aggregate a documented 20-second I/O budget. Production limits, provider deadlines and security assertions remain unchanged.
+
+### Phase 1 bounded completion and review corrections — 2026-10-24 (combined verification Pending)
+
+- Mount explicitly confirmed unpaid cancellation (0028), independently routed durable notice (0029), and native transcription with approved notices, review-only draft insertion, retained cleanup obligations and server-enforced quota/concurrency admission (0030). No policies or approvals are seeded.
+- Add exact native WebRTC/plugin dependencies, relay-only browser/native adapters and isolated synthetic DO signaling; actual signed-device/TURN/provider evidence remains Pending.
+- Correct CodeRabbit findings in blocked-anonymous browser action lifetimes, bounded grant retries, native reference-only checkout recovery, per-root/text-asset audit coverage, citation host validation, foreign Git environment isolation and historical phase-scope documentation.
+- Preserve main browser evidence across subsequent campaigns and verify retention with the actual Playwright CLI. Give the 30-request real-PostgreSQL rate-cap case an explicit I/O budget without changing its assertions. No skipped or failing gate is treated as passed.
+- Fence known browser session expiry locally as anonymous without awaiting network revalidation; retain passive-restoration denial and explicit sign-in recovery. Cover unresolved revalidation and timer-clamped deadlines without weakening the original expiry assertion.
+
+### PR #5/#6 client history consolidation — 2026-10-24
+
+- Preserve P1-DEV-003's uncertain-save correction: retire mutation identities after validated results or definitive rejection, retain the same identity after an ambiguous response, and correlate consent/payment recovery with authoritative reads.
+- Preserve P1-DEV-003's native logout and capture corrections: sticky private-access fencing survives failed remote logout/navigation, and interrupted recording cleanup remains retryable. These historical deliveries did not establish native-device or provider acceptance.
+- Preserve P1-DEV-004's source-backed editor/cited Companion and built-client security-audit history, including stale-save correlation, source/artifact checks and explicit chat/handoff identities. Integrated effect-owned lifetimes correct the original StrictMode defects; completed intentional actions retire identities while uncertain retries retain them.
+- Consolidate the 2026-10-23 PR #6 dependency/conflict alignment and frontend-security corrections without treating the original heads as approved. Earlier independent review, actual APIs/providers and device/G1 acceptance were Pending at delivery; current exact-candidate evidence supersedes historical verification claims.
+
+### Phase 1 parallel backlog integration — 2026-10-24 (verification and independent review Pending)
+
+- Preserve existing owner implementation candidates and the incumbent interface while integrating separately authored Phase 1 changes. Company/provider/device acceptance and G1 remain Pending.
+- Add an exact browser-origin mutation boundary with denial before feature execution, preserving separate authentication, current authorization and CSRF obligations.
+- Add Tinu's deterministic fixture aliases, candidate-bound evidence ledger and mandatory Node QA regressions; no mock or aggregate row can grant canonical acceptance.
+- Integrate canonical persisted identity/privacy, commerce/payment, booking, source-backed knowledge authoring, scoped staff reads and EN/ML/TA web/native journeys; mount actual native sign-in/consent/verified secure-vault/logout controls without fabricating provider success.
+- Bind financial outbox insertion to persisted obligations/ledger/expiration references with additive migration 0026; preserve immutable migrations and existing authorization assertions. Keep uncertain expired financial work in durable financial review.
+- Repair expired native privacy-session logout with narrowly bound additive migration 0027; preserve expired business-auth denial, provider-confirmed revocation and stable-key pending reconciliation. Preserve unavailable versus denied admission through Companion and booking mutation adapters.
+- Publish a scoped [integration register](docs/development/PHASE1_INTEGRATION.md) and [manual testing handoff](docs/development/PHASE1_MANUAL_TESTING.md); final combined checks and independent review remain required before commit/merge. No G1 or device/provider acceptance is implied.
+
 ### PR #8 QA register correction — 2026-10-24 (independent review Pending)
 
 - Reconcile canonical Phase 1 variant coverage, distinguish historical unverified observations from current implementation and pending acceptance, and repair UTF-8 punctuation without inventing execution or approval evidence.
 - Integrate current reviewed platform/client `dev`, preserving newline-terminated runtime pins and required Expo compatibility checks. Isolate external scanner Git-hook context with unit and real-scanner controls, retaining all authored-source targets, rules and mandatory gates.
 - Preserve foreground Astro supervision under agent detection so repeated browser campaigns do not leave a preview server occupying a later candidate's port.
+
+### Mathew/platform integration — 2026-10-24 (independent review Pending)
+
+- Merge reviewed platform PR #3 from `dev`, preserving safe configuration/logging, PostgreSQL transport infrastructure, real database CI/hooks and Core Cron/Queue handlers alongside the identity fetch boundary.
+- Keep third-argument feature registration behind platform guards, preserve both Companion registrations, and extend composition regressions for explicit local test configuration and invalid-environment denial before adapter access. Business adapters and all domain/provider/clinical acceptance remain Pending.
+
+### Local development supervision — 2026-10-23 (review Pending)
+
+- Keep Astro dev and preview in the foreground under agent detection so `pnpm dev` does not stop sibling services after a successful background launcher exit and Playwright can supervise preview cleanup.
+- Add a script contract regression and actual four-service browser/Worker lifecycle campaign to `pnpm test:e2e`; readiness and business/provider acceptance remain Pending.
+- Isolate external scanners from inherited Git hook repository selectors, while preserving Git's actual candidate index. This prevents generated ignored bundles being parsed as authored source during linked-worktree commits; rules and fail-closed gates are unchanged, with real scanner and environment regressions.
 
 ### P1-DEV-001 PR #3 second review — 2026-10-23 (independent retest Pending)
 

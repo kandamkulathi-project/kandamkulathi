@@ -1,0 +1,12 @@
+{
+  "extends": "../../apps/mobile/tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@kandamkulathi/client/private-video": ["../../packages/client/src/private-video.ts"],
+      "@kandamkulathi/client/private-video-http": [
+        "../../packages/client/src/private-video-http.ts"
+      ]
+    }
+  },
+  "include": ["../../apps/mobile/App.tsx"]
+}

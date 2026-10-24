@@ -1,0 +1,27 @@
+/** Draft English labels awaiting Denzil/company EN/ML/TA review. Never fake translations. */
+export const bookingDraftLabels = {
+  directory: "Find a consultation",
+  clinic: "Clinic",
+  doctor: "Doctor",
+  service: "Service",
+  choose: "Choose…",
+  slots: "Available appointments",
+  hold: "Hold this appointment",
+  held: "Appointment held — payment verification pending",
+  confirmed: "Confirmed by the server",
+  expired: "Hold expired",
+  cancelled: "Cancelled",
+  conflict: "This appointment is no longer available. Check current availability.",
+  countdown: "Hold time remaining",
+  elapsed: "Hold deadline reached. Check the server for the current status.",
+  refresh: "Check current status",
+  appointments: "Your appointments",
+  join: "Request consultation access",
+  pending: "Consultation access is pending in the reviewed adapter.",
+  uncertain:
+    "The hold outcome is unknown. Check your appointments before trying another booking. Do not repeat the request.",
+  refund: "Payment requires rebooking or refund reconciliation. No refund is confirmed.",
+  online: "Online",
+  in_clinic: "In clinic",
+  draft: "Booking labels are draft English; reviewed translations are pending.",
+};

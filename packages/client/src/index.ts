@@ -56,6 +56,20 @@ export async function loadSession(
   }
 }
 
+/** A known session deadline revokes local access independently of network revalidation. */
+export function watchSessionExpiry(expiresAt: string, onExpired: () => void): () => void {
+  const deadline = Date.parse(expiresAt);
+  if (!Number.isFinite(deadline)) throw new Error("Invalid session deadline");
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const check = () => {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) onExpired();
+    else timer = setTimeout(check, Math.min(2147483647, remaining));
+  };
+  check();
+  return () => clearTimeout(timer);
+}
+
 export function workspaceAccess(session: ClientSession, workspace: Workspace, now = Date.now()) {
   return Date.parse(session.expiresAt) > now && session.workspaces.includes(workspace);
 }

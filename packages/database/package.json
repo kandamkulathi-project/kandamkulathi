@@ -10,9 +10,16 @@
   "exports": {
     ".": "./src/schema.ts",
     "./client": "./src/client.ts",
-    "./outbox": "./src/outbox.ts"
+    "./outbox": "./src/outbox.ts",
+    "./outbox-external": "./src/outbox-external.ts",
+    "./channels": "./src/channels.ts",
+    "./booking": "./src/booking.ts",
+    "./knowledge": "./src/knowledge.ts",
+    "./identity": "./src/identity.ts"
   },
   "dependencies": {
+    "@kandamkulathi/contracts": "workspace:*",
+    "@kandamkulathi/domain": "workspace:*",
     "drizzle-orm": "0.45.4",
     "@neondatabase/serverless": "1.2.0",
     "@kandamkulathi/server": "workspace:*",
